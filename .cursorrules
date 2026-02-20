@@ -1,0 +1,692 @@
+# Fuel Flow - Cursor Rules
+
+> Comprehensive filling station management system for the Pakistani market
+
+**Version**: 1.6.0  
+**Last Updated**: 2026-02-19  
+**Last Synced with PRD**: v1.6.0 (2026-02-19)  
+**Last Synced with Project Overview**: v1.2 (2026-02-18)
+
+---
+
+## Project Context
+
+**Fuel Flow** is a complete filling station management system enabling station owners to manage multiple filling stations, track fuel inventory, handle credit customers (udhaar), manage shift-based operations, and generate comprehensive reports.
+
+### Key Documents
+- **PRD**: `docs/PRD.md` - Complete technical specifications, API details, database schema
+- **Project Overview**: `docs/ProjectOverView.md` - Detailed module breakdown and business requirements
+- **Implementation Status**: `docs/IMPLEMENTATION_STATUS.md` - What's done, where to continue
+
+---
+
+## Technology Stack
+
+### Frontend
+- **Framework**: React 18.x with Vite 5.x
+- **Routing**: TanStack Router 1.x (file-based, type-safe)
+- **Data Fetching**: TanStack Query 5.x (server state, caching)
+- **Tables**: TanStack Table 8.x (headless)
+- **Forms**: TanStack Form + Zod 3.x validation
+- **State**: Zustand 4.x (client state only)
+- **UI**: Shadcn/ui (latest) + Tailwind CSS 3.x
+- **Icons**: Lucide React
+- **Charts**: Recharts 2.x
+- **PWA**: Vite PWA Plugin
+- **i18n**: react-i18next (English + Urdu)
+
+### Backend
+- **Framework**: ASP.NET Core 10.x (C# 12)
+- **ORM**: Entity Framework Core 10.x
+- **Auth**: ASP.NET Identity + JWT
+- **CQRS/Messaging**: MediatR 14.x (command/query dispatching)
+- **Validation**: FluentValidation 12.x
+- **Mapping**: Mapperly 3.x (source-generated)
+- **Background Jobs**: Hangfire 1.8.x
+- **Logging**: Serilog 3.x
+- **API Docs**: Swagger/OpenAPI
+
+### Database
+- **Primary**: PostgreSQL 16.x
+- **Migrations**: EF Core Migrations
+
+### Infrastructure
+- **Containerization**: Docker + Docker Compose
+- **CI/CD**: GitHub Actions
+- **File Storage**: AWS S3 / Local disk
+- **SMS**: Telenor/Jazz API
+
+---
+
+## Architecture Principles
+
+### Multi-Tenancy
+- **Strategy**: Single database, shared schema
+- **Isolation**: All tables have `StationId` foreign key
+- **Queries**: Global filter via EF Core query filters
+- **Owner View**: Aggregates data across all owned stations
+
+### Clean Architecture (Backend)
+
+The backend uses **Clean Architecture** with 4 separate .NET projects. Dependencies flow inward — inner layers never reference outer layers.
+
+| Project | Role | Depends On |
+|:--|:--|:--|
+| **FuelFlow.Domain** | Entities, enums, business rules (pure C#, zero packages) | Nothing |
+| **FuelFlow.Application** | Commands, Queries, interfaces, DTOs, validators, Result type | Domain |
+| **FuelFlow.Infrastructure** | Command/Query handlers, EF Core, repos, JWT, external services | Application, Domain |
+| **FuelFlow.Api** | Controllers, Program.cs (composition root) | Application, Infrastructure |
+
+```
+FuelFlow.Domain/         # Entities/, Enums/, Common/
+FuelFlow.Application/    # Features/*/Commands/, Features/*/Queries/, Interfaces/, DTOs/, Validators/, Common/
+FuelFlow.Infrastructure/ # Features/*/Commands/, Features/*/Queries/, Data/, Repositories/, Services/
+FuelFlow.Api/            # Controllers/, Middleware/, Program.cs
+```
+
+**CQRS + MediatR:**
+- Controllers send Commands/Queries via `IMediator.Send()` — never call handlers directly
+- Commands = state-changing operations (e.g., `RegisterCommand`, `LoginCommand`)
+- Queries = read-only operations (e.g., `GetCurrentUserQuery`)
+- Handlers live in Infrastructure, implement `IRequestHandler<TRequest, TResponse>`
+- Handlers return `Result<T>` for explicit success/failure
+
+**Key rules:**
+- Domain has NO NuGet packages — pure C# only
+- Entities are POCOs — no EF Core attributes, no `[Table]` or `[Column]`
+- EF Core mapping done via Fluent API in Infrastructure (Configurations/)
+- Interfaces defined in Application, implemented in Infrastructure
+- Api is the composition root — the only project that knows about all layers
+
+**Frontend** (`fuel-flow-web/`):
+```
+src/
+  ├── routes/          # TanStack Router file-based routes
+  ├── components/
+  │   ├── ui/         # Shadcn components
+  │   ├── forms/      # Form components
+  │   └── layout/     # Shell, sidebar, header
+  ├── hooks/
+  │   ├── useAuth.ts
+  │   └── queries/    # TanStack Query hooks
+  ├── lib/
+  │   ├── api.ts      # Axios/fetch config
+  │   ├── utils.ts
+  │   └── validators.ts # Zod schemas
+  ├── stores/         # Zustand stores
+  └── locales/        # i18n (en.json, ur.json)
+```
+
+---
+
+## API Conventions
+
+- **Base URL**: `/api/v1`
+- **Format**: JSON
+- **Auth**: JWT Bearer token
+- **Errors**: RFC 7807 Problem Details
+- **Pagination**: `?page=1&pageSize=20`
+- **Sorting**: `?sortBy=name&sortOrder=asc`
+- **Filtering**: `?status=active&search=xyz`
+
+### Response Format
+```json
+{
+  "success": true,
+  "data": { ... },
+  "errors": null
+}
+```
+
+---
+
+## Database Conventions
+
+### Naming
+- **Tables**: `snake_case` (e.g., `fuel_types`, `meter_readings`)
+- **Primary Keys**: `id` (UUID, `gen_random_uuid()`)
+- **Foreign Keys**: `{entity}_id` (e.g., `station_id`, `tank_id`)
+- **Timestamps**: `created_at`, `updated_at` (TIMESTAMPTZ)
+- **Soft Deletes**: `is_active` BOOLEAN (preferred over hard deletes)
+
+### Key Entities
+- `organizations` → `stations` → `tanks`, `nozzles`, `users`
+- `organizations` → `subscriptions` → `subscription_payments`
+- `refresh_tokens` (user_id → AspNetUsers; stores hashed tokens, ip_address, user_agent, device_id)
+- `subscription_plans` (system-defined: starter, professional, enterprise)
+- `shifts` → `meter_readings`, `dip_readings`
+- `credit_customers` → `credit_transactions`
+- `suppliers` → `supplier_transactions`
+
+### Multi-Tenancy
+- **Always** include `station_id` in queries (except Owner's consolidated view)
+- Use EF Core query filters for automatic tenant isolation
+- Owner can aggregate across all stations
+
+---
+
+## Business Rules
+
+### Shift Management (SH-001 to SH-006)
+- Only one shift open per station at a time
+- Opening meter reading must be ≥ last closing reading
+- Shift cannot close until all assigned nozzles have closing readings
+- Shortage = Calculated Sales - (Cash + Credit + Card + Digital)
+- Shortage added to nozzleman's balance due
+- Excess logged but not deducted from balance
+
+### Pricing (PR-001 to PR-005)
+- Only one active price per fuel type per station
+- Price changes require confirmation (type twice)
+- Price changes trigger notification to all station users
+- Sales during price change split by time, calculated at respective rates
+- Customer special rates applied automatically on credit sales
+
+### Inventory (INV-001 to INV-005)
+- Stock = Opening Dip + Deliveries - Sales (calculated)
+- Physical stock from closing dip reading
+- Variance = Physical Stock - Calculated Stock
+- Variance exceeding threshold triggers alert
+- Short delivery alerts sent to Owner immediately
+
+### Credit Management (CR-001 to CR-004)
+- Credit sale blocked if customer at/above credit limit
+- Partial payments reduce outstanding balance
+- Customer balance = Sum(sales) - Sum(payments)
+- Aging calculated from transaction date
+
+### Audit (AUD-001 to AUD-005)
+- All price changes logged with before/after values
+- All user create/delete actions logged
+- Manual stock adjustments logged with reason
+- Credit entry deletions logged
+- Audit logs never deleted (retention: owner-configurable)
+
+### Registration (REG-001 to REG-004)
+- Email must be unique across all organizations
+- Registration creates Organization + Owner + Station + Trial subscription in one transaction
+- New registrations start on 14-day trial with Professional plan features
+- Phone number validated for Pakistani format (+92XXXXXXXXXX)
+
+### Subscription & Billing (SUB-001 to SUB-010)
+- Each organization has exactly one active subscription at a time
+- Trial period is 14 days from registration date
+- Trial gives Professional plan features (full product experience)
+- When trial expires, account becomes read-only (can view, cannot create/edit)
+- Payment verification is manual (admin approves bank transfer proof)
+- Subscription activates only after payment is verified
+- 3-day grace period after subscription expires before read-only mode
+- Downgrade blocked if current usage exceeds target plan limits
+- Annual billing gives ~17% discount (2 months free)
+- Feature gating enforced at API level (not just UI)
+
+### Feature Gating (FG-001 to FG-005)
+- Station count checked on station creation against plan limits
+- User count checked on user creation against plan limits
+- Module access checked via plan's feature flags JSONB
+- Expired/cancelled subscriptions allow read-only access
+- Owner always sees upgrade prompts for gated features
+
+---
+
+## Code Standards
+
+### Frontend
+
+**React Components**:
+- Use functional components with hooks
+- Extract custom hooks for reusable logic
+- Colocate styles with components (Tailwind)
+- Use TypeScript for all components
+- Use Shadcn/ui components as base for UI elements
+- Customize Shadcn components by modifying files in `components/ui/` (you own the code)
+
+**State Management**:
+- **TanStack Query**: All server state (API calls, caching)
+- **Zustand**: Client-only state (theme, language, sidebar, UI state)
+- **TanStack Form**: Form state and validation
+
+**Forms**:
+- Use TanStack Form + Zod validation
+- Share Zod schemas with backend DTOs when possible
+- Show validation errors inline
+
+**API Calls**:
+- Use TanStack Query hooks (`useQuery`, `useMutation`)
+- Centralize API client in `lib/api.ts`
+- Handle errors consistently (toast notifications)
+
+**Routing**:
+- File-based routing with TanStack Router
+- Type-safe route params and search params
+- Protected routes via route loaders
+
+### Backend (Clean Architecture)
+
+**Domain Layer** (`FuelFlow.Domain`):
+- Entities are plain C# classes (POCOs) — no EF Core attributes
+- Enums for strongly-typed values (UserRole, ShiftStatus, etc.)
+- BaseEntity with common fields: Id (Guid), CreatedAt, UpdatedAt
+- Zero external NuGet packages — if Domain needs a package, reconsider design
+
+**Application Layer** (`FuelFlow.Application`):
+- Define service interfaces (IAuthService, IShiftService, etc.)
+- Define repository interfaces (IRepository<T>, IUnitOfWork)
+- DTOs for all request/response objects
+- FluentValidation validators for DTOs
+- Result<T> type for service return values (success/failure without exceptions)
+
+**Infrastructure Layer** (`FuelFlow.Infrastructure`):
+- Implements interfaces from Application
+- AppDbContext extends IdentityDbContext<AppUser, AppRole, Guid>
+- EF Core Fluent API in Configurations/ folder (entity-per-file)
+- Repository<T> implements IRepository<T>
+- JWT token service, external integrations (SMS, S3)
+- DependencyInjection.cs extension method to register all Infrastructure services
+
+**Api Layer** (`FuelFlow.Api`):
+- Keep controllers thin — send Commands/Queries via MediatR, no business logic
+- Return DTOs, never entities directly
+- Use `[Authorize]` attributes for auth
+- Program.cs is the composition root (registers all DI)
+- Middleware for global error handling (RFC 7807 Problem Details)
+- Serilog for structured logging
+- Swagger for API docs in development
+
+**General Backend Rules**:
+- Use async/await for all DB operations
+- Apply EF Core query filters for multi-tenancy
+- Use Mapperly for DTO ↔ Entity mapping (source-generated, in Infrastructure)
+- Don't expose internal errors or stack traces to clients
+
+---
+
+## UI/UX Guidelines
+
+### Component Library
+- **Shadcn/ui**: Base components (customizable, accessible)
+  - Installed and configured in `components.json`
+  - Add components via: `npx shadcn@latest add [component-name]`
+  - Uses Radix UI primitives + class-variance-authority
+  - Components stored in `src/components/ui/`
+  - Example: `import { Button } from '@/components/ui/button'`
+- **DataTable**: TanStack Table + Shadcn styling
+- **Forms**: TanStack Form + Zod + Shadcn form components
+- **Modals**: Dialog component for confirmations
+- **Toasts**: Sonner for notifications (to be added)
+- **Charts**: Recharts with consistent theme
+
+### Responsive Design
+- **Mobile**: < 640px (Nozzleman entry screens)
+- **Tablet**: 640px - 1024px (Manager on tablet)
+- **Desktop**: > 1024px (Full dashboard)
+
+### Localization
+- Support English and Urdu
+- Use `react-i18next` for translations
+- Store translations in `locales/en.json` and `locales/ur.json`
+- Date format: DD/MM/YYYY
+- Currency format: Rs. 1,25,000 (Pakistani notation)
+
+### PWA Features
+- Service worker caches app shell
+- Add to home screen prompt
+- Offline support for critical features
+
+---
+
+## Security & Permissions
+
+### Roles
+- **Owner**: Full access, create Managers, configure all settings
+- **Manager**: Manage shifts, view reports, create other users
+- **Custom Users**: Configurable granular permissions
+
+### Permissions
+- Granular per-module: View / Edit / Delete / No Access
+- Manager can be assigned to multiple stations
+- Owner sees consolidated "All Stations" dashboard
+
+### Authentication
+- JWT Bearer tokens
+- Refresh token mechanism
+- PIN-based quick login (optional)
+- Session timeout configurable per user
+
+### Authorization
+- Check permissions at API level
+- Filter data by station access at query level
+- Owner bypasses station filters for consolidated views
+
+---
+
+## Testing Guidelines
+
+### Frontend
+- Test React components with React Testing Library
+- Test hooks in isolation
+- Mock TanStack Query in tests
+- Test form validation with Zod schemas
+
+### Backend (Clean Architecture Testing)
+- **Domain**: Unit test entities and business rules (no mocking needed — pure C#)
+- **Application**: Unit test service logic with mocked repository interfaces
+- **Infrastructure**: Integration tests for EF Core, query filters, multi-tenancy
+- **Api**: Integration tests for full API endpoints (WebApplicationFactory)
+
+---
+
+## Development Workflow
+
+### Git Conventions
+- Keep commit messages short
+- Use conventional commits when possible
+- Branch per feature/module
+
+### Code Quality
+- **Frontend**: ESLint + Prettier
+- **Backend**: `dotnet format`
+- **Pre-commit**: Husky hooks
+
+### Database Migrations
+- Use EF Core Migrations
+- Never edit migration files after creation
+- Test migrations on staging before production
+
+---
+
+## Key Modules Reference
+
+1. **User & Access Management**: Login, roles, permissions, multi-station access
+2. **Fuel Inventory & Tank Control**: Tanks, dip readings, stock levels, deliveries
+3. **Pump & Nozzle Operations**: Meter readings, sales calculation, shortage tracking
+4. **Shift Management**: Shift open/close, cash collection, nozzleman assignment
+5. **Finance & Accounts**: Credit customers, suppliers, expenses, bank accounts
+6. **Pricing & Rate Management**: Fuel prices, price history, promotions, special rates
+7. **Reporting & Analytics**: Daily/weekly/monthly reports, dashboards, exports
+8. **Settings & Configuration**: Station setup, tank/pump config, dip charts
+9. **Lubricants / Oil Shop**: Product inventory, sales, stock management
+10. **SMS / Notifications**: Alerts for stock, prices, shortages, daily summaries
+11. **Subscription & Billing**: Trial management, plan tiers, payments, feature gating
+
+---
+
+## Common Patterns
+
+### CQRS + MediatR
+```csharp
+// Controller - thin, only sends command/query
+var result = await _mediator.Send(new LoginCommand(request));
+if (!result.IsSuccess) return Unauthorized(new { error = result.Error });
+return Ok(new { success = true, data = result.Data });
+
+// Application - Command (IRequest<Result<T>>)
+public record LoginCommand(LoginRequest Request) : IRequest<Result<AuthResponse>>;
+
+// Application - Query
+public record GetCurrentUserQuery(Guid UserId) : IRequest<Result<AuthResponse>>;
+
+// Infrastructure - Handler implements IRequestHandler
+public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
+{
+    public async Task<Result<AuthResponse>> Handle(LoginCommand request, CancellationToken ct)
+    {
+        // Business logic here
+        return Result<AuthResponse>.Success(authResponse);
+    }
+}
+```
+
+### Refresh Token (DB-Backed, Rotation)
+- Login/Register create refresh token, store hash in `refresh_tokens`, return plain token to client
+- `POST /auth/refreshToken`: validate token, revoke old, create new, return new access + refresh tokens
+- Session tracking: `IRequestContextService` provides `ClientIp`, `UserAgent`; optional `deviceId` from request body
+- Handlers inject `IRefreshTokenRepository`, `IRequestContextService` for token persistence and metadata
+
+### Password Reset (Token-Based)
+- `POST /auth/forgot-password`: accepts email; sends reset link via IAuthService (generic success for security)
+- `POST /auth/reset-password`: accepts `userId`, `token`, `newPassword`; UserManager.ResetPasswordAsync
+- Token expiry: 24 hours (DataProtectionTokenProviderOptions in DependencyInjection)
+
+### Multi-Tenant Queries
+```csharp
+// Backend - Always filter by StationId
+var tanks = await _repository.GetAll()
+    .Where(t => t.StationId == currentStationId)
+    .ToListAsync();
+
+// Owner can see all stations
+if (user.Role == "owner")
+{
+    tanks = await _repository.GetAll().ToListAsync();
+}
+```
+
+### API Error Handling
+```typescript
+// Frontend - Consistent error handling
+try {
+  const data = await api.post('/api/v1/shifts', payload);
+  toast.success('Shift opened successfully');
+} catch (error) {
+  toast.error(error.response?.data?.detail || 'Failed to open shift');
+}
+```
+
+### Feature Gating (Subscription)
+```csharp
+// Backend - Check plan limits before creating resources
+var subscription = await _subscriptionService.GetActiveSubscription(orgId);
+var plan = subscription.Plan;
+
+// Check station limit
+if (plan.MaxStations != -1)
+{
+    var stationCount = await _stationRepo.CountByOrgAsync(orgId);
+    if (stationCount >= plan.MaxStations)
+        return Result.Fail("Station limit reached. Upgrade your plan.");
+}
+
+// Check feature flag
+if (!plan.Features.GetProperty("sms").GetBoolean())
+    return Result.Fail("SMS not available on your plan. Upgrade to Professional.");
+```
+
+```typescript
+// Frontend - Show upgrade prompt for gated features
+const { data: subscription } = useSubscription();
+const canExportReports = subscription?.plan.features.reports_export ?? false;
+
+{canExportReports ? (
+  <Button onClick={handleExport}>Export PDF</Button>
+) : (
+  <UpgradePrompt feature="Report Exports" />
+)}
+```
+
+### Form Validation
+```typescript
+// Frontend - TanStack Form + Zod schema (shared with backend DTOs)
+const shiftSchema = z.object({
+  stationId: z.string().uuid(),
+  shiftName: z.string().min(1),
+  openingCash: z.number().min(0),
+});
+// Use useForm from @tanstack/react-form with zodValidator(shiftSchema)
+
+// Backend - FluentValidation
+public class CreateShiftValidator : AbstractValidator<CreateShiftDto>
+{
+    public CreateShiftValidator()
+    {
+        RuleFor(x => x.StationId).NotEmpty();
+        RuleFor(x => x.ShiftName).NotEmpty();
+        RuleFor(x => x.OpeningCash).GreaterThanOrEqualTo(0);
+    }
+}
+```
+
+---
+
+## Learning & Education During Development
+
+### Teaching Approach
+
+**When implementing any feature, component, or functionality, always explain:**
+
+1. **WHAT** - What is being implemented/built
+   - Clear description of the feature or code
+   - What problem it solves
+   - What it does in simple terms
+
+2. **WHY** - Why this approach/solution was chosen
+   - Reasoning behind the implementation decision
+   - Why this pattern/technology/library was selected
+   - Trade-offs considered (if any)
+   - How it fits into the overall architecture
+
+3. **HOW** - How it works technically
+   - Step-by-step explanation of the implementation
+   - Key concepts, patterns, or techniques used
+   - How different parts interact
+   - Important code patterns or conventions
+
+### Implementation Guidelines
+
+- **Explain as you code** - Don't just implement, teach along the way
+- **Use analogies** - Relate complex concepts to familiar ideas when helpful
+- **Highlight patterns** - Point out design patterns, architectural patterns, or code patterns being used
+- **Connect to project context** - Explain how this relates to Fuel Flow's architecture and business rules
+- **Ask if unclear** - If something needs deeper explanation, offer to elaborate
+
+### Example Teaching Format
+
+When implementing a feature, structure explanations like:
+
+```
+## What We're Building
+[Clear description of the feature]
+
+## Why This Approach
+[Reasoning behind decisions]
+
+## How It Works
+[Technical explanation with key concepts]
+
+## Key Patterns/Concepts Used
+[List of patterns, libraries, or techniques]
+```
+
+### Learning Focus Areas
+
+Pay special attention to explaining:
+- **Multi-tenancy patterns** - How StationId filtering works
+- **State management** - When to use TanStack Query vs Zustand
+- **Form validation** - TanStack Form + Zod schemas
+- **API design** - DTOs, validation, error handling
+- **Database patterns** - EF Core query filters, relationships
+- **Business rules** - How they're enforced in code
+- **Architecture decisions** - Why certain patterns are used
+
+**Goal**: Help the developer understand not just what the code does, but why it's structured this way and how it fits into the larger system.
+
+---
+
+## Important Notes
+
+- **Always** check user's station access before querying data
+- **Always** log sensitive actions (price changes, user creation, stock adjustments)
+- **Never** expose internal errors or stack traces to clients
+- **Always** validate input at both frontend and backend
+- **Always** use DTOs for API communication (never expose entities)
+- **Always** apply multi-tenant filters unless user is Owner
+- **Always** calculate sales from meter readings (never manual entry without alert)
+- **Always** check subscription status and plan limits before creating stations, users, or accessing gated modules
+- **Always** explain WHAT, WHY, and HOW when implementing features (see Learning & Education section above)
+
+---
+
+## Maintenance & Keeping Files in Sync
+
+### File Relationships
+
+This `.cursorrules` file serves as a **quick reference guide** for AI assistance, while:
+- **`docs/PRD.md`** = Complete technical specifications (source of truth)
+- **`docs/ProjectOverView.md`** = Detailed business requirements (source of truth)
+
+### Sync Strategy
+
+**When to Update `.cursorrules`:**
+
+1. **Major Changes**: When PRD or Project Overview has significant updates:
+   - New modules or features added
+   - Technology stack changes
+   - Architecture pattern changes
+   - New business rules or conventions
+
+2. **Periodic Review**: Review and update monthly or at major milestones
+
+3. **Quick Reference Updates**: If you find yourself repeatedly explaining the same thing to AI, add it to rules
+
+**What to Update:**
+
+- ✅ **Technology stack** changes (new libraries, versions)
+- ✅ **Architecture patterns** (new patterns, changed approaches)
+- ✅ **Code conventions** (new standards, changed practices)
+- ✅ **Business rules** (new rules, rule changes)
+- ✅ **Common patterns** (new patterns, updated examples)
+- ❌ **Detailed API specs** → Keep in PRD.md (rules just reference it)
+- ❌ **Detailed database schema** → Keep in PRD.md (rules just reference it)
+- ❌ **Detailed module breakdowns** → Keep in ProjectOverView.md
+
+### Workflow Recommendations
+
+**Recommended Workflow:**
+- Use the **Update Documentation Workflow** (`.agent/workflows/update-docs.md`)
+- This single workflow covers updating PRD/ProjectOverview, syncing `.cursorrules`, and updating CHANGELOG
+- Includes complete checklists, examples, and best practices
+
+**Quick Process:**
+1. Update source docs first (`docs/PRD.md` or `docs/ProjectOverView.md`)
+2. Sync `.cursorrules` using the checklist in the workflow
+3. Update `docs/CHANGELOG.md` if changes warrant documentation
+4. Update version tracking in `.cursorrules` header
+5. Commit all related files together
+
+**Trigger the workflow:** Ask AI: *"Help me update the docs using the update-docs workflow"*
+
+**Sync PRD from codebase:** Ask AI: *"Sync project state with PRD"* (Mode B — discovers codebase, updates PRD to match)
+
+**See**: `.agent/workflows/update-docs.md` for complete workflow with examples
+
+### Quick Sync Checklist
+
+When updating PRD or Project Overview, check:
+- [ ] Tech stack still accurate in rules?
+- [ ] Architecture patterns still match?
+- [ ] Business rules section up to date?
+- [ ] Code examples still valid?
+- [ ] New modules/features reflected?
+- [ ] References to docs still correct?
+
+### Best Practice
+
+**Keep `.cursorrules` lean and focused:**
+- Quick reference for AI context
+- Key conventions and patterns
+- References to detailed docs
+- Don't duplicate entire PRD content
+
+**Detailed specs belong in:**
+- `docs/PRD.md` for technical details
+- `docs/ProjectOverView.md` for business requirements
+
+---
+
+## References
+
+For complete details, see:
+- **PRD**: `docs/PRD.md` - Full technical specifications, API endpoints, database schema
+- **Project Overview**: `docs/ProjectOverView.md` - Module breakdown, use cases, business requirements
+
+**Note**: This rules file is a summary/reference guide. Always refer to the detailed docs for complete specifications.

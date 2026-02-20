@@ -1,0 +1,20 @@
+# Docker Compose for Fuel Flow development services
+# Run: docker compose up -d
+# Stop: docker compose down
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: fuelflow-db
+    #restart: unless-stopped
+    ports:
+      - "5432:5432"          # host:container
+    environment:
+      POSTGRES_USER: fuelflow
+      POSTGRES_PASSWORD: fuelflow123
+      POSTGRES_DB: fuelflow_dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # persist data across restarts
+
+volumes:
+  pgdata:

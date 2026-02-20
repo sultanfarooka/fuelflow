@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="FuelFlow.Api/FuelFlow.Api.csproj" />
+  <Project Path="FuelFlow.Application/FuelFlow.Application.csproj" />
+  <Project Path="FuelFlow.Domain/FuelFlow.Domain.csproj" />
+  <Project Path="FuelFlow.Infrastructure/FuelFlow.Infrastructure.csproj" />
+</Solution>

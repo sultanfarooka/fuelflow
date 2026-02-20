@@ -1,0 +1,21 @@
+{
+  "common": {
+    "welcome": "Welcome to Fuel Flow",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "stations": "Stations",
+    "shifts": "Shifts",
+    "inventory": "Inventory",
+    "finance": "Finance",
+    "reports": "Reports",
+    "settings": "Settings"
+  }
+}
