@@ -39,8 +39,7 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
             .HasMaxLength(500);
 
         builder.Property(u => u.OrganizationId)
-            .HasColumnName("organization_id")
-            .IsRequired();
+            .HasColumnName("organization_id");
 
         builder.Property(u => u.CreatedAt)
             .HasColumnName("created_at")

@@ -3,6 +3,8 @@ import { z } from 'zod'
 /**
  * Registration form schema — mirrors backend RegisterRequestValidator.
  * Used for client-side validation before submit.
+ * 
+ * Organization is added after first login during onboarding.
  */
 export const registerSchema = z.object({
   // Owner info
@@ -18,8 +20,6 @@ export const registerSchema = z.object({
     .min(6, 'Password must be at least 6 characters')
     .regex(/\d/, 'Password must contain at least one number'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
-  // Organization info (first station added on first login)
-  organizationName: z.string().min(1, 'Organization name is required').max(200),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],

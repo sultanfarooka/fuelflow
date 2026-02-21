@@ -615,10 +615,6 @@ Content-Type: application/json
   "email": "tariq@example.com",
   "phone": "+923001234567",
   "password": "SecurePass123",
-  "organizationName": "Tariq Petroleum",
-  "stationName": "Al-Madina Filling Station",
-  "stationAddress": "GT Road, Lahore",
-  "stationPhone": "+924235001234",
   "deviceId": "optional-browser-fingerprint"
 }
 ```
@@ -627,26 +623,7 @@ Content-Type: application/json
 {
   "success": true,
   "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-    "refreshToken": "dGhpcyBpcyBhIHJlZnJlc2g...",
-    "expiresIn": 3600,
-    "user": {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "email": "tariq@example.com",
-      "fullName": "Muhammad Tariq",
-      "role": "owner",
-      "stations": [
-        {
-          "id": "660e8400-e29b-41d4-a716-446655440001",
-          "name": "Al-Madina Filling Station"
-        }
-      ]
-    },
-    "subscription": {
-      "status": "trial",
-      "plan": "professional",
-      "trialEndsAt": "2026-02-22T00:00:00Z"
-    }
+    "message": "Please check your email to verify your account."
   }
 }
 ```
@@ -771,11 +748,10 @@ Authorization: Bearer {token}
 
 | Rule ID | Description |
 |:--|:--|
-| REG-001 | Email must be unique across all organizations |
-| REG-002 | Registration creates Organization + Owner user + first Station in a single transaction |
-| REG-003 | New registrations start on 14-day trial with Professional plan features |
-| REG-004 | Phone number validated for Pakistani format (+92XXXXXXXXXX) |
-| REG-005 | Email must be verified before login. Verification link sent on registration. |
+| REG-001 | Email must be unique across all users |
+| REG-002 | Registration creates Owner user only. Organization and first station are added after first login (onboarding) |
+| REG-003 | Phone number validated for Pakistani format (+92XXXXXXXXXX) |
+| REG-004 | Email must be verified before login. Verification link sent on registration. |
 
 ### 5.7 Subscription & Billing
 
@@ -832,14 +808,14 @@ Authorization: Bearer {token}
 | Subscription | `/settings/subscription` | Owner |
 | Payment Verification | `/admin/payments` | SuperAdmin |
 
-#### Registration Flow (Multi-Step Form)
+#### Registration Flow
 
 | Step | Content | Validation |
 |:--|:--|:--|
 | 1 – Owner Info | Full name, email, phone, password | Email unique, phone +92 format, password min 6 chars |
-| 2 – Station Info | Station name, address, phone | Required fields |
-| 3 – Review | Summary of all entered data | Confirm before submit |
-| 4 – Success | Welcome message + trial info | Auto-redirect to dashboard |
+| 2 – Success | Welcome message + verify email prompt | Redirect to login after verification |
+
+Organization and first station are added after first login during onboarding.
 
 #### Subscription Status UI
 

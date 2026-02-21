@@ -53,8 +53,12 @@ public class JwtTokenService
             new(ClaimTypes.Email, user.Email!),
             new(ClaimTypes.Name, user.FullName),
             new(ClaimTypes.Role, user.Role.ToString()),
-            new("org_id", user.OrganizationId.ToString()),
         };
+
+        if (user.OrganizationId.HasValue)
+        {
+            claims.Add(new Claim("org_id", user.OrganizationId.Value.ToString()));
+        }
 
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiresInMinutes = int.Parse(jwtSettings["ExpiresInMinutes"] ?? "60");

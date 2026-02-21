@@ -41,7 +41,12 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         if (user == null || !user.IsActive)
             return Result<AuthResponse>.Failure("User not found.");
 
-        var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId);
+        if (!user.OrganizationId.HasValue)
+        {
+            return Result<AuthResponse>.Success(BuildAuthResponseWithoutOrg(user));
+        }
+
+        var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId.Value);
         if (organization == null)
             return Result<AuthResponse>.Failure("Organization not found.");
 
@@ -49,6 +54,25 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
 
         return Result<AuthResponse>.Success(
             BuildAuthResponse(user, organization, stations.ToArray()));
+    }
+
+    private AuthResponse BuildAuthResponseWithoutOrg(AppUser user)
+    {
+        return new AuthResponse
+        {
+            AccessToken = _jwtTokenService.GenerateAccessToken(user),
+            RefreshToken = _jwtTokenService.GenerateRefreshToken(),
+            ExpiresIn = _jwtTokenService.GetExpiresInSeconds(),
+            User = new UserInfo
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                FullName = user.FullName,
+                Role = user.Role.ToString().ToLower(),
+                Stations = new List<StationInfo>(),
+            },
+            Subscription = null,
+        };
     }
 
     private AuthResponse BuildAuthResponse(

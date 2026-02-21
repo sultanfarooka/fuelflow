@@ -28,6 +28,12 @@ using FuelFlow.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Ensure dev URLs are used even when launched via debugger (which bypasses launchSettings.json)
+if (builder.Environment.IsDevelopment())
+{
+    builder.WebHost.UseUrls("http://localhost:5035");
+}
+
 // ── 1. Serilog ───────────────────────────────────────────────────
 // Replaces the default .NET logger with structured logging.
 // Structured = logs are key-value pairs, not just strings.

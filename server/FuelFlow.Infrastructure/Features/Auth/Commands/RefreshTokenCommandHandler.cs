@@ -51,31 +51,21 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         if (string.IsNullOrEmpty(refreshToken))
             return Result<AuthResponse>.Failure("Refresh token is required.");
 
-        // Step 1: Hash and lookup the token
         var tokenHash = _jwtTokenService.HashRefreshToken(refreshToken);
         var existingToken = await _refreshTokenRepo.GetByTokenHashAsync(tokenHash);
         if (existingToken == null)
             return Result<AuthResponse>.Failure("Invalid refresh token.");
 
-        // Step 2: Validate — not revoked (reuse = possible breach), not expired
         if (existingToken.RevokedAt != null)
             return Result<AuthResponse>.Failure("Refresh token has been revoked. Please log in again.");
 
         if (existingToken.ExpiresAt < DateTime.UtcNow)
             return Result<AuthResponse>.Failure("Refresh token has expired. Please log in again.");
 
-        // Step 3: Load user and org/stations
         var user = await _userManager.FindByIdAsync(existingToken.UserId.ToString());
         if (user == null || !user.IsActive)
             return Result<AuthResponse>.Failure("User not found or inactive.");
 
-        var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId);
-        if (organization == null)
-            return Result<AuthResponse>.Failure("Organization not found.");
-
-        var stations = await _stationRepo.GetByOrganizationIdAsync(organization.Id);
-
-        // Step 4: Rotation — create new refresh token, revoke old one
         var newPlainToken = _jwtTokenService.GenerateRefreshToken();
         var newTokenEntity = new RefreshToken
         {
@@ -98,7 +88,36 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         await _unitOfWork.SaveChangesAsync();
 
         // Step 5: Return new tokens
+        if (!user.OrganizationId.HasValue)
+        {
+            return Result<AuthResponse>.Success(BuildAuthResponseWithoutOrg(user, newPlainToken));
+        }
+
+        var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId.Value);
+        if (organization == null)
+            return Result<AuthResponse>.Failure("Organization not found.");
+
+        var stations = await _stationRepo.GetByOrganizationIdAsync(organization.Id);
         return Result<AuthResponse>.Success(BuildAuthResponse(user, organization, stations.ToArray(), newPlainToken));
+    }
+
+    private AuthResponse BuildAuthResponseWithoutOrg(AppUser user, string refreshToken)
+    {
+        return new AuthResponse
+        {
+            AccessToken = _jwtTokenService.GenerateAccessToken(user),
+            RefreshToken = refreshToken,
+            ExpiresIn = _jwtTokenService.GetExpiresInSeconds(),
+            User = new UserInfo
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                FullName = user.FullName,
+                Role = user.Role.ToString().ToLower(),
+                Stations = new List<StationInfo>(),
+            },
+            Subscription = null,
+        };
     }
 
     private AuthResponse BuildAuthResponse(

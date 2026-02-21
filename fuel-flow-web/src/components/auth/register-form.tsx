@@ -1,67 +1,67 @@
-import { useForm } from '@tanstack/react-form'
-import { useMutation } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { Smartphone } from 'lucide-react'
-import { toast } from 'sonner'
+import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Smartphone } from "lucide-react";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldSeparator,
-} from '@/components/ui/field'
-import { GoogleIcon } from '@/components/ui/icons/google-icon'
-import { FormTextField } from '@/components/forms/form-text-field'
-import { register } from '@/lib/auth-api'
-import {
-  registerSchema,
-  type RegisterFormData,
-} from '@/lib/validators/auth'
+} from "@/components/ui/field";
+import { GoogleIcon } from "@/components/ui/icons/google-icon";
+import { FormTextField } from "@/components/forms/form-text-field";
+import { register, type RegisterRequest } from "@/lib/api/auth";
+import { registerSchema, type RegisterFormData } from "@/lib/validators/auth";
 
 /**
  * Registration form — signup-02 design.
  * Used inside auth pages with two-column layout.
  */
 export function RegisterForm() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const registerMutation = useMutation({
     mutationFn: register,
-    onSuccess: (data) => {
-      toast.success(data.data?.message ?? 'Account created. Please check your email to verify.')
-      navigate({ to: '/auth/login' })
+    onSuccess: (data, variables) => {
+      toast.success(
+        data.data?.message ?? "Account created. Please check your email to verify.",
+      );
+      navigate({ to: "/auth/check-email", search: { email: variables.email } });
     },
     onError: (error: Error) => {
-      toast.error(error.message ?? 'Registration failed. Please try again.')
+      toast.error(error.message ?? "Registration failed. Please try again.");
     },
-  })
+  });
 
   const form = useForm({
     defaultValues: {
-      fullName: '',
-      email: '',
-      phone: '',
-      password: '',
-      confirmPassword: '',
-      organizationName: '',
+      fullName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
     } satisfies RegisterFormData,
     validators: {
       onBlur: registerSchema,
       onSubmit: registerSchema,
     },
     onSubmit: async ({ value }) => {
-      await registerMutation.mutateAsync(value)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- confirmPassword is UI-only, not sent to API
+      const { confirmPassword, ...apiPayload } = value;
+      await registerMutation.mutateAsync(apiPayload as RegisterRequest);
     },
-  })
+  });
 
   return (
     <form
       id="register-form"
       noValidate
       onSubmit={(e) => {
-        e.preventDefault()
-        form.handleSubmit()
+        e.preventDefault();
+        form.handleSubmit();
       }}
       className="flex flex-col gap-6"
     >
@@ -141,26 +141,14 @@ export function RegisterForm() {
             )}
           />
         </div>
-        <form.Field
-          name="organizationName"
-          children={(field) => (
-            <FormTextField
-              field={field}
-              label="Organization name"
-              placeholder="ABC Petroleum"
-              autoComplete="organization"
-              description="Your company or business name — not the filling station name."
-            />
-          )}
-        />
         <Field>
           <Button
             type="submit"
             disabled={form.state.isSubmitting || registerMutation.isPending}
           >
             {form.state.isSubmitting || registerMutation.isPending
-              ? 'Creating...'
-              : 'Create Account'}
+              ? "Creating..."
+              : "Create Account"}
           </Button>
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
@@ -184,7 +172,7 @@ export function RegisterForm() {
             Phone signup (coming soon)
           </Button>
           <FieldDescription className="px-6 text-center">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <Link
               to="/auth/login"
               className="font-medium text-primary underline-offset-4 hover:underline"
@@ -195,5 +183,5 @@ export function RegisterForm() {
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }

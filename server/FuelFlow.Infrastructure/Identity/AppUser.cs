@@ -34,8 +34,8 @@ public class AppUser : IdentityUser<Guid>
     public int SessionTimeoutMins { get; set; } = 30;
     public string? PinHash { get; set; }
 
-    // Every user belongs to an Organization
-    public Guid OrganizationId { get; set; }
+    // Every user belongs to an Organization (nullable until onboarding completes)
+    public Guid? OrganizationId { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

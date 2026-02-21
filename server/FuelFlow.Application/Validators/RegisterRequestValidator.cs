@@ -37,10 +37,5 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .NotEmpty().WithMessage("Password is required")
             .MinimumLength(6).WithMessage("Password must be at least 6 characters")
             .Matches(@"\d").WithMessage("Password must contain at least one number");
-
-        // Organization info
-        RuleFor(x => x.OrganizationName)
-            .NotEmpty().WithMessage("Organization name is required")
-            .MaximumLength(200);
     }
 }

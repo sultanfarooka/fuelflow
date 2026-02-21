@@ -43,7 +43,7 @@ public class AuthService : IAuthService
         {
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var frontendUrl = _configuration["FrontendUrl"]?.TrimEnd('/') ?? "http://localhost:5173";
-            var verifyUrl = $"{frontendUrl}/verify-email?token={Uri.EscapeDataString(token)}&userId={user.Id}";
+            var verifyUrl = $"{frontendUrl}/auth/verify-email?token={Uri.EscapeDataString(token)}&userId={user.Id}";
 
             var htmlBody = $@"
                 <h2>Verify your Fuel Flow account</h2>

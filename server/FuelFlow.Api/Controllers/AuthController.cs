@@ -34,7 +34,8 @@ public class AuthController : ControllerBase
     /// <summary>
     /// POST /api/v1/auth/register
     /// Public endpoint — no [Authorize] attribute.
-    /// Creates: Organization + Owner + Station + Trial subscription.
+    /// Creates Owner user (unverified). Organization, station, and subscription
+    /// are created during onboarding after first login.
     /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)

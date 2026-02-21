@@ -110,11 +110,10 @@
 ### 1.6 Registration & Onboarding
 
 - **Self-service registration** for station owners (public, no invitation required)
-- Multi-step form: owner info → organization name → first station details
-- Registration creates organization, owner user, and first station in one step
-- **14-day free trial** starts automatically with Professional plan features
-- Email verification (future enhancement: SMS OTP)
-- After registration, owner is logged in and redirected to the dashboard
+- Registration form: owner info only (full name, email, phone, password)
+- Organization and first station are added **after first login** during onboarding
+- **14-day free trial** starts automatically with Professional plan features (once organization is created)
+- Email verification required before login
 
 ---
 

@@ -12,7 +12,7 @@ using FuelFlow.Infrastructure.Services;
 namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 
 /// <summary>
-/// CQRS Handler: Authenticates user with email/password.
+/// CQQS Handler: Authenticates user with email/password.
 /// Moved from AuthService.LoginAsync.
 /// </summary>
 public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
@@ -49,28 +49,17 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
     {
         var req = request.Request;
 
-        // Step 1: Find user by email
         var user = await _userManager.FindByEmailAsync(req.Email);
         if (user == null || !user.IsActive)
             return Result<AuthResponse>.Failure("Invalid email or password.");
 
-        // Step 2: Verify password
         var passwordValid = await _userManager.CheckPasswordAsync(user, req.Password);
         if (!passwordValid)
             return Result<AuthResponse>.Failure("Invalid email or password.");
 
-        // Step 2b: Require email verification (REG-005)
         if (!user.EmailConfirmed)
             return Result<AuthResponse>.Failure("Please verify your email before logging in. Check your inbox or resend the verification email.");
 
-        // Step 3: Load organization and station
-        var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId);
-        if (organization == null)
-            return Result<AuthResponse>.Failure("Organization not found.");
-
-        var station = await _stationRepo.GetFirstByOrganizationIdAsync(organization.Id);
-
-        // Step 4: Create refresh token and persist
         var plainRefreshToken = _jwtTokenService.GenerateRefreshToken();
         var refreshTokenEntity = new RefreshToken
         {
@@ -86,8 +75,37 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         await _refreshTokenRepo.AddAsync(refreshTokenEntity);
         await _unitOfWork.SaveChangesAsync();
 
-        // Step 5: Generate tokens and return
+        if (!user.OrganizationId.HasValue)
+        {
+            return Result<AuthResponse>.Success(BuildAuthResponseWithoutOrg(user, plainRefreshToken));
+        }
+
+        var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId.Value);
+        if (organization == null)
+            return Result<AuthResponse>.Failure("Organization not found.");
+
+        var station = await _stationRepo.GetFirstByOrganizationIdAsync(organization.Id);
+
         return Result<AuthResponse>.Success(BuildAuthResponse(user, organization, new[] { station }, plainRefreshToken));
+    }
+
+    private AuthResponse BuildAuthResponseWithoutOrg(AppUser user, string refreshToken)
+    {
+        return new AuthResponse
+        {
+            AccessToken = _jwtTokenService.GenerateAccessToken(user),
+            RefreshToken = refreshToken,
+            ExpiresIn = _jwtTokenService.GetExpiresInSeconds(),
+            User = new UserInfo
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                FullName = user.FullName,
+                Role = user.Role.ToString().ToLower(),
+                Stations = new List<StationInfo>(),
+            },
+            Subscription = null,
+        };
     }
 
     private AuthResponse BuildAuthResponse(
