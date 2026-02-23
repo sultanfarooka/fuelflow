@@ -77,7 +77,7 @@ public class AuthService : IAuthService
         {
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var frontendUrl = _configuration["FrontendUrl"]?.TrimEnd('/') ?? "http://localhost:5173";
-            var resetUrl = $"{frontendUrl}/reset-password?token={Uri.EscapeDataString(token)}&userId={user.Id}";
+            var resetUrl = $"{frontendUrl}/auth/reset-password?token={Uri.EscapeDataString(token)}&userId={user.Id}";
 
             var htmlBody = $@"
                 <h2>Reset your Fuel Flow password</h2>

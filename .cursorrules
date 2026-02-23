@@ -2,9 +2,9 @@
 
 > Comprehensive filling station management system for the Pakistani market
 
-**Version**: 1.6.0  
-**Last Updated**: 2026-02-19  
-**Last Synced with PRD**: v1.6.0 (2026-02-19)  
+**Version**: 1.7.0  
+**Last Updated**: 2026-02-23  
+**Last Synced with PRD**: v1.7.0 (2026-02-23)  
 **Last Synced with Project Overview**: v1.2 (2026-02-18)
 
 ---
@@ -123,7 +123,7 @@ src/
 
 - **Base URL**: `/api/v1`
 - **Format**: JSON
-- **Auth**: JWT Bearer token
+- **Auth**: JWT via HTTP-only cookies (`access_token`, `refresh_token`); client sends `credentials: include`; JSON responses omit tokens
 - **Errors**: RFC 7807 Problem Details
 - **Pagination**: `?page=1&pageSize=20`
 - **Sorting**: `?sortBy=name&sortOrder=asc`
@@ -348,8 +348,8 @@ src/
 - Owner sees consolidated "All Stations" dashboard
 
 ### Authentication
-- JWT Bearer tokens
-- Refresh token mechanism
+- JWT via HTTP-only cookies (access_token, refresh_token)
+- Refresh token mechanism with rotation
 - PIN-based quick login (optional)
 - Session timeout configurable per user
 
@@ -437,9 +437,10 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
 }
 ```
 
-### Refresh Token (DB-Backed, Rotation)
-- Login/Register create refresh token, store hash in `refresh_tokens`, return plain token to client
-- `POST /auth/refreshToken`: validate token, revoke old, create new, return new access + refresh tokens
+### Refresh Token (DB-Backed, Rotation, Cookie-Based)
+- Login/Register set `access_token` and `refresh_token` in HTTP-only cookies; JSON returns `user`, `expiresIn`, `subscription` (no tokens)
+- `POST /auth/refreshToken`: reads refresh token from cookie; validates, rotates (revokes old, issues new), sets new cookies
+- `POST /auth/logout`: revokes refresh token (from cookie or body), clears auth cookies
 - Session tracking: `IRequestContextService` provides `ClientIp`, `UserAgent`; optional `deviceId` from request body
 - Handlers inject `IRefreshTokenRepository`, `IRequestContextService` for token persistence and metadata
 

@@ -1,24 +1,32 @@
+using System.Text.Json.Serialization;
+
 namespace FuelFlow.Application.DTOs.Auth;
 
 /// <summary>
-/// Returned after successful registration or login.
-/// 
-/// Contains the JWT tokens and basic user info so the frontend can:
-/// 1. Store the tokens (localStorage or httpOnly cookie)
-/// 2. Display the user's name and role in the UI
-/// 3. Know which stations the user has access to
-/// 4. Show subscription status (trial banner, etc.)
-/// 
-/// From PRD Section 4.5 — matches the sample response format.
+/// Returned by auth handlers (login, refresh, get-current-user).
+/// Tokens are internal only — set in HTTP-only cookies by the controller, never serialized to JSON.
+/// API responses expose only ExpiresIn, User, Subscription.
 /// </summary>
 public class AuthResponse
 {
+    /// access token is internal only and should not be serialized to JSON
+    [JsonIgnore]
     public string AccessToken { get; set; } = string.Empty;
+
+    /// refresh token is internal only and should not be serialized to JSON
+    [JsonIgnore]
     public string RefreshToken { get; set; } = string.Empty;
+
+
     public int ExpiresIn { get; set; }
+
+    /// user info
     public UserInfo User { get; set; } = null!;
     public SubscriptionInfo? Subscription { get; set; }
 }
+
+
+
 
 /// <summary>
 /// Basic user info included in the auth response.

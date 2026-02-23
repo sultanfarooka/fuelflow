@@ -3,35 +3,64 @@
  *
  * This file sets up the base API client with:
  * - Base URL configuration
- * - JWT token handling
- * - Request/response interceptors
- * - Error handling
+ * - Cookie-based auth (withCredentials sends HTTP-only cookies automatically)
+ * - 401 interceptor: refresh token, retry; on refresh failure, call onAuthFailure
+ * - Response interceptors and error handling
+ *
+ * Call setupAuthFailureHandler() from main.tsx to wire logout + redirect.
  */
 
 import axios, { type AxiosInstance } from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5035/api/v1'
 
+let onAuthFailure: () => void = () => { window.location.href = '/auth/login' }
+
+export function setupAuthFailureHandler(handler: () => void) {
+  onAuthFailure = handler
+}
+
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// Request interceptor — add JWT token when available
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
+// 401 interceptor: try refresh, retry; on refresh failure, call onAuthFailure
+let isRefreshing = false
 
-// Response interceptor — normalize errors to Error with API message
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      const isRefreshRequest = originalRequest.url?.includes('/auth/refreshToken')
+      if (isRefreshRequest) {
+        onAuthFailure()
+        return Promise.reject(error)
+      }
+
+      if (isRefreshing) {
+        return Promise.reject(error)
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        await axiosInstance.post('/auth/refreshToken', {})
+        isRefreshing = false
+        return axiosInstance(originalRequest)
+      } catch (refreshError) {
+        isRefreshing = false
+        onAuthFailure()
+        return Promise.reject(refreshError)
+      }
+    }
+
     const message =
       error.response?.data?.error ??
       error.response?.data?.message ??
@@ -42,7 +71,8 @@ axiosInstance.interceptors.response.use(
 )
 
 /**
- * API client with JWT auth support.
+ * API client with cookie-based auth.
+ * withCredentials sends HTTP-only cookies on every request.
  * Methods return response.data directly (parsed JSON body).
  */
 export const api = {

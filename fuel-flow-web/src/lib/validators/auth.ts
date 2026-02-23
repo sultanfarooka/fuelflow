@@ -34,3 +34,27 @@ export const loginSchema = z.object({
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
+
+/** Forgot password form schema — email only */
+export const forgotPasswordSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Invalid email format'),
+})
+
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
+
+/** Reset password form schema — mirrors backend ResetPasswordRequestValidator */
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(1, 'Password is required')
+      .min(6, 'Password must be at least 6 characters')
+      .regex(/\d/, 'Password must contain at least one number'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>

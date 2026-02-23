@@ -4,13 +4,13 @@ using FuelFlow.Application.DTOs.Auth;
 namespace FuelFlow.Application.Validators;
 
 /// <summary>
-/// Validates refresh token request — ensures the token string is provided.
+/// Validates refresh token request. RefreshToken is optional when using HTTP-only cookies
+/// (controller reads from cookie when body is empty). Handler enforces presence.
 /// </summary>
 public class RefreshTokenRequestValidator : AbstractValidator<RefreshTokenRequest>
 {
     public RefreshTokenRequestValidator()
     {
-        RuleFor(x => x.RefreshToken)
-            .NotEmpty().WithMessage("Refresh token is required.");
+        // RefreshToken can be empty when using cookie auth — handler validates
     }
 }

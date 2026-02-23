@@ -9,14 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth/verify-email'
+import { Route as AuthResetPasswordSuccessRouteImport } from './routes/auth/reset-password-success'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
-import { Route as AuthCheckEmailRouteImport } from './routes/auth/check-email'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
+import { Route as AuthCheckEmailResetRouteImport } from './routes/auth/check-email-reset'
+import { Route as AuthCheckEmailRegisterRouteImport } from './routes/auth/check-email-register'
 
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -37,6 +47,17 @@ const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthResetPasswordSuccessRoute =
+  AuthResetPasswordSuccessRouteImport.update({
+    id: '/reset-password-success',
+    path: '/reset-password-success',
+    getParentRoute: () => AuthRouteRoute,
+  } as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -47,9 +68,19 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthCheckEmailRoute = AuthCheckEmailRouteImport.update({
-  id: '/check-email',
-  path: '/check-email',
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthCheckEmailResetRoute = AuthCheckEmailResetRouteImport.update({
+  id: '/check-email-reset',
+  path: '/check-email-reset',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthCheckEmailRegisterRoute = AuthCheckEmailRegisterRouteImport.update({
+  id: '/check-email-register',
+  path: '/check-email-register',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 
@@ -57,18 +88,28 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/auth/check-email': typeof AuthCheckEmailRoute
+  '/dashboard': typeof DashboardRoute
+  '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
+  '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/auth/check-email': typeof AuthCheckEmailRoute
+  '/dashboard': typeof DashboardRoute
+  '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
+  '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
 }
 export interface FileRoutesById {
@@ -76,9 +117,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/auth/check-email': typeof AuthCheckEmailRoute
+  '/dashboard': typeof DashboardRoute
+  '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
+  '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
 }
 export interface FileRouteTypes {
@@ -87,27 +133,42 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/about'
-    | '/auth/check-email'
+    | '/dashboard'
+    | '/auth/check-email-register'
+    | '/auth/check-email-reset'
+    | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/auth/reset-password'
+    | '/auth/reset-password-success'
     | '/auth/verify-email'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/about'
-    | '/auth/check-email'
+    | '/dashboard'
+    | '/auth/check-email-register'
+    | '/auth/check-email-reset'
+    | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/auth/reset-password'
+    | '/auth/reset-password-success'
     | '/auth/verify-email'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/about'
-    | '/auth/check-email'
+    | '/dashboard'
+    | '/auth/check-email-register'
+    | '/auth/check-email-reset'
+    | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/register'
+    | '/auth/reset-password'
+    | '/auth/reset-password-success'
     | '/auth/verify-email'
   fileRoutesById: FileRoutesById
 }
@@ -115,10 +176,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
+  DashboardRoute: typeof DashboardRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -147,6 +216,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/auth/reset-password-success': {
+      id: '/auth/reset-password-success'
+      path: '/reset-password-success'
+      fullPath: '/auth/reset-password-success'
+      preLoaderRoute: typeof AuthResetPasswordSuccessRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/auth/register': {
       id: '/auth/register'
       path: '/register'
@@ -161,27 +244,49 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/auth/check-email': {
-      id: '/auth/check-email'
-      path: '/check-email'
-      fullPath: '/auth/check-email'
-      preLoaderRoute: typeof AuthCheckEmailRouteImport
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/auth/check-email-reset': {
+      id: '/auth/check-email-reset'
+      path: '/check-email-reset'
+      fullPath: '/auth/check-email-reset'
+      preLoaderRoute: typeof AuthCheckEmailResetRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/auth/check-email-register': {
+      id: '/auth/check-email-register'
+      path: '/check-email-register'
+      fullPath: '/auth/check-email-register'
+      preLoaderRoute: typeof AuthCheckEmailRegisterRouteImport
       parentRoute: typeof AuthRouteRoute
     }
   }
 }
 
 interface AuthRouteRouteChildren {
-  AuthCheckEmailRoute: typeof AuthCheckEmailRoute
+  AuthCheckEmailRegisterRoute: typeof AuthCheckEmailRegisterRoute
+  AuthCheckEmailResetRoute: typeof AuthCheckEmailResetRoute
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+  AuthResetPasswordSuccessRoute: typeof AuthResetPasswordSuccessRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
-  AuthCheckEmailRoute: AuthCheckEmailRoute,
+  AuthCheckEmailRegisterRoute: AuthCheckEmailRegisterRoute,
+  AuthCheckEmailResetRoute: AuthCheckEmailResetRoute,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+  AuthResetPasswordSuccessRoute: AuthResetPasswordSuccessRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRoute,
 }
 
@@ -193,6 +298,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   AboutRoute: AboutRoute,
+  DashboardRoute: DashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -5,10 +5,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { setupAuthFailureHandler } from "@/lib/api/client";
+import { useAuthStore } from "@/stores/auth-store";
 import "./index.css";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
+
+// Wire 401 handler: clear auth state and redirect to login
+setupAuthFailureHandler(() => {
+  useAuthStore.getState().logout();
+  window.location.href = "/auth/login";
+});
 
 // Create a new router instance
 const router = createRouter({ routeTree });

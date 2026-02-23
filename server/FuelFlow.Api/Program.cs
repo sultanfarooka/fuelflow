@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using FuelFlow.Infrastructure;
+using FuelFlow.Api.Options;
 
 // ──────────────────────────────────────────────────────────────────
 // Program.cs — The Composition Root
@@ -50,9 +51,11 @@ builder.Host.UseSerilog();
 // This calls the extension method we created in DependencyInjection.cs.
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Cookie configuration for auth tokens (HTTP-only, Secure in prod)
+builder.Services.AddScoped<AuthCookieOptions>();
+
 // ── 3. JWT Authentication ────────────────────────────────────────
-// Tells ASP.NET: "When a request comes in with an Authorization header,
-// validate the JWT token using these rules."
+// Reads token from cookie only (no Authorization header). Cookie-only is more secure.
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 builder.Services.AddAuthentication(options =>
 {
@@ -71,6 +74,17 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSettings["Secret"]!)),
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            // Cookie only — ignore Authorization header
+            var token = context.Request.Cookies[CookieConstants.AccessToken];
+            if (!string.IsNullOrEmpty(token))
+                context.Token = token;
+            return Task.CompletedTask;
+        }
     };
 });
 

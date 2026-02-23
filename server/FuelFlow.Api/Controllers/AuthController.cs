@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using FuelFlow.Application.DTOs.Auth;
 using FuelFlow.Application.Features.Auth.Commands;
 using FuelFlow.Application.Features.Auth.Queries;
+using FuelFlow.Api.Options;
 
 namespace FuelFlow.Api.Controllers;
 
@@ -19,16 +20,20 @@ namespace FuelFlow.Api.Controllers;
 /// 
 /// ROUTE: /api/v1/auth/...
 /// The [Route] attribute sets the base path. [action] maps to the method name.
+/// 
+/// Tokens are stored in HTTP-only cookies. JSON responses omit tokens.
 /// </summary>
 [ApiController]
 [Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly AuthCookieOptions _authCookieOptions;
 
-    public AuthController(IMediator mediator)
+    public AuthController(IMediator mediator, AuthCookieOptions authCookieOptions)
     {
         _mediator = mediator;
+        _authCookieOptions = authCookieOptions;
     }
 
     /// <summary>
@@ -51,7 +56,8 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// POST /api/v1/auth/login
-    /// Public endpoint — validates email/password, returns JWT tokens.
+    /// Public endpoint — validates email/password. Sets access_token and refresh_token in HTTP-only cookies.
+    /// Returns user, subscription, expiresIn in JSON (no tokens).
     /// </summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -61,7 +67,10 @@ public class AuthController : ControllerBase
         if (!result.IsSuccess)
             return Unauthorized(new { success = false, error = result.Error });
 
-        return Ok(new { success = true, data = result.Data });
+        var data = result.Data!;
+        SetAuthCookiesInResponse(data.AccessToken, data.RefreshToken);
+
+        return Ok(new { success = true, data = new { data.ExpiresIn, data.User, data.Subscription } });
     }
 
     /// <summary>
@@ -91,19 +100,33 @@ public class AuthController : ControllerBase
 
 
     /// <summary>
-    /// POST /api/v1/auth/refresh
+    /// POST /api/v1/auth/refreshToken
     /// Public endpoint — exchanges a valid refresh token for new access + refresh tokens.
-    /// Implements rotation: the old refresh token is revoked and replaced.
+    /// Reads refresh token from cookie. Sets new cookies on success.
     /// </summary>
     [HttpPost("refreshToken")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> RefreshToken()
     {
-        var result = await _mediator.Send(new RefreshTokenCommand(request));
+
+        var (_, refreshToken) = GetAuthCookiesFromRequest();
+        //if refresh token is empty, return unauthorized
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized(new { success = false, error = "Refresh token is required." });
+
+        var result = await _mediator.Send(new RefreshTokenCommand(new RefreshTokenRequest { RefreshToken = refreshToken }));
 
         if (!result.IsSuccess)
+        {
+            //clear auth cookies
+            ClearAuthCookies();
             return Unauthorized(new { success = false, error = result.Error });
+        }
 
-        return Ok(new { success = true, data = result.Data });
+        var data = result.Data!;
+        //set new auth cookies in response
+        SetAuthCookiesInResponse(data.AccessToken, data.RefreshToken);
+
+        return Ok(new { success = true, data = new { data.ExpiresIn, data.User, data.Subscription } });
     }
 
     /// <summary>
@@ -168,16 +191,50 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// POST /api/v1/auth/logout
-    /// Public endpoint — revokes the refresh token. Client should clear tokens regardless.
+    /// Public endpoint — revokes the refresh token (from cookie or body). Clears auth cookies.
     /// </summary>
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest? request = null)
     {
-        var result = await _mediator.Send(new LogoutCommand(request));
+        var refreshToken = request?.RefreshToken?.Trim() ?? Request.Cookies[CookieConstants.RefreshToken];
+        var requestToSend = new LogoutRequest { RefreshToken = refreshToken ?? string.Empty };
+
+        var result = await _mediator.Send(new LogoutCommand(requestToSend));
+
+        //clear auth cookies
+        ClearAuthCookies();
 
         if (!result.IsSuccess)
             return BadRequest(new { success = false, error = result.Error });
 
         return Ok(new { success = true, data = result.Data });
+    }
+
+
+    /// <summary>
+    /// Gets the auth cookies from the request.
+    /// </summary>
+    private (string accessToken, string refreshToken) GetAuthCookiesFromRequest()
+    {
+        return (
+            Request.Cookies[CookieConstants.AccessToken] ?? string.Empty,
+            Request.Cookies[CookieConstants.RefreshToken] ?? string.Empty);
+    }
+
+    /// <summary>
+    /// Sets the auth cookies in the response.
+    /// </summary>
+    private void SetAuthCookiesInResponse(string accessToken, string refreshToken)
+    {
+        Response.Cookies.Append(CookieConstants.AccessToken, accessToken, _authCookieOptions.GetAccessTokenOptions());
+        Response.Cookies.Append(CookieConstants.RefreshToken, refreshToken, _authCookieOptions.GetRefreshTokenOptions());
+    }
+    /// <summary>
+    /// Clears the auth cookies.
+    /// </summary>
+    private void ClearAuthCookies()
+    {
+        Response.Cookies.Delete(CookieConstants.AccessToken, new CookieOptions { Path = "/" });
+        Response.Cookies.Delete(CookieConstants.RefreshToken, new CookieOptions { Path = "/" });
     }
 }

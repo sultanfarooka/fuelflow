@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.12.0] - 2026-02-23
+
+### Added
+- **Logout endpoint** — `POST /api/v1/auth/logout` revokes refresh token (from cookie or body), clears auth cookies
+- **Cookie-based auth** — Tokens stored in HTTP-only cookies; JSON responses omit tokens; client uses `credentials: include`
+
+### Changed
+- **PRD** — v1.7.0; logout marked Implemented; API conventions updated for cookie-based auth; Login/Refresh samples reflect cookie flow
+- **IMPLEMENTATION_STATUS** — Logout endpoint added; Dashboard marked Done (basic placeholder with route guard); API client noted as cookie-based
+- **.cursorrules** — Auth conventions updated for HTTP-only cookies; Refresh Token pattern includes logout and cookie flow
+
+### Technical Decisions
+- **HTTP-only cookies over Bearer token in JSON**: Reduces XSS risk; tokens not accessible to JavaScript; SameSite and Secure flags for CSRF protection
+
+---
+
 ## [1.11.0] - 2026-02-19
 
 ### Changed

@@ -8,8 +8,8 @@
 
 | Property | Value |
 |:--|:--|
-| Version | 1.6.0 |
-| Last Updated | 2026-02-19 |
+| Version | 1.7.0 |
+| Last Updated | 2026-02-23 |
 | Status | Draft – Clean Architecture + CQRS/MediatR |
 
 ---
@@ -428,7 +428,7 @@ Indexes and exact column definitions are defined in EF Core migrations.
 |:--|:--|
 | Base URL | `/api/v1` |
 | Format | JSON |
-| Auth | JWT Bearer token |
+| Auth | JWT via HTTP-only cookies (access_token, refresh_token); JSON responses omit tokens; client sends `credentials: include` |
 | Errors | RFC 7807 Problem Details (see example below) |
 | Pagination | `?page=1&pageSize=20` |
 | Sorting | `?sortBy=name&sortOrder=asc` |
@@ -460,12 +460,12 @@ Indexes and exact column definitions are defined in EF Core migrations.
 | `POST /api/v1/auth/login-pin` | PIN quick login | Planned |
 | `POST /api/v1/auth/forgot-password` | Request password reset (sends email with token link) | Implemented |
 | `POST /api/v1/auth/reset-password` | Reset password using token from link | Implemented |
-| `POST /api/v1/auth/logout` | Invalidate token | Planned |
+| `POST /api/v1/auth/logout` | Revoke refresh token (from cookie or body), clear auth cookies | Implemented |
 | `GET /api/v1/auth/me` | Get current user profile | Implemented |
 
 **Refresh token flow (implemented):**
-- Login/Register return `accessToken` + `refreshToken`; refresh tokens are stored hashed in `refresh_tokens` table
-- `POST /auth/refreshToken` accepts `{ "refreshToken": "..." }`; validates, rotates (revokes old, issues new), returns new tokens
+- Login/Register set `access_token` and `refresh_token` in HTTP-only cookies; JSON response returns `user`, `expiresIn`, `subscription` (no tokens)
+- `POST /auth/refreshToken` reads refresh token from cookie; validates, rotates (revokes old, issues new), sets new cookies
 - Session tracking: `ip_address`, `user_agent` (from request), optional `device_id` (from client)
 
 **Password reset flow (implemented):**
@@ -644,8 +644,6 @@ Content-Type: application/json
 {
   "success": true,
   "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-    "refreshToken": "dGhpcyBpcyBhIHJlZnJlc2g...",
     "expiresIn": 3600,
     "user": {
       "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -658,10 +656,13 @@ Content-Type: application/json
           "name": "Al-Madina Filling Station"
         }
       ]
-    }
+    },
+    "subscription": { "plan": "professional", "status": "trial" }
   }
 }
 ```
+
+Tokens are set in HTTP-only cookies (`access_token`, `refresh_token`); not returned in JSON.
 
 #### Refresh Token
 ```http
@@ -674,7 +675,7 @@ Content-Type: application/json
 }
 ```
 
-Response: Same shape as Login (new `accessToken`, `refreshToken`, `user`, `subscription`). Old refresh token is revoked.
+Response: Same shape as Login (new cookies set; JSON returns `expiresIn`, `user`, `subscription`). Old refresh token is revoked.
 
 #### Record Meter Reading
 ```http
@@ -947,5 +948,5 @@ Using Shadcn/ui components:
 
 ---
 
-*Document Version: 1.5.0*  
-*Last Updated: 2026-02-18*
+*Document Version: 1.7.0*  
+*Last Updated: 2026-02-23*

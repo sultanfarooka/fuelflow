@@ -29,7 +29,7 @@ export function RegisterForm() {
       toast.success(
         data.data?.message ?? "Account created. Please check your email to verify.",
       );
-      navigate({ to: "/auth/check-email", search: { email: variables.email } });
+      navigate({ to: "/auth/check-email-register", search: { email: variables.email } });
     },
     onError: (error: Error) => {
       toast.error(error.message ?? "Registration failed. Please try again.");

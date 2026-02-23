@@ -2,8 +2,8 @@
 
 > Single source of truth for what's implemented and where to continue.
 
-**Last Updated**: 2026-02-19  
-**Synced with**: PRD v1.6.0, codebase
+**Last Updated**: 2026-02-23  
+**Synced with**: PRD v1.7.0, codebase
 
 ---
 
@@ -29,7 +29,8 @@
 
 | Area             | Status        | Notes                                         |
 | ---------------- | ------------- | --------------------------------------------- |
-| **Auth**         | ✅ Implemented | Register (email verification), Login, RefreshToken, VerifyEmail, ResendVerification, ForgotPassword, ResetPassword, GetCurrentUser |
+| **Auth**         | ✅ Implemented | Register (email verification), Login, RefreshToken, VerifyEmail, ResendVerification, ForgotPassword, ResetPassword, Logout, GetCurrentUser |
+
 | **Dashboard**    | ✅ Implemented | Summary (Owner/Manager only)                  |
 | **Subscription** | ⬜ Planned     | Plans, management, payments                   |
 | **Stations**     | ⬜ Planned     | CRUD, tank/nozzle config                      |
@@ -45,10 +46,10 @@
 | Area              | Status    | Notes                                 |
 | ----------------- | --------- | ------------------------------------- |
 | **Project setup** | ✅ Done    | React, Vite, TanStack, Tailwind, i18n |
-| **API client**    | ✅ Done    | Axios, JWT auth                       |
+| **API client**    | ✅ Done    | Axios, cookie-based auth (withCredentials)             |
 | **UI shell**      | ⬜ Planned | Layout, sidebar, navigation           |
 | **Auth pages**    | ✅ Done    | Login, Register (multi-step), Verify-email, Check-email |
-| **Dashboard**     | ⬜ Planned | Placeholder exists                    |
+| **Dashboard**     | ✅ Done    | Basic placeholder with route guard, cookie-based auth   |
 | **Pricing page**  | ⬜ Planned | Plan comparison                       |
 
 
@@ -78,8 +79,9 @@
 | POST   | `/api/v1/auth/resend-verification` | Public | ✅      |
 | POST   | `/api/v1/auth/forgot-password`    | Public | ✅      |
 | POST   | `/api/v1/auth/reset-password`     | Public | ✅      |
-| GET    | `/api/v1/auth/me`           | JWT            | ✅      |
-| GET    | `/api/v1/dashboard/summary` | Owner, Manager | ✅      |
+| POST   | `/api/v1/auth/logout`            | Public | ✅      |
+| GET    | `/api/v1/auth/me`                | JWT    | ✅      |
+| GET    | `/api/v1/dashboard/summary`     | Owner, Manager | ✅      |
 
 
 ---

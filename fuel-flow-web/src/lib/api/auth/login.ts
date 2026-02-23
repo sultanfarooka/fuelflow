@@ -18,21 +18,22 @@ export interface UserInfo {
   stations: { id: string; name: string }[]
 }
 
-export interface AuthResponse {
-  accessToken: string
-  refreshToken: string
+/** Auth response (login/refresh). Tokens are in HTTP-only cookies, not in JSON. */
+export interface LoginResponse {
   expiresIn: number
   user: UserInfo
-  subscription?: {
-    status: string
-    plan: string
-    trialEndsAt?: string
-  }
+  subscription?: SubscriptionInfo
+}
+
+export interface SubscriptionInfo {
+  status: string
+  plan: string
+  trialEndsAt?: string
 }
 
 export interface LoginApiResponse {
   success: boolean
-  data: AuthResponse
+  data: LoginResponse
 }
 
 /**

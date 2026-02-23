@@ -6,14 +6,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { resendVerification } from "@/lib/api/auth";
 
-export const Route = createFileRoute("/auth/check-email")({
+export const Route = createFileRoute("/auth/check-email-register")({
   validateSearch: (search: Record<string, unknown>) => ({
     email: typeof search.email === "string" ? search.email : undefined,
   }),
-  component: CheckEmailPage,
+  component: CheckEmailRegisterPage,
 });
 
-function CheckEmailPage() {
+function CheckEmailRegisterPage() {
   const { email } = Route.useSearch();
 
   const resendVerificationEmailMutation = useMutation({
