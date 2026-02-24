@@ -828,7 +828,7 @@ Organization and first station are added after first login during onboarding.
 
 Using Shadcn/ui components:
 - **DataTable**: TanStack Table + Shadcn styling
-- **Forms**: TanStack Form + Zod validation
+- **Forms**: TanStack Form + Zod validation; auth forms validate on submit only (validators `onSubmit`)
 - **Modals**: Dialog component for confirmations
 - **Toasts**: Sonner for notifications
 - **Charts**: Recharts with consistent theme

@@ -48,7 +48,7 @@
 | **Project setup** | ✅ Done    | React, Vite, TanStack, Tailwind, i18n |
 | **API client**    | ✅ Done    | Axios, cookie-based auth (withCredentials)             |
 | **UI shell**      | ⬜ Planned | Layout, sidebar, navigation           |
-| **Auth pages**    | ✅ Done    | Login, Register (multi-step), Verify-email, Check-email |
+| **Auth pages**    | ✅ Done    | Login, Register (multi-step), Verify-email, Check-email; submit-only validation |
 | **Dashboard**     | ✅ Done    | Basic placeholder with route guard, cookie-based auth   |
 | **Pricing page**  | ⬜ Planned | Plan comparison                       |
 

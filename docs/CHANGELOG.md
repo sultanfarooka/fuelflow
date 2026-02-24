@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cookie-based auth** — Tokens stored in HTTP-only cookies; JSON responses omit tokens; client uses `credentials: include`
 
 ### Changed
-- **PRD** — v1.7.0; logout marked Implemented; API conventions updated for cookie-based auth; Login/Refresh samples reflect cookie flow
+- **Auth forms** — Validation on submit only (TanStack Form validators `onSubmit`); errors show after user submits
+- **PRD** — v1.7.0; logout marked Implemented; API conventions updated for cookie-based auth; Login/Refresh samples reflect cookie flow; UI spec: auth forms validate on submit only
 - **IMPLEMENTATION_STATUS** — Logout endpoint added; Dashboard marked Done (basic placeholder with route guard); API client noted as cookie-based
 - **.cursorrules** — Auth conventions updated for HTTP-only cookies; Refresh Token pattern includes logout and cookie flow
 

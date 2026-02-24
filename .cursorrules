@@ -248,6 +248,7 @@ src/
 
 **Forms**:
 - Use TanStack Form + Zod validation
+- Auth forms: validate on submit only (validators `onSubmit`); errors show after submit
 - Share Zod schemas with backend DTOs when possible
 - Show validation errors inline
 
@@ -311,7 +312,7 @@ src/
   - Components stored in `src/components/ui/`
   - Example: `import { Button } from '@/components/ui/button'`
 - **DataTable**: TanStack Table + Shadcn styling
-- **Forms**: TanStack Form + Zod + Shadcn form components
+- **Forms**: TanStack Form + Zod + Shadcn form components; auth forms validate on submit only
 - **Modals**: Dialog component for confirmations
 - **Toasts**: Sonner for notifications (to be added)
 - **Charts**: Recharts with consistent theme
