@@ -10,4 +10,5 @@ public interface IOrganizationRepository
 {
     Task<Organization?> GetByIdAsync(Guid id);
     Task AddAsync(Organization organization);
+    Task DeleteAsync(Organization organization);
 }

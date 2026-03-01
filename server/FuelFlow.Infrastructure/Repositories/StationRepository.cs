@@ -27,6 +27,23 @@ public class StationRepository : IStationRepository
             .ToListAsync();
     }
 
+    public async Task<List<Station>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.ToList();
+        if (idList.Count == 0)
+            return new List<Station>();
+
+        return await _dbContext.Stations
+            .Where(s => idList.Contains(s.Id) && s.IsActive)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> CountByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Stations
+            .CountAsync(s => s.OrganizationId == organizationId && s.IsActive, cancellationToken);
+    }
+
     public async Task AddAsync(Station station)
     {
         await _dbContext.Stations.AddAsync(station);

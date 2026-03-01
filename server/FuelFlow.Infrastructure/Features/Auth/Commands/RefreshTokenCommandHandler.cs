@@ -6,20 +6,24 @@ using FuelFlow.Application.Features.Auth.Commands;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Application.Interfaces.Services;
 using FuelFlow.Domain.Entities;
+using StationEntity = FuelFlow.Domain.Entities.Station;
 using FuelFlow.Infrastructure.Identity;
 using FuelFlow.Infrastructure.Services;
 
 namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 
 /// <summary>
-/// CQRS Handler: Exchanges a valid refresh token for new access + refresh tokens.
-/// Implements rotation — the old token is revoked and replaced with a new one.
+/// CQRS Handler: Exchanges a valid refresh token for new access + refresh tokens (rotation).
+/// Old token is revoked and linked to the new one; returns same shape as login (AuthResponse).
 /// </summary>
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<AuthResponse>>
 {
+    // Dependencies: Identity, org/station/subscription/refresh repos, JWT, request context
     private readonly UserManager<AppUser> _userManager;
     private readonly IOrganizationRepository _organizationRepo;
     private readonly IStationRepository _stationRepo;
+    private readonly IUserStationRepository _userStationRepo;
+    private readonly ISubscriptionRepository _subscriptionRepo;
     private readonly IRefreshTokenRepository _refreshTokenRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly JwtTokenService _jwtTokenService;
@@ -29,6 +33,8 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         UserManager<AppUser> userManager,
         IOrganizationRepository organizationRepo,
         IStationRepository stationRepo,
+        IUserStationRepository userStationRepo,
+        ISubscriptionRepository subscriptionRepo,
         IRefreshTokenRepository refreshTokenRepo,
         IUnitOfWork unitOfWork,
         JwtTokenService jwtTokenService,
@@ -37,6 +43,8 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         _userManager = userManager;
         _organizationRepo = organizationRepo;
         _stationRepo = stationRepo;
+        _userStationRepo = userStationRepo;
+        _subscriptionRepo = subscriptionRepo;
         _refreshTokenRepo = refreshTokenRepo;
         _unitOfWork = unitOfWork;
         _jwtTokenService = jwtTokenService;
@@ -47,6 +55,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         RefreshTokenCommand request,
         CancellationToken cancellationToken)
     {
+        // 1. Validate refresh token presence and hash lookup
         var refreshToken = request.Request.RefreshToken?.Trim();
         if (string.IsNullOrEmpty(refreshToken))
             return Result<AuthResponse>.Failure("Refresh token is required.");
@@ -62,10 +71,12 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         if (existingToken.ExpiresAt < DateTime.UtcNow)
             return Result<AuthResponse>.Failure("Refresh token has expired. Please log in again.");
 
+        // 2. Load user; reject if missing or inactive
         var user = await _userManager.FindByIdAsync(existingToken.UserId.ToString());
         if (user == null || !user.IsActive)
             return Result<AuthResponse>.Failure("User not found or inactive.");
 
+        // 3. Create new refresh token and persist; then revoke old token (rotation)
         var newPlainToken = _jwtTokenService.GenerateRefreshToken();
         var newTokenEntity = new RefreshToken
         {
@@ -81,28 +92,31 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         await _refreshTokenRepo.AddAsync(newTokenEntity);
         await _unitOfWork.SaveChangesAsync();
 
-        // Revoke old token and link to replacement
+        // 4. Revoke old token and link to replacement (audit trail)
         existingToken.RevokedAt = DateTime.UtcNow;
         existingToken.ReplacedByToken = newTokenEntity.Id.ToString();
         existingToken.UpdatedAt = DateTime.UtcNow;
         await _unitOfWork.SaveChangesAsync();
 
-        // Step 5: Return new tokens
+        // 5. Build and return auth response (same shape as login: tokens, user, stations, subscription)
         if (!user.OrganizationId.HasValue)
         {
-            return Result<AuthResponse>.Success(BuildAuthResponseWithoutOrg(user, newPlainToken));
+            return Result<AuthResponse>.Success(await BuildAuthResponseWithoutOrgAsync(user, newPlainToken, cancellationToken));
         }
 
         var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId.Value);
         if (organization == null)
             return Result<AuthResponse>.Failure("Organization not found.");
 
-        var stations = await _stationRepo.GetByOrganizationIdAsync(organization.Id);
-        return Result<AuthResponse>.Success(BuildAuthResponse(user, organization, stations.ToArray(), newPlainToken));
+        var stations = await GetStationsForUserAsync(user.Id, organization.Id, cancellationToken);
+        var subscription = await _subscriptionRepo.GetActiveSubscriptionForUserAsync(user.Id, cancellationToken);
+        return Result<AuthResponse>.Success(BuildAuthResponse(user, organization, stations, subscription, newPlainToken));
     }
 
-    private AuthResponse BuildAuthResponseWithoutOrg(AppUser user, string refreshToken)
+    /// <summary>Builds auth response for user without organization; stations empty, optional subscription.</summary>
+    private async Task<AuthResponse> BuildAuthResponseWithoutOrgAsync(AppUser user, string refreshToken, CancellationToken cancellationToken)
     {
+        var subscription = await _subscriptionRepo.GetActiveSubscriptionForUserAsync(user.Id, cancellationToken);
         return new AuthResponse
         {
             AccessToken = _jwtTokenService.GenerateAccessToken(user),
@@ -116,14 +130,25 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
                 Role = user.Role.ToString().ToLower(),
                 Stations = new List<StationInfo>(),
             },
-            Subscription = null,
+            Subscription = subscription,
         };
     }
 
+    /// <summary>Returns stations for user: assigned via user_stations if any, else all org stations.</summary>
+    private async Task<List<StationEntity>> GetStationsForUserAsync(Guid userId, Guid organizationId, CancellationToken cancellationToken)
+    {
+        var stationIds = await _userStationRepo.GetStationIdsByUserIdAsync(userId, cancellationToken);
+        if (stationIds.Count > 0)
+            return await _stationRepo.GetByIdsAsync(stationIds, cancellationToken);
+        return await _stationRepo.GetByOrganizationIdAsync(organizationId);
+    }
+
+    /// <summary>Builds full auth response with tokens, user info, station list, and subscription.</summary>
     private AuthResponse BuildAuthResponse(
         AppUser user,
         Organization org,
-        Station?[] stations,
+        List<StationEntity> stations,
+        SubscriptionInfo? subscription,
         string refreshToken)
     {
         return new AuthResponse
@@ -137,17 +162,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
                 Email = user.Email!,
                 FullName = user.FullName,
                 Role = user.Role.ToString().ToLower(),
-                Stations = stations
-                    .Where(s => s != null)
-                    .Select(s => new StationInfo { Id = s!.Id, Name = s.Name })
-                    .ToList(),
+                Stations = stations.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
             },
-            Subscription = new SubscriptionInfo
-            {
-                Status = org.SubscriptionStatus.ToString().ToLower(),
-                Plan = "professional",
-                TrialEndsAt = org.TrialEndsAt,
-            },
+            Subscription = subscription,
         };
     }
 }

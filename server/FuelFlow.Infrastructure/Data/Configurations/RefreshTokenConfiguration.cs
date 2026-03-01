@@ -6,41 +6,33 @@ using FuelFlow.Infrastructure.Identity;
 namespace FuelFlow.Infrastructure.Data.Configurations;
 
 /// <summary>
-/// EF Core Fluent API configuration for the RefreshToken entity.
-/// 
-/// TABLE NAME: refresh_tokens (snake_case per PRD convention)
-/// 
-/// IMPORTANT:
-/// - The Domain RefreshToken links to a User via UserId (Guid).
-/// - In the database, this foreign key points to Infrastructure's AppUser
-///   (the Identity user table).
-/// - We IGNORE the Domain navigation property to keep Domain and Infrastructure
-///   layers decoupled at the EF level.
+/// EF Core config for RefreshToken. user_id → AspNetUsers (AppUser). Domain User navigation ignored.
 /// </summary>
 public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
+        // 1. Table & key
         builder.ToTable("refresh_tokens");
 
-        // Primary key
         builder.HasKey(rt => rt.Id);
         builder.Property(rt => rt.Id)
             .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
 
-        // Foreign key to AppUser (Identity user table)
+        // 2. Relationships (FK property with its relationship block)
+
+        // Relationship: RefreshToken → AppUser (many-to-one)
+        // On delete cascade: if user is deleted, their refresh tokens are removed
         builder.Property(rt => rt.UserId)
             .HasColumnName("user_id")
             .IsRequired();
-
-        // Relationship: many refresh tokens per user
         builder.HasOne<AppUser>()
             .WithMany()
             .HasForeignKey(rt => rt.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Token hash and metadata
+        // 3. Non-FK properties
         builder.Property(rt => rt.TokenHash)
             .HasColumnName("token_hash")
             .HasMaxLength(500)
@@ -77,14 +69,14 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .HasColumnName("updated_at")
             .HasDefaultValueSql("NOW()");
 
-        // Ignore domain-level navigation property (RefreshToken.User)
-        // so EF doesn't try to map Domain.User as an entity here.
-        builder.Ignore(rt => rt.User);
-
-        // Indexes
+        // 4. Indexes
+        // Index for fast lookups by user
         builder.HasIndex(rt => rt.UserId);
+        // Index for token lookup (unique)
         builder.HasIndex(rt => rt.TokenHash)
             .IsUnique();
+
+        // 5. Ignore (domain navigation; FK points to AppUser)
+        builder.Ignore(rt => rt.User);
     }
 }
-

@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Smartphone } from "lucide-react";
+import { AlertCircleIcon, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,35 @@ import { GoogleIcon } from "@/components/ui/icons/google-icon";
 import { login, type LoginRequest } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { loginSchema, type LoginFormData } from "@/lib/validators/auth";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useState } from "react";
 
 /**
  * Login form — signup-02 design (matching register).
  * Tokens are set in HTTP-only cookies by the backend; UserInfo persisted via auth store.
  */
 export function LoginForm() {
-  const navigate = useNavigate();
   const setAuthState = useAuthStore((s) => s.setAuthState);
+  const navigate = useNavigate();
+
+  const [loginMutationError, setLoginMutationError] = useState<string | null>(
+    null,
+  );
+
+  const form = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    } satisfies LoginFormData,
+    validators: {
+      onSubmit: loginSchema,
+    },
+    onSubmit: async ({ value }) => {
+      // Clear any previous submit error when user tries again
+      setLoginMutationError(null);
+      await loginMutation.mutateAsync(value as LoginRequest);
+    },
+  });
 
   const loginMutation = useMutation({
     mutationFn: login,
@@ -36,20 +57,7 @@ export function LoginForm() {
       navigate({ to: "/" });
     },
     onError: (error: Error) => {
-      toast.error(error.message ?? "Login failed. Please try again.");
-    },
-  });
-
-  const form = useForm({
-    defaultValues: {
-      email: "",
-      password: "",
-    } satisfies LoginFormData,
-    validators: {
-      onSubmit: loginSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await loginMutation.mutateAsync(value as LoginRequest);
+      setLoginMutationError(error.message ?? "Login failed. Please try again.");
     },
   });
 
@@ -105,6 +113,13 @@ export function LoginForm() {
             </div>
           )}
         />
+        {loginMutationError && (
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircleIcon />
+            <AlertTitle>Login failed</AlertTitle>
+            <AlertDescription>{loginMutationError}</AlertDescription>
+          </Alert>
+        )}
         <Field>
           <Button
             type="submit"

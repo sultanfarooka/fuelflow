@@ -1,8 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Smartphone } from "lucide-react";
+import { AlertCircleIcon, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import { GoogleIcon } from "@/components/ui/icons/google-icon";
 import { FormTextField } from "@/components/forms/form-text-field";
 import { register, type RegisterRequest } from "@/lib/api/auth";
 import { registerSchema, type RegisterFormData } from "@/lib/validators/auth";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 /**
  * Registration form — signup-02 design.
@@ -22,6 +24,10 @@ import { registerSchema, type RegisterFormData } from "@/lib/validators/auth";
  */
 export function RegisterForm() {
   const navigate = useNavigate();
+
+  const [registerMutationError, setRegisterMutationError] = useState<string | null>(
+    null,
+  );
 
   const registerMutation = useMutation({
     mutationFn: register,
@@ -32,7 +38,9 @@ export function RegisterForm() {
       navigate({ to: "/auth/check-email-register", search: { email: variables.email } });
     },
     onError: (error: Error) => {
-      toast.error(error.message ?? "Registration failed. Please try again.");
+      const message = error.message ?? "Registration failed. Please try again.";
+      setRegisterMutationError(message);
+      toast.error(message);
     },
   });
 
@@ -49,6 +57,8 @@ export function RegisterForm() {
       onSubmit: registerSchema,
     },
     onSubmit: async ({ value }) => {
+      // Clear any previous submit error when user tries again
+      setRegisterMutationError(null);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars -- confirmPassword is UI-only, not sent to API
       const { confirmPassword, ...apiPayload } = value;
       await registerMutation.mutateAsync(apiPayload as RegisterRequest);
@@ -141,6 +151,13 @@ export function RegisterForm() {
             )}
           />
         </div>
+        {registerMutationError && (
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircleIcon />
+            <AlertTitle>Registration failed</AlertTitle>
+            <AlertDescription>{registerMutationError}</AlertDescription>
+          </Alert>
+        )}
         <Field>
           <Button
             type="submit"

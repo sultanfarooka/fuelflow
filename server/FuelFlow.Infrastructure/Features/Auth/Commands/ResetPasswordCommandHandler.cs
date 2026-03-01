@@ -8,7 +8,8 @@ using FuelFlow.Infrastructure.Identity;
 namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 
 /// <summary>
-/// CQRS Handler: Resets password using token from reset link.
+/// CQRS Handler: Resets password using token from reset link (userId + token + new password).
+/// Token is issued by ForgotPassword flow and validated by Identity.
 /// </summary>
 public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, Result<ResetPasswordResponse>>
 {
@@ -25,10 +26,12 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
     {
         var req = request.Request;
 
+        // 1. Load user; reject if not found (invalid or expired link)
         var user = await _userManager.FindByIdAsync(req.UserId.ToString());
         if (user == null)
             return Result<ResetPasswordResponse>.Failure("Invalid or expired reset link.");
 
+        // 2. Reset password with Identity (validates token, hashes new password); return errors if failed
         var result = await _userManager.ResetPasswordAsync(user, req.Token, req.NewPassword);
         if (!result.Succeeded)
         {

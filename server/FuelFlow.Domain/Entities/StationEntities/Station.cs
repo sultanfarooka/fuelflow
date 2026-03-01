@@ -27,4 +27,13 @@ public class Station : BaseEntity
 
     // Navigation property — EF Core uses this to JOIN to organizations table
     public Organization Organization { get; set; } = null!;
+    public ICollection<FuelTank> FuelTanks { get; set; } = new List<FuelTank>();
+    public ICollection<FuelNozzle> FuelNozzles { get; set; } = new List<FuelNozzle>();
+    public ICollection<StationShift> StationShifts { get; set; } = new List<StationShift>();
+    public ICollection<FuelPrices> FuelPrices { get; set; } = new List<FuelPrices>();
+
+    /// <summary>
+    /// Users assigned to this station (many-to-many via user_stations). Populated in application layer from junction + AppUser.
+    /// </summary>
+    public ICollection<User> Employees { get; set; } = new List<User>();
 }

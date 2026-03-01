@@ -24,6 +24,7 @@ namespace FuelFlow.Api.Controllers;
 /// Tokens are stored in HTTP-only cookies. JSON responses omit tokens.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
 [Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {

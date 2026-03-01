@@ -23,16 +23,10 @@ namespace FuelFlow.Domain.Entities;
 public class Organization : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string? Phone { get; set; }
 
-    // Subscription tracking (denormalized here for quick access)
-    public SubscriptionStatus SubscriptionStatus { get; set; } = SubscriptionStatus.Trial;
-    public DateTime? TrialEndsAt { get; set; }
-    public DateTime? RegisteredAt { get; set; }
+    public Guid OwnerId { get; set; }
+    public User Owner { get; set; } = null!;
 
-    // Navigation properties — EF Core uses these to understand relationships
-    // "An Organization HAS MANY Stations" and "HAS MANY Users"
     public ICollection<Station> Stations { get; set; } = new List<Station>();
-    public ICollection<User> Users { get; set; } = new List<User>();
+
 }

@@ -64,6 +64,9 @@ public static class DependencyInjection
         // 3. Register repositories
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IStationRepository, StationRepository>();
+        services.AddScoped<IUserStationRepository, UserStationRepository>();
+        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

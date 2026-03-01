@@ -9,8 +9,8 @@ using FuelFlow.Infrastructure.Identity;
 namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 
 /// <summary>
-/// CQRS Handler: Resends verification email.
-/// Returns generic message for security (don't reveal if email exists).
+/// CQRS Handler: Resends verification email for the given email address.
+/// Always returns success with generic message (do not reveal whether email exists or is already verified).
 /// </summary>
 public class ResendVerificationCommandHandler : IRequestHandler<ResendVerificationCommand, Result<ResendVerificationResponse>>
 {
@@ -31,13 +31,15 @@ public class ResendVerificationCommandHandler : IRequestHandler<ResendVerificati
     {
         var req = request.Request;
 
+        // 1. Find user by email; if not found or already verified, return same success (security: no info leak)
         var user = await _userManager.FindByEmailAsync(req.Email);
         if (user == null)
-            return Result<ResendVerificationResponse>.Success(new ResendVerificationResponse()); // Generic for security
+            return Result<ResendVerificationResponse>.Success(new ResendVerificationResponse());
 
         if (user.EmailConfirmed)
-            return Result<ResendVerificationResponse>.Success(new ResendVerificationResponse()); // Same message - don't reveal
+            return Result<ResendVerificationResponse>.Success(new ResendVerificationResponse());
 
+        // 2. Send verification email
         _ = await _authService.SendVerificationEmailAsync(user.Id, cancellationToken);
 
         return Result<ResendVerificationResponse>.Success(new ResendVerificationResponse());

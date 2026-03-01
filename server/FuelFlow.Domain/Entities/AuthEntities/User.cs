@@ -31,4 +31,11 @@ public class User : BaseEntity
     // Every user belongs to an Organization
     public Guid OrganizationId { get; set; }
     public Organization Organization { get; set; } = null!;
+
+    public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+
+    /// <summary>
+    /// Stations this user is assigned to (many-to-many via user_stations). Populated in application layer from junction + AppUser.
+    /// </summary>
+    public ICollection<Station> AssignedStations { get; set; } = new List<Station>();
 }

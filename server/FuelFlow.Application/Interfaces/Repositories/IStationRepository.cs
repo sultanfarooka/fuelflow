@@ -10,5 +10,8 @@ public interface IStationRepository
 {
     Task<Station?> GetFirstByOrganizationIdAsync(Guid organizationId);
     Task<List<Station>> GetByOrganizationIdAsync(Guid organizationId);
+    Task<List<Station>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
+    /// <summary>Count of active stations for the organization (for plan limit checks).</summary>
+    Task<int> CountByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken = default);
     Task AddAsync(Station station);
 }

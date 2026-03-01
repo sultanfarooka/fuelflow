@@ -1,20 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using FuelFlow.Domain.Entities;
 using FuelFlow.Infrastructure.Identity;
 
 namespace FuelFlow.Infrastructure.Data.Configurations;
 
 /// <summary>
-/// Additional configuration for our AppUser (on top of what Identity provides).
-/// 
-/// Identity already configures the base AspNetUsers table. Here we add
-/// our custom columns and the relationship to Organization.
+/// Additional configuration for AppUser (on top of Identity). Custom columns and relationship to Organization.
 /// </summary>
 public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
 {
     public void Configure(EntityTypeBuilder<AppUser> builder)
     {
-        // Our custom columns (Identity handles Email, PasswordHash, etc.)
+        // 1. Non-FK properties (Identity handles Id, Email, PasswordHash, etc.)
         builder.Property(u => u.FullName)
             .HasColumnName("full_name")
             .HasMaxLength(200)
@@ -38,9 +36,6 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
             .HasColumnName("pin_hash")
             .HasMaxLength(500);
 
-        builder.Property(u => u.OrganizationId)
-            .HasColumnName("organization_id");
-
         builder.Property(u => u.CreatedAt)
             .HasColumnName("created_at")
             .HasDefaultValueSql("NOW()");
@@ -49,6 +44,18 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
             .HasColumnName("updated_at")
             .HasDefaultValueSql("NOW()");
 
+        // 2. Relationships (FK property with its relationship block)
+
+        // Relationship: AppUser → Organization (many-to-one, optional)
+        // OrganizationId can be null (e.g. before onboarding)
+        builder.Property(u => u.OrganizationId)
+            .HasColumnName("organization_id");
+        builder.HasOne<Organization>()
+            .WithMany()
+            .HasForeignKey(u => u.OrganizationId)
+            .IsRequired(false);
+
+        // 3. Indexes
         // Index for fast lookups by organization
         builder.HasIndex(u => u.OrganizationId);
     }

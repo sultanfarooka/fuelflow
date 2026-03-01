@@ -29,6 +29,9 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Station> Stations => Set<Station>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<UserStation> UserStations => Set<UserStation>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<SubscriptionPlans> SubscriptionPlans => Set<SubscriptionPlans>();
 
     // Note: We do NOT add DbSet<User> (Domain entity) here.
     // Identity's AppUser IS our user table. The Domain User entity
@@ -42,5 +45,9 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
         // Apply all entity configurations from this assembly
         // (reads all IEntityTypeConfiguration<T> classes from Data/Configurations/)
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // Domain User is discovered via other entities; AssignedStations is populated in app layer from user_stations junction
+        modelBuilder.Entity<User>().Ignore(u => u.AssignedStations);
+        modelBuilder.Entity<User>().Ignore(u => u.Subscriptions);
     }
 }

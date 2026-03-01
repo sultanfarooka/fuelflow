@@ -30,4 +30,11 @@ public class OrganizationRepository : IOrganizationRepository
     {
         await _dbContext.Organizations.AddAsync(organization);
     }
+
+    public Task DeleteAsync(Organization organization)
+    {
+        _dbContext.Organizations.Remove(organization);
+        return Task.CompletedTask;
+    }
+
 }

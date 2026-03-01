@@ -51,5 +51,5 @@ public class SubscriptionInfo
 {
     public string Status { get; set; } = string.Empty;
     public string Plan { get; set; } = string.Empty;
-    public DateTime? TrialEndsAt { get; set; }
+    public DateTime? EndsAt { get; set; }
 }
