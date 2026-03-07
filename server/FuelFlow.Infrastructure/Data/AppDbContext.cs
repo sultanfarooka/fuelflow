@@ -32,6 +32,18 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     public DbSet<UserStation> UserStations => Set<UserStation>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<SubscriptionPlans> SubscriptionPlans => Set<SubscriptionPlans>();
+    public DbSet<FuelTank> FuelTanks => Set<FuelTank>();
+    public DbSet<FuelType> FuelTypes => Set<FuelType>();
+    public DbSet<OMC> OMCs => Set<OMC>();
+    public DbSet<OMCFuelTypes> OMCFuelTypes => Set<OMCFuelTypes>();
+    public DbSet<FuelPrices> FuelPrices => Set<FuelPrices>();
+    public DbSet<FuelNozzle> FuelNozzles => Set<FuelNozzle>();
+    public DbSet<StationShift> StationShifts => Set<StationShift>();
+    public DbSet<ShiftAssignment> ShiftAssignments => Set<ShiftAssignment>();
+    public DbSet<NozzleReadings> NozzleReadings => Set<NozzleReadings>();
+    public DbSet<FuelTankReading> FuelTankReadings => Set<FuelTankReading>();
+    public DbSet<DipChart> DipCharts => Set<DipChart>();
+    public DbSet<DipChartEntry> DipChartEntries => Set<DipChartEntry>();
 
     // Note: We do NOT add DbSet<User> (Domain entity) here.
     // Identity's AppUser IS our user table. The Domain User entity

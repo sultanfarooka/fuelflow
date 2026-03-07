@@ -4,7 +4,7 @@ using FuelFlow.Application.DTOs.Station;
 namespace FuelFlow.Application.Validators;
 
 /// <summary>
-/// Validates CreateStationRequest. Name required; Address, Phone, LogoUrl optional.
+/// Validates CreateStationRequest. Name and OMCId required; Address, Phone, LogoUrl optional.
 /// </summary>
 public class CreateStationRequestValidator : AbstractValidator<CreateStationRequest>
 {
@@ -13,6 +13,9 @@ public class CreateStationRequestValidator : AbstractValidator<CreateStationRequ
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Station name is required.")
             .MaximumLength(200).WithMessage("Station name must not exceed 200 characters.");
+
+        RuleFor(x => x.OMCId)
+            .NotEqual(Guid.Empty).WithMessage("OMC is required.");
 
         RuleFor(x => x.Address)
             .MaximumLength(500).WithMessage("Address must not exceed 500 characters.")

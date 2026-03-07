@@ -3,15 +3,11 @@
  */
 
 import { api } from '../client'
-import type { UserInfo } from './login'
+import type { LoginResponse } from './login'
 
 export interface MeApiResponse {
   success: boolean
-  data: {
-    user: UserInfo
-    subscription?: { status: string; plan: string; trialEndsAt?: string }
-    expiresIn: number
-  }
+  data: LoginResponse
 }
 
 /**

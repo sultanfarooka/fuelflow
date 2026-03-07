@@ -22,7 +22,11 @@ public class AuthResponse
 
     /// user info
     public UserInfo User { get; set; } = null!;
-    public SubscriptionInfo? Subscription { get; set; }
+    public OrganizationInfo? Organization { get; set; } = null!;
+    public SubscriptionInfo? Subscription { get; set; } = null!;
+    public List<StationInfo>? Stations { get; set; } = null!;
+
+
 }
 
 
@@ -37,8 +41,14 @@ public class UserInfo
     public Guid Id { get; set; }
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-    public List<StationInfo> Stations { get; set; } = new();
+    public List<string> Roles { get; set; } = new List<string>();
+
+}
+
+public class OrganizationInfo
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
 public class StationInfo
@@ -50,6 +60,8 @@ public class StationInfo
 public class SubscriptionInfo
 {
     public string Status { get; set; } = string.Empty;
-    public string Plan { get; set; } = string.Empty;
+
+    public Guid PlanId { get; set; }
+    public string PlanName { get; set; } = string.Empty;
     public DateTime? EndsAt { get; set; }
 }

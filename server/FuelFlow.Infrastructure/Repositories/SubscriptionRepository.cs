@@ -30,7 +30,8 @@ public class SubscriptionRepository : ISubscriptionRepository
         return new SubscriptionInfo
         {
             Status = sub.Status.ToString(),
-            Plan = sub.Plan.Name,
+            PlanId = sub.PlanId,
+            PlanName = sub.Plan.Name,
             EndsAt = sub.EndsAt,
         };
     }

@@ -24,7 +24,6 @@ namespace FuelFlow.Api.Controllers;
 /// Tokens are stored in HTTP-only cookies. JSON responses omit tokens.
 /// </summary>
 [ApiController]
-[AllowAnonymous]
 [Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {
@@ -43,6 +42,9 @@ public class AuthController : ControllerBase
     /// Creates Owner user (unverified). Organization, station, and subscription
     /// are created during onboarding after first login.
     /// </summary>
+    /// [AllowAnonymous] tells ASP.NET: "Allow this endpoint to be accessed without authentication."
+    /// If the token is missing or invalid, ASP.NET returns 401 automatically.
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
@@ -60,6 +62,7 @@ public class AuthController : ControllerBase
     /// Public endpoint — validates email/password. Sets access_token and refresh_token in HTTP-only cookies.
     /// Returns user, subscription, expiresIn in JSON (no tokens).
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -71,7 +74,7 @@ public class AuthController : ControllerBase
         var data = result.Data!;
         SetAuthCookiesInResponse(data.AccessToken, data.RefreshToken);
 
-        return Ok(new { success = true, data = new { data.ExpiresIn, data.User, data.Subscription } });
+        return Ok(new { success = true, data = new { data.User, data.Organization, data.Stations, data.Subscription } });
     }
 
     /// <summary>
@@ -96,7 +99,8 @@ public class AuthController : ControllerBase
         if (!result.IsSuccess)
             return NotFound(new { success = false, error = result.Error });
 
-        return Ok(new { success = true, data = result.Data });
+        var data = result.Data!;
+        return Ok(new { success = true, data = new { data.User, data.Organization, data.Stations, data.Subscription } });
     }
 
 
@@ -105,6 +109,7 @@ public class AuthController : ControllerBase
     /// Public endpoint — exchanges a valid refresh token for new access + refresh tokens.
     /// Reads refresh token from cookie. Sets new cookies on success.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("refreshToken")]
     public async Task<IActionResult> RefreshToken()
     {
@@ -134,6 +139,7 @@ public class AuthController : ControllerBase
     /// POST /api/v1/auth/verify-email
     /// Public endpoint — verifies email using token from verification link.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("verify-email")]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
     {
@@ -149,6 +155,7 @@ public class AuthController : ControllerBase
     /// POST /api/v1/auth/resend-verification
     /// Public endpoint — resends verification email. Returns generic message for security.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("resend-verification")]
     public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest request)
     {
@@ -164,6 +171,7 @@ public class AuthController : ControllerBase
     /// POST /api/v1/auth/forgot-password
     /// Public endpoint — sends password reset email. Returns generic message for security.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
@@ -179,6 +187,7 @@ public class AuthController : ControllerBase
     /// POST /api/v1/auth/reset-password
     /// Public endpoint — resets password using token from reset link.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
@@ -194,6 +203,7 @@ public class AuthController : ControllerBase
     /// POST /api/v1/auth/logout
     /// Public endpoint — revokes the refresh token (from cookie or body). Clears auth cookies.
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest? request = null)
     {

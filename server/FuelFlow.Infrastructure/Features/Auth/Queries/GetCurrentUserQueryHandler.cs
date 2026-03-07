@@ -12,12 +12,13 @@ using FuelFlow.Infrastructure.Services;
 namespace FuelFlow.Infrastructure.Features.Auth.Queries;
 
 /// <summary>
-/// CQRS Handler: Returns the current authenticated user's profile (UserInfo, Stations, Subscription).
-/// Used by GET /me or similar. Stations come from user_stations when assigned, else org's stations.
+/// CQRS Handler: Returns the current authenticated user's profile (GET /me).
+/// Loads user by ID from the request (set by auth middleware), then returns the same
+/// <see cref="AuthResponse"/> shape as login: tokens (new access + new refresh), UserInfo,
+/// and when onboarded: Organization, Stations, Subscription. Used to refresh client state after login.
 /// </summary>
 public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, Result<AuthResponse>>
 {
-    // Dependencies: Identity, org/station/subscription repos, JWT for new access token in response
     private readonly UserManager<AppUser> _userManager;
     private readonly IOrganizationRepository _organizationRepo;
     private readonly IStationRepository _stationRepo;
@@ -41,74 +42,67 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         _jwtTokenService = jwtTokenService;
     }
 
+    /// <summary>
+    /// Loads current user by ID (from auth context), then returns auth response with new tokens
+    /// and profile (pre-onboarding: user only; post-onboarding: user + org + stations + subscription).
+    /// </summary>
     public async Task<Result<AuthResponse>> Handle(
         GetCurrentUserQuery request,
         CancellationToken cancellationToken)
     {
-        // 1. Load user; reject if missing or inactive
+        // --- Step 1: Load user and roles; reject if missing or inactive ---
         var user = await _userManager.FindByIdAsync(request.UserId.ToString());
         if (user == null || !user.IsActive)
             return Result<AuthResponse>.Failure("User not found.");
 
-        // 2. User without org (pre-onboarding): return profile with empty stations, optional subscription
-        if (!user.OrganizationId.HasValue)
-        {
-            return Result<AuthResponse>.Success(await BuildAuthResponseWithoutOrgAsync(user, cancellationToken));
-        }
+        var userRole = await _userManager.GetRolesAsync(user);
+        if (userRole.Count == 0)
+            return Result<AuthResponse>.Failure("User has no role assigned.");
 
-        // 3. Load organization; reject if missing
-        var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId.Value);
+        // --- Step 2: Pre-onboarding: return tokens + user only (no org/stations/subscription) ---
+        if (!user.OrganizationId.HasValue)
+            return Result<AuthResponse>.Success(BuildAuthResponse(user, userRole));
+
+        // --- Step 3: Load organization (with stations) for onboarded user ---
+        var organization = await _organizationRepo.GetByIdWithStationsAsync(user.OrganizationId.Value, cancellationToken);
         if (organization == null)
             return Result<AuthResponse>.Failure("Organization not found.");
 
-        // 4. Resolve stations (assigned via user_stations, or fallback to org stations) and active subscription
-        var stations = await GetStationsForUserAsync(user.Id, organization.Id, cancellationToken);
+        // --- Step 4: Resolve user's stations and active subscription; build full response ---
+        var stations = await GetStationsForUserAsync(user.Id, organization.Id, cancellationToken, organization);
         var subscription = await _subscriptionRepo.GetActiveSubscriptionForUserAsync(user.Id, cancellationToken);
 
-        return Result<AuthResponse>.Success(
-            BuildAuthResponse(user, organization, stations, subscription));
+        return Result<AuthResponse>.Success(BuildAuthResponse(user, userRole, organization, stations, subscription));
     }
 
-    /// <summary>Builds auth response for user without organization (pre-onboarding). Stations empty; subscription if any.</summary>
-    private async Task<AuthResponse> BuildAuthResponseWithoutOrgAsync(AppUser user, CancellationToken cancellationToken)
-    {
-        var subscription = await _subscriptionRepo.GetActiveSubscriptionForUserAsync(user.Id, cancellationToken);
-        return new AuthResponse
-        {
-            AccessToken = _jwtTokenService.GenerateAccessToken(user),
-            RefreshToken = _jwtTokenService.GenerateRefreshToken(),
-            ExpiresIn = _jwtTokenService.GetExpiresInSeconds(),
-            User = new UserInfo
-            {
-                Id = user.Id,
-                Email = user.Email!,
-                FullName = user.FullName,
-                Role = user.Role.ToString().ToLower(),
-                Stations = new List<StationInfo>(),
-            },
-            Subscription = subscription,
-        };
-    }
-
-    /// <summary>Returns stations for user: assigned via user_stations if any, else all org stations.</summary>
-    private async Task<List<StationEntity>> GetStationsForUserAsync(Guid userId, Guid organizationId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Resolves the station list for the user: assigned stations (user_stations) or all org stations.
+    /// When <paramref name="orgWithStations"/> is provided, uses its Stations to avoid an extra query.
+    /// </summary>
+    private async Task<List<StationEntity>> GetStationsForUserAsync(Guid userId, Guid organizationId, CancellationToken cancellationToken, Organization? orgWithStations = null)
     {
         var stationIds = await _userStationRepo.GetStationIdsByUserIdAsync(userId, cancellationToken);
         if (stationIds.Count > 0)
             return await _stationRepo.GetByIdsAsync(stationIds, cancellationToken);
+        if (orgWithStations?.Stations != null)
+            return orgWithStations.Stations.Where(s => s.IsActive).ToList();
         return await _stationRepo.GetByOrganizationIdAsync(organizationId);
     }
 
-    /// <summary>Builds full auth response with user info, station list, and subscription (for user with org).</summary>
+    /// <summary>
+    /// Builds the auth response: new access + new refresh token, user info, and optionally
+    /// org/stations/subscription (null when pre-onboarding). Refresh token is generated here (no incoming token).
+    /// </summary>
     private AuthResponse BuildAuthResponse(
         AppUser user,
-        Organization org,
-        List<StationEntity> stations,
-        SubscriptionInfo? subscription)
+        IList<string> userRoles,
+        Organization? org = null,
+        List<StationEntity>? stations = null,
+        SubscriptionInfo? subscription = null)
     {
         return new AuthResponse
         {
-            AccessToken = _jwtTokenService.GenerateAccessToken(user),
+            AccessToken = _jwtTokenService.GenerateAccessToken(user, userRoles),
             RefreshToken = _jwtTokenService.GenerateRefreshToken(),
             ExpiresIn = _jwtTokenService.GetExpiresInSeconds(),
             User = new UserInfo
@@ -116,9 +110,10 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
                 Id = user.Id,
                 Email = user.Email!,
                 FullName = user.FullName,
-                Role = user.Role.ToString().ToLower(),
-                Stations = stations.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
+                Roles = userRoles.Select(r => r.ToLower()).ToList(),
             },
+            Organization = org != null ? new OrganizationInfo { Id = org.Id, Name = org.Name } : null,
+            Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
             Subscription = subscription,
         };
     }

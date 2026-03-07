@@ -3,6 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertCircleIcon, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import type { AxiosError } from "axios";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,11 +15,14 @@ import {
 } from "@/components/ui/field";
 import { FormTextField } from "@/components/forms/form-text-field";
 import { GoogleIcon } from "@/components/ui/icons/google-icon";
-import { login, type LoginRequest } from "@/lib/api/auth";
+import {
+  login,
+  type LoginApiResponse,
+  type LoginRequest,
+} from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { loginSchema, type LoginFormData } from "@/lib/validators/auth";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { useState } from "react";
 
 /**
  * Login form — signup-02 design (matching register).
@@ -46,18 +51,28 @@ export function LoginForm() {
     },
   });
 
-  const loginMutation = useMutation({
+  const loginMutation = useMutation<
+    LoginApiResponse,
+    AxiosError<{ error?: string; message?: string }>,
+    LoginRequest
+  >({
     mutationFn: login,
     onSuccess: (data) => {
       const auth = data.data;
       if (auth) {
         setAuthState(auth);
+        if (auth.organization) {
+          navigate({ to: "/dashboard" });
+        } else {
+          navigate({ to: "/onboarding" });
+        }
       }
       toast.success(`Welcome back, ${auth?.user?.fullName ?? "User"}!`);
-      navigate({ to: "/" });
     },
-    onError: (error: Error) => {
-      setLoginMutationError(error.message ?? "Login failed. Please try again.");
+    onError: (error) => {
+      const apiMessage =
+        error.response?.data?.error ?? error.response?.data?.message;
+      setLoginMutationError(apiMessage ?? "Login failed. Please try again.");
     },
   });
 

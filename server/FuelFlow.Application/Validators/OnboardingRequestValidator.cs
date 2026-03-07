@@ -18,6 +18,9 @@ public class OnboardingRequestValidator : AbstractValidator<OnboardingRequest>
             .NotEmpty().WithMessage("Station name is required.")
             .MaximumLength(200).WithMessage("Station name must not exceed 200 characters.");
 
+        RuleFor(x => x.OMCId)
+            .NotEmpty().WithMessage("OMC ID is required.");
+
         RuleFor(x => x.Address)
             .MaximumLength(500).WithMessage("Address must not exceed 500 characters.")
             .When(x => !string.IsNullOrWhiteSpace(x.Address));

@@ -14,21 +14,33 @@ export interface UserInfo {
   id: string
   email: string
   fullName: string
-  role: string
-  stations: { id: string; name: string }[]
+  roles: string[]
+}
+
+export interface OrganizationInfo {
+  id: string
+  name: string
+}
+
+export interface StationInfo {
+  id: string
+  name: string
+}
+
+export interface SubscriptionInfo {
+  status: string
+  planId: string
+  planName: string
+  endsAt?: string
 }
 
 /** Auth response (login/refresh). Tokens are in HTTP-only cookies, not in JSON. */
 export interface LoginResponse {
   expiresIn: number
   user: UserInfo
-  subscription?: SubscriptionInfo
-}
-
-export interface SubscriptionInfo {
-  status: string
-  plan: string
-  trialEndsAt?: string
+  organization?: OrganizationInfo | null
+  subscription?: SubscriptionInfo | null
+  stations?: StationInfo[] | null
 }
 
 export interface LoginApiResponse {

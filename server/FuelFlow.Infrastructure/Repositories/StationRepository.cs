@@ -14,6 +14,12 @@ public class StationRepository : IStationRepository
         _dbContext = dbContext;
     }
 
+    public async Task<Station?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Stations
+            .FirstOrDefaultAsync(s => s.Id == id && s.IsActive, cancellationToken);
+    }
+
     public async Task<Station?> GetFirstByOrganizationIdAsync(Guid organizationId)
     {
         return await _dbContext.Stations

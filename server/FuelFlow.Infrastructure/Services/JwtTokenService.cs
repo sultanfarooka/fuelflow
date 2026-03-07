@@ -38,7 +38,7 @@ public class JwtTokenService
     /// <summary>
     /// Generate an access token containing the user's claims (identity info).
     /// </summary>
-    public string GenerateAccessToken(AppUser user)
+    public string GenerateAccessToken(AppUser user, IList<string> userRoles)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
         var key = new SymmetricSecurityKey(
@@ -52,7 +52,7 @@ public class JwtTokenService
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email!),
             new(ClaimTypes.Name, user.FullName),
-            new(ClaimTypes.Role, user.Role.ToString()),
+            new(ClaimTypes.Role, string.Join(",", userRoles)),
         };
 
         if (user.OrganizationId.HasValue)

@@ -8,6 +8,7 @@ namespace FuelFlow.Application.Interfaces.Repositories;
 /// </summary>
 public interface IStationRepository
 {
+    Task<Station?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Station?> GetFirstByOrganizationIdAsync(Guid organizationId);
     Task<List<Station>> GetByOrganizationIdAsync(Guid organizationId);
     Task<List<Station>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);

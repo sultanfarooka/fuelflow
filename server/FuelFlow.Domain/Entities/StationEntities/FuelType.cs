@@ -11,6 +11,8 @@ public class FuelType : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
     public string Unit { get; set; } = "L"; // e.g. L, kg — plan varchar(10)
+    public bool IsCustom { get; set; } = false;
+    public Guid? OMCId { get; set; } = null;
 
     /// <summary>Null = predefined (seeded); set = custom type for this station.</summary>
     public Guid? StationId { get; set; }

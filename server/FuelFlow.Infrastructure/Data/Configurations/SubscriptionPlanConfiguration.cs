@@ -9,13 +9,6 @@ namespace FuelFlow.Infrastructure.Data.Configurations;
 /// </summary>
 public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<SubscriptionPlans>
 {
-    /// <summary>Fixed IDs for seeded plans so migrations and lookups are deterministic.</summary>
-    public static readonly Guid StarterPlanId = new("11111111-1111-1111-1111-111111111101");
-    public static readonly Guid ProfessionalPlanId = new("11111111-1111-1111-1111-111111111102");
-    public static readonly Guid EnterprisePlanId = new("11111111-1111-1111-1111-111111111103");
-
-    public static readonly DateTime SeedTimestamp = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
     public void Configure(EntityTypeBuilder<SubscriptionPlans> builder)
     {
         // 1. Table & key
@@ -61,34 +54,6 @@ public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<Subscripti
         builder.HasIndex(s => s.MaxStations);
         builder.HasIndex(s => s.MaxUsers);
 
-        // 5. Seed reference data (Starter 1 station, Professional 3, Enterprise unlimited)
-        builder.HasData(
-            new SubscriptionPlans
-            {
-                Id = StarterPlanId,
-                Name = "Starter",
-                MaxStations = 1,
-                MaxUsers = 5,
-                CreatedAt = SeedTimestamp,
-                UpdatedAt = SeedTimestamp,
-            },
-            new SubscriptionPlans
-            {
-                Id = ProfessionalPlanId,
-                Name = "Professional",
-                MaxStations = 3,
-                MaxUsers = 10,
-                CreatedAt = SeedTimestamp,
-                UpdatedAt = SeedTimestamp,
-            },
-            new SubscriptionPlans
-            {
-                Id = EnterprisePlanId,
-                Name = "Enterprise",
-                MaxStations = -1,
-                MaxUsers = -1,
-                CreatedAt = SeedTimestamp,
-                UpdatedAt = SeedTimestamp,
-            });
+        // 5. Seed data: see DataSeeder (runs on startup, idempotent)
     }
 }

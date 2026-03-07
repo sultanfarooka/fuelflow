@@ -6,11 +6,8 @@ using FuelFlow.Infrastructure.Data;
 namespace FuelFlow.Infrastructure.Repositories;
 
 /// <summary>
-/// Concrete implementation of IOrganizationRepository.
-/// 
-/// This is the ONLY place that knows "Organizations are stored in PostgreSQL
-/// via EF Core." If we ever switch to MongoDB or an API call, we change
-/// this file and nothing else.
+/// EF Core implementation of <see cref="IOrganizationRepository"/>.
+/// All organization persistence and queries go through this class; auth/onboarding handlers use it to load org (and optionally stations).
 /// </summary>
 public class OrganizationRepository : IOrganizationRepository
 {
@@ -21,9 +18,20 @@ public class OrganizationRepository : IOrganizationRepository
         _dbContext = dbContext;
     }
 
+    /// <inheritdoc />
     public async Task<Organization?> GetByIdAsync(Guid id)
     {
         return await _dbContext.Organizations.FindAsync(id);
+    }
+
+    /// <inheritdoc />
+    /// <remarks>Uses AsNoTracking and Include(Stations) so auth handlers can use organization.Stations when resolving the user's station list without an extra query.</remarks>
+    public async Task<Organization?> GetByIdWithStationsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Organizations
+            .AsNoTracking()
+            .Include(o => o.Stations)
+            .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
     }
 
     public async Task AddAsync(Organization organization)

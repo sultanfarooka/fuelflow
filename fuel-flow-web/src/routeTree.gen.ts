@@ -9,10 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as OnboardingRouteRouteImport } from './routes/onboarding/route'
+import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth/verify-email'
 import { Route as AuthResetPasswordSuccessRouteImport } from './routes/auth/reset-password-success'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
@@ -21,15 +24,22 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthCheckEmailResetRouteImport } from './routes/auth/check-email-reset'
 import { Route as AuthCheckEmailRegisterRouteImport } from './routes/auth/check-email-register'
+import { Route as DashboardStationStationIdRouteImport } from './routes/dashboard/station.$stationId'
+import { Route as DashboardStationStationIdSetupRouteImport } from './routes/dashboard/station.$stationId.setup'
 
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRouteRoute = OnboardingRouteRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRouteRoute = DashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
@@ -41,6 +51,16 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OnboardingRouteRoute,
+} as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -83,12 +103,25 @@ const AuthCheckEmailRegisterRoute = AuthCheckEmailRegisterRouteImport.update({
   path: '/check-email-register',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const DashboardStationStationIdRoute =
+  DashboardStationStationIdRouteImport.update({
+    id: '/station/$stationId',
+    path: '/station/$stationId',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
+const DashboardStationStationIdSetupRoute =
+  DashboardStationStationIdSetupRouteImport.update({
+    id: '/setup',
+    path: '/setup',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
+  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/onboarding': typeof OnboardingRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -97,12 +130,15 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/onboarding/': typeof OnboardingIndexRoute
+  '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -111,13 +147,18 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/onboarding': typeof OnboardingIndexRoute
+  '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
+  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/onboarding': typeof OnboardingRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/dashboard': typeof DashboardRoute
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -126,14 +167,19 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/onboarding/': typeof OnboardingIndexRoute
+  '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
-    | '/about'
     | '/dashboard'
+    | '/onboarding'
+    | '/about'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
     | '/auth/forgot-password'
@@ -142,12 +188,15 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/reset-password-success'
     | '/auth/verify-email'
+    | '/dashboard/'
+    | '/onboarding/'
+    | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/setup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/about'
-    | '/dashboard'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
     | '/auth/forgot-password'
@@ -156,12 +205,17 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/reset-password-success'
     | '/auth/verify-email'
+    | '/dashboard'
+    | '/onboarding'
+    | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/setup'
   id:
     | '__root__'
     | '/'
     | '/auth'
-    | '/about'
     | '/dashboard'
+    | '/onboarding'
+    | '/about'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
     | '/auth/forgot-password'
@@ -170,29 +224,41 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/reset-password-success'
     | '/auth/verify-email'
+    | '/dashboard/'
+    | '/onboarding/'
+    | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/setup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
+  OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
-  DashboardRoute: typeof DashboardRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/about': {
       id: '/about'
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -208,6 +274,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/': {
+      id: '/onboarding/'
+      path: '/'
+      fullPath: '/onboarding/'
+      preLoaderRoute: typeof OnboardingIndexRouteImport
+      parentRoute: typeof OnboardingRouteRoute
+    }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
     '/auth/verify-email': {
       id: '/auth/verify-email'
@@ -265,6 +345,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCheckEmailRegisterRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/dashboard/station/$stationId': {
+      id: '/dashboard/station/$stationId'
+      path: '/station/$stationId'
+      fullPath: '/dashboard/station/$stationId'
+      preLoaderRoute: typeof DashboardStationStationIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/station/$stationId/setup': {
+      id: '/dashboard/station/$stationId/setup'
+      path: '/setup'
+      fullPath: '/dashboard/station/$stationId/setup'
+      preLoaderRoute: typeof DashboardStationStationIdSetupRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
   }
 }
 
@@ -294,11 +388,52 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface DashboardStationStationIdRouteChildren {
+  DashboardStationStationIdSetupRoute: typeof DashboardStationStationIdSetupRoute
+}
+
+const DashboardStationStationIdRouteChildren: DashboardStationStationIdRouteChildren =
+  {
+    DashboardStationStationIdSetupRoute: DashboardStationStationIdSetupRoute,
+  }
+
+const DashboardStationStationIdRouteWithChildren =
+  DashboardStationStationIdRoute._addFileChildren(
+    DashboardStationStationIdRouteChildren,
+  )
+
+interface DashboardRouteRouteChildren {
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardStationStationIdRoute: typeof DashboardStationStationIdRouteWithChildren
+}
+
+const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardStationStationIdRoute: DashboardStationStationIdRouteWithChildren,
+}
+
+const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
+  DashboardRouteRouteChildren,
+)
+
+interface OnboardingRouteRouteChildren {
+  OnboardingIndexRoute: typeof OnboardingIndexRoute
+}
+
+const OnboardingRouteRouteChildren: OnboardingRouteRouteChildren = {
+  OnboardingIndexRoute: OnboardingIndexRoute,
+}
+
+const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
+  OnboardingRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
+  DashboardRouteRoute: DashboardRouteRouteWithChildren,
+  OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   AboutRoute: AboutRoute,
-  DashboardRoute: DashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

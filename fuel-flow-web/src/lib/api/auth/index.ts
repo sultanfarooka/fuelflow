@@ -11,6 +11,11 @@ export {
   type RegisterRequest,
   type RegisterResponse,
 } from './registerRequest'
+export {
+  completeOnboarding,
+  type OnboardingApiResponse,
+  type OnboardingRequest,
+} from './onboarding'
 export { resendVerification } from './resendVerification'
 export {
   verifyEmail,

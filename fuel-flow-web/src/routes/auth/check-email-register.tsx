@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Mail } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { resendVerification } from "@/lib/api/auth";
@@ -9,17 +10,33 @@ import { resendVerification } from "@/lib/api/auth";
 export const Route = createFileRoute("/auth/check-email-register")({
   validateSearch: (search: Record<string, unknown>) => ({
     email: typeof search.email === "string" ? search.email : undefined,
+    fromRegistration:
+      search.fromRegistration === "true" || search.fromRegistration === true,
   }),
   component: CheckEmailRegisterPage,
 });
 
 function CheckEmailRegisterPage() {
-  const { email } = Route.useSearch();
+  const { email, fromRegistration } = Route.useSearch();
+  const [cooldown, setCooldown] = useState(() =>
+    fromRegistration && email ? 30 : 0,
+  );
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const id = setInterval(() => {
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, [cooldown]);
 
   const resendVerificationEmailMutation = useMutation({
     mutationFn: resendVerification,
     onSuccess: () => {
       toast.success("Verification email sent. Please check your inbox.");
+      setCooldown(30);
     },
     onError: (err: Error) => {
       toast.error(err.message ?? "Failed to resend verification email.");
@@ -56,11 +73,13 @@ function CheckEmailRegisterPage() {
           <Button
             variant="outline"
             onClick={handleResend}
-            disabled={resendVerificationEmailMutation.isPending}
+            disabled={resendVerificationEmailMutation.isPending || cooldown > 0}
           >
             {resendVerificationEmailMutation.isPending
               ? "Sending..."
-              : "Resend verification email"}
+              : cooldown > 0
+                ? `Resend verification email in ${cooldown}s`
+                : "Resend verification email"}
           </Button>
         )}
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">

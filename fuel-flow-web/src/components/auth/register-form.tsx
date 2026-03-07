@@ -25,17 +25,21 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 export function RegisterForm() {
   const navigate = useNavigate();
 
-  const [registerMutationError, setRegisterMutationError] = useState<string | null>(
-    null,
-  );
+  const [registerMutationError, setRegisterMutationError] = useState<
+    string | null
+  >(null);
 
   const registerMutation = useMutation({
     mutationFn: register,
     onSuccess: (data, variables) => {
       toast.success(
-        data.data?.message ?? "Account created. Please check your email to verify.",
+        data.data?.message ??
+          "Account created. Please check your email to verify.",
       );
-      navigate({ to: "/auth/check-email-register", search: { email: variables.email } });
+      navigate({
+        to: "/auth/check-email-register",
+        search: { email: variables.email, fromRegistration: true },
+      });
     },
     onError: (error: Error) => {
       const message = error.message ?? "Registration failed. Please try again.";
@@ -53,7 +57,6 @@ export function RegisterForm() {
       confirmPassword: "",
     } satisfies RegisterFormData,
     validators: {
-      onBlur: registerSchema,
       onSubmit: registerSchema,
     },
     onSubmit: async ({ value }) => {

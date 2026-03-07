@@ -29,13 +29,12 @@ public class AppUser : IdentityUser<Guid>
 
     // Our custom business fields:
     public string FullName { get; set; } = string.Empty;
-    public UserRole Role { get; set; }
     public bool IsActive { get; set; } = true;
     public int SessionTimeoutMins { get; set; } = 30;
     public string? PinHash { get; set; }
-
     // Every user belongs to an Organization (nullable until onboarding completes)
     public Guid? OrganizationId { get; set; }
+
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

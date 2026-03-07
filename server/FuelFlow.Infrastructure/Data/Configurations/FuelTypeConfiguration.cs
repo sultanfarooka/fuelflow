@@ -30,6 +30,13 @@ public class FuelTypeConfiguration : IEntityTypeConfiguration<FuelType>
             .HasMaxLength(10)
             .IsRequired();
 
+        builder.Property(f => f.IsCustom)
+            .HasColumnName("is_custom")
+            .HasDefaultValue(false);
+
+        builder.Property(f => f.OMCId)
+            .HasColumnName("omc_id");
+
         builder.Property(f => f.CreatedAt)
             .HasColumnName("created_at")
             .HasDefaultValueSql("NOW()");

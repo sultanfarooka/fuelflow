@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Application.Interfaces.Services;
 using FuelFlow.Infrastructure.Data;
+using Microsoft.Extensions.Hosting;
 using FuelFlow.Infrastructure.Features.Auth.Commands;
 using FuelFlow.Infrastructure.Identity;
 using FuelFlow.Infrastructure.Repositories;
@@ -64,6 +65,14 @@ public static class DependencyInjection
         // 3. Register repositories
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IStationRepository, StationRepository>();
+        services.AddScoped<IFuelTankRepository, FuelTankRepository>();
+        services.AddScoped<IFuelTypeRepository, FuelTypeRepository>();
+        services.AddScoped<IFuelPricesRepository, FuelPricesRepository>();
+        services.AddScoped<IFuelNozzleRepository, FuelNozzleRepository>();
+        services.AddScoped<IStationShiftRepository, StationShiftRepository>();
+        services.AddScoped<IShiftAssignmentRepository, ShiftAssignmentRepository>();
+        services.AddScoped<IOMCRepository, OMCRepository>();
+        services.AddScoped<IOMCFuelTypeRepository, OMCFuelTypeRepository>();
         services.AddScoped<IUserStationRepository, UserStationRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
@@ -80,6 +89,9 @@ public static class DependencyInjection
 
         // 5. Register MediatR (CQRS handlers from Infrastructure)
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(RegisterCommandHandler).Assembly));
+
+        // 6. Data seeder (runs on startup, idempotent — seeds OMCs, OMCFuelTypes, SubscriptionPlans if not present)
+        services.AddHostedService<DataSeeder>();
 
         return services;
     }

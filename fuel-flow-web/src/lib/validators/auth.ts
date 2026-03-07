@@ -3,7 +3,7 @@ import { z } from 'zod'
 /**
  * Registration form schema — mirrors backend RegisterRequestValidator.
  * Used for client-side validation before submit.
- * 
+ *
  * Organization is added after first login during onboarding.
  */
 export const registerSchema = z.object({
@@ -58,3 +58,38 @@ export const resetPasswordSchema = z
   })
 
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
+
+/**
+ * Onboarding form schema — mirrors OnboardingRequestValidator.
+ * OrganizationName, StationName, and OMCId required; other fields optional.
+ */
+export const onboardingSchema = z.object({
+  organizationName: z
+    .string()
+    .min(1, 'Organization name is required')
+    .max(200, 'Organization name must not exceed 200 characters'),
+  stationName: z
+    .string()
+    .min(1, 'Station name is required')
+    .max(200, 'Station name must not exceed 200 characters'),
+  omcId: z
+    .string()
+    .min(1, 'OMC is required')
+    .uuid('Please select a valid OMC'),
+  address: z
+    .string()
+    .max(500, 'Address must not exceed 500 characters')
+    .or(z.literal('')),
+  phone: z
+    .string()
+    .regex(/^\+92\d{10}$/, 'Phone must be in Pakistani format: +92XXXXXXXXXX')
+    .or(z.literal('')),
+  logoUrl: z
+    .string()
+    .url('Logo URL must be a valid URL')
+    .max(2048, 'Logo URL must not exceed 2048 characters')
+    .or(z.literal('')),
+})
+
+export type OnboardingFormData = z.input<typeof onboardingSchema>
+

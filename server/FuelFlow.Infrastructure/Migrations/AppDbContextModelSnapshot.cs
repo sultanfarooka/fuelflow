@@ -42,7 +42,7 @@ namespace FuelFlow.Infrastructure.Migrations
                     b.HasIndex("TankId")
                         .IsUnique();
 
-                    b.ToTable("DipChart");
+                    b.ToTable("DipCharts");
                 });
 
             modelBuilder.Entity("FuelFlow.Domain.Entities.DipChartEntry", b =>
@@ -70,7 +70,7 @@ namespace FuelFlow.Infrastructure.Migrations
 
                     b.HasIndex("DipChartId");
 
-                    b.ToTable("DipChartEntry");
+                    b.ToTable("DipChartEntries");
                 });
 
             modelBuilder.Entity("FuelFlow.Domain.Entities.FuelNozzle", b =>
@@ -220,6 +220,69 @@ namespace FuelFlow.Infrastructure.Migrations
                     b.ToTable("fuel_tanks", (string)null);
                 });
 
+            modelBuilder.Entity("FuelFlow.Domain.Entities.FuelTankReading", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<decimal>("DepthCm")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("depth_cm");
+
+                    b.Property<Guid>("FuelTankId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tank_id");
+
+                    b.Property<DateTime>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("ReadingType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reading_type");
+
+                    b.Property<Guid?>("RecordedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recorded_by_user_id");
+
+                    b.Property<Guid?>("StationShiftId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shift_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<decimal>("VolumeLiters")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("volume_liters");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FuelTankId");
+
+                    b.HasIndex("RecordedByUserId");
+
+                    b.HasIndex("StationShiftId");
+
+                    b.ToTable("tank_dip_readings", (string)null);
+                });
+
             modelBuilder.Entity("FuelFlow.Domain.Entities.FuelType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -234,11 +297,21 @@ namespace FuelFlow.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<bool>("IsCustom")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_custom");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
+
+                    b.Property<Guid?>("OMCId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("omc_id");
 
                     b.Property<Guid?>("StationId")
                         .HasColumnType("uuid")
@@ -261,6 +334,64 @@ namespace FuelFlow.Infrastructure.Migrations
                     b.HasIndex("StationId");
 
                     b.ToTable("fuel_types", (string)null);
+                });
+
+            modelBuilder.Entity("FuelFlow.Domain.Entities.NozzleReadings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("FuelNozzleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("nozzle_id");
+
+                    b.Property<string>("ReadingType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reading_type");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("recorded_at");
+
+                    b.Property<Guid?>("RecordedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recorded_by_user_id");
+
+                    b.Property<Guid>("StationShiftId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shift_id");
+
+                    b.Property<decimal>("TotalizerValue")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("totalizer_value");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FuelNozzleId");
+
+                    b.HasIndex("RecordedByUserId");
+
+                    b.HasIndex("StationShiftId");
+
+                    b.ToTable("meter_readings", (string)null);
                 });
 
             modelBuilder.Entity("FuelFlow.Domain.Entities.Organization", b =>
@@ -398,7 +529,7 @@ namespace FuelFlow.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ShiftAssignment");
+                    b.ToTable("ShiftAssignments");
                 });
 
             modelBuilder.Entity("FuelFlow.Domain.Entities.Station", b =>
@@ -436,6 +567,10 @@ namespace FuelFlow.Infrastructure.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<Guid>("OMCId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("omc_id");
+
                     b.Property<Guid>("OrganizationId")
                         .HasColumnType("uuid")
                         .HasColumnName("organization_id");
@@ -452,6 +587,8 @@ namespace FuelFlow.Infrastructure.Migrations
                         .HasDefaultValueSql("NOW()");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OMCId");
 
                     b.HasIndex("OrganizationId");
 
@@ -656,35 +793,6 @@ namespace FuelFlow.Infrastructure.Migrations
                     b.HasIndex("Name");
 
                     b.ToTable("subscription_plans", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111101"),
-                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MaxStations = 1,
-                            MaxUsers = 5,
-                            Name = "Starter",
-                            UpdatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111102"),
-                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MaxStations = 3,
-                            MaxUsers = 10,
-                            Name = "Professional",
-                            UpdatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111103"),
-                            CreatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            MaxStations = -1,
-                            MaxUsers = -1,
-                            Name = "Enterprise",
-                            UpdatedAt = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("FuelFlow.Domain.Entities.User", b =>
@@ -845,12 +953,6 @@ namespace FuelFlow.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("pin_hash");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("role");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
@@ -990,6 +1092,134 @@ namespace FuelFlow.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("OMC", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("address");
+
+                    b.Property<string>("ContactPerson")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("contact_person");
+
+                    b.Property<string>("ContactPersonEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("contact_person_email");
+
+                    b.Property<string>("ContactPersonPhone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("contact_person_phone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("LogoUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("logo_url");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .IsUnicode(true)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Website")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("website");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("omcs", (string)null);
+                });
+
+            modelBuilder.Entity("OMCFuelTypes", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OMCId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("omc_id");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("unit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("OMCId");
+
+                    b.ToTable("omc_fuel_types", (string)null);
+                });
+
             modelBuilder.Entity("FuelFlow.Domain.Entities.DipChart", b =>
                 {
                     b.HasOne("FuelFlow.Domain.Entities.FuelTank", "FuelTank")
@@ -1069,6 +1299,29 @@ namespace FuelFlow.Infrastructure.Migrations
                     b.Navigation("Station");
                 });
 
+            modelBuilder.Entity("FuelFlow.Domain.Entities.FuelTankReading", b =>
+                {
+                    b.HasOne("FuelFlow.Domain.Entities.FuelTank", "FuelTank")
+                        .WithMany()
+                        .HasForeignKey("FuelTankId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FuelFlow.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("RecordedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("FuelFlow.Domain.Entities.StationShift", "StationShift")
+                        .WithMany()
+                        .HasForeignKey("StationShiftId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("FuelTank");
+
+                    b.Navigation("StationShift");
+                });
+
             modelBuilder.Entity("FuelFlow.Domain.Entities.FuelType", b =>
                 {
                     b.HasOne("FuelFlow.Domain.Entities.Station", "Station")
@@ -1077,6 +1330,30 @@ namespace FuelFlow.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Station");
+                });
+
+            modelBuilder.Entity("FuelFlow.Domain.Entities.NozzleReadings", b =>
+                {
+                    b.HasOne("FuelFlow.Domain.Entities.FuelNozzle", "FuelNozzle")
+                        .WithMany()
+                        .HasForeignKey("FuelNozzleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FuelFlow.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("RecordedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("FuelFlow.Domain.Entities.StationShift", "StationShift")
+                        .WithMany()
+                        .HasForeignKey("StationShiftId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FuelNozzle");
+
+                    b.Navigation("StationShift");
                 });
 
             modelBuilder.Entity("FuelFlow.Domain.Entities.Organization", b =>
@@ -1126,11 +1403,19 @@ namespace FuelFlow.Infrastructure.Migrations
 
             modelBuilder.Entity("FuelFlow.Domain.Entities.Station", b =>
                 {
+                    b.HasOne("OMC", "OMC")
+                        .WithMany("Stations")
+                        .HasForeignKey("OMCId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("FuelFlow.Domain.Entities.Organization", "Organization")
                         .WithMany("Stations")
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("OMC");
 
                     b.Navigation("Organization");
                 });
@@ -1208,7 +1493,8 @@ namespace FuelFlow.Infrastructure.Migrations
                 {
                     b.HasOne("FuelFlow.Domain.Entities.Organization", null)
                         .WithMany()
-                        .HasForeignKey("OrganizationId");
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1262,6 +1548,17 @@ namespace FuelFlow.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("OMCFuelTypes", b =>
+                {
+                    b.HasOne("OMC", "OMC")
+                        .WithMany("FuelTypes")
+                        .HasForeignKey("OMCId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OMC");
+                });
+
             modelBuilder.Entity("FuelFlow.Domain.Entities.DipChart", b =>
                 {
                     b.Navigation("Entries");
@@ -1297,6 +1594,13 @@ namespace FuelFlow.Infrastructure.Migrations
             modelBuilder.Entity("FuelFlow.Domain.Entities.SubscriptionPlans", b =>
                 {
                     b.Navigation("Subscriptions");
+                });
+
+            modelBuilder.Entity("OMC", b =>
+                {
+                    b.Navigation("FuelTypes");
+
+                    b.Navigation("Stations");
                 });
 #pragma warning restore 612, 618
         }

@@ -18,12 +18,6 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
             .HasMaxLength(200)
             .IsRequired();
 
-        builder.Property(u => u.Role)
-            .HasColumnName("role")
-            .HasConversion<string>()
-            .HasMaxLength(50)
-            .IsRequired();
-
         builder.Property(u => u.IsActive)
             .HasColumnName("is_active")
             .HasDefaultValue(true);
@@ -47,13 +41,15 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         // 2. Relationships (FK property with its relationship block)
 
         // Relationship: AppUser → Organization (many-to-one, optional)
-        // OrganizationId can be null (e.g. before onboarding)
+        // OrganizationId can be null (e.g. before onboarding).
+        // On delete SetNull: when an organization is deleted, users' OrganizationId is set to null (no FK violation).
         builder.Property(u => u.OrganizationId)
             .HasColumnName("organization_id");
         builder.HasOne<Organization>()
             .WithMany()
             .HasForeignKey(u => u.OrganizationId)
-            .IsRequired(false);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // 3. Indexes
         // Index for fast lookups by organization

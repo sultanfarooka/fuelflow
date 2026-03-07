@@ -8,8 +8,10 @@ export const Route = createRootRoute({
 function RootLayout() {
   const { location } = useRouterState();
   const isAuthRoute = location.pathname.startsWith("/auth");
+  const isOnboardingRoute = location.pathname.startsWith("/onboarding");
+  const isDashboardRoute = location.pathname.startsWith("/dashboard");
 
-  if (isAuthRoute) {
+  if (isAuthRoute || isOnboardingRoute || isDashboardRoute) {
     return (
       <>
         <Outlet />

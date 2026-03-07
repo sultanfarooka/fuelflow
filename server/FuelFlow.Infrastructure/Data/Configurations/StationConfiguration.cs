@@ -60,6 +60,16 @@ public class StationConfiguration : IEntityTypeConfiguration<Station>
             .HasForeignKey(s => s.OrganizationId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Relationship: Station → OMC (many-to-one)
+        // On delete cascade: if omc is deleted, its stations go too
+        builder.Property(s => s.OMCId)
+            .HasColumnName("omc_id")
+            .IsRequired();
+        builder.HasOne(s => s.OMC)
+            .WithMany(o => o.Stations)
+            .HasForeignKey(s => s.OMCId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Relationship: Station → FuelTanks (one-to-many; FK on FuelTank)
         // On delete cascade: if station is deleted, its fuel tanks go too
         builder.HasMany(s => s.FuelTanks)

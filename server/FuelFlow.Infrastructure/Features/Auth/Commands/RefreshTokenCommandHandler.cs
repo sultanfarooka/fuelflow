@@ -14,11 +14,11 @@ namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 
 /// <summary>
 /// CQRS Handler: Exchanges a valid refresh token for new access + refresh tokens (rotation).
-/// Old token is revoked and linked to the new one; returns same shape as login (AuthResponse).
+/// Validates the incoming token (exists, not revoked, not expired), revokes it, creates a new one
+/// and links the old to the new for audit. Returns the same <see cref="AuthResponse"/> shape as login.
 /// </summary>
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<AuthResponse>>
 {
-    // Dependencies: Identity, org/station/subscription/refresh repos, JWT, request context
     private readonly UserManager<AppUser> _userManager;
     private readonly IOrganizationRepository _organizationRepo;
     private readonly IStationRepository _stationRepo;
@@ -51,11 +51,15 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         _requestContext = requestContext;
     }
 
+    /// <summary>
+    /// Handles refresh: validates token, rotates to a new one, revokes the old, then returns
+    /// auth response (same shape as login; pre-onboarding vs post-onboarding).
+    /// </summary>
     public async Task<Result<AuthResponse>> Handle(
         RefreshTokenCommand request,
         CancellationToken cancellationToken)
     {
-        // 1. Validate refresh token presence and hash lookup
+        // --- Step 1: Validate incoming refresh token (present, found by hash, not revoked, not expired) ---
         var refreshToken = request.Request.RefreshToken?.Trim();
         if (string.IsNullOrEmpty(refreshToken))
             return Result<AuthResponse>.Failure("Refresh token is required.");
@@ -71,12 +75,16 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         if (existingToken.ExpiresAt < DateTime.UtcNow)
             return Result<AuthResponse>.Failure("Refresh token has expired. Please log in again.");
 
-        // 2. Load user; reject if missing or inactive
+        // --- Step 2: Load user and roles; reject if missing or inactive ---
         var user = await _userManager.FindByIdAsync(existingToken.UserId.ToString());
         if (user == null || !user.IsActive)
             return Result<AuthResponse>.Failure("User not found or inactive.");
 
-        // 3. Create new refresh token and persist; then revoke old token (rotation)
+        var userRole = await _userManager.GetRolesAsync(user);
+        if (userRole.Count == 0)
+            return Result<AuthResponse>.Failure("User has no role assigned.");
+
+        // --- Step 3: Create and persist new refresh token (rotation: one-time use per token) ---
         var newPlainToken = _jwtTokenService.GenerateRefreshToken();
         var newTokenEntity = new RefreshToken
         {
@@ -92,68 +100,53 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         await _refreshTokenRepo.AddAsync(newTokenEntity);
         await _unitOfWork.SaveChangesAsync();
 
-        // 4. Revoke old token and link to replacement (audit trail)
+        // --- Step 4: Revoke old token and link to new one (audit trail) ---
         existingToken.RevokedAt = DateTime.UtcNow;
         existingToken.ReplacedByToken = newTokenEntity.Id.ToString();
         existingToken.UpdatedAt = DateTime.UtcNow;
         await _unitOfWork.SaveChangesAsync();
 
-        // 5. Build and return auth response (same shape as login: tokens, user, stations, subscription)
+        // --- Step 5: Build response (pre-onboarding: tokens + user only; post-onboarding: + org + stations + subscription) ---
         if (!user.OrganizationId.HasValue)
-        {
-            return Result<AuthResponse>.Success(await BuildAuthResponseWithoutOrgAsync(user, newPlainToken, cancellationToken));
-        }
+            return Result<AuthResponse>.Success(BuildAuthResponse(user, userRole, newPlainToken));
 
-        var organization = await _organizationRepo.GetByIdAsync(user.OrganizationId.Value);
+        var organization = await _organizationRepo.GetByIdWithStationsAsync(user.OrganizationId.Value, cancellationToken);
         if (organization == null)
             return Result<AuthResponse>.Failure("Organization not found.");
 
-        var stations = await GetStationsForUserAsync(user.Id, organization.Id, cancellationToken);
+        var stations = await GetStationsForUserAsync(user.Id, organization.Id, cancellationToken, organization);
         var subscription = await _subscriptionRepo.GetActiveSubscriptionForUserAsync(user.Id, cancellationToken);
-        return Result<AuthResponse>.Success(BuildAuthResponse(user, organization, stations, subscription, newPlainToken));
+        return Result<AuthResponse>.Success(BuildAuthResponse(user, userRole, newPlainToken, organization, stations, subscription));
     }
 
-    /// <summary>Builds auth response for user without organization; stations empty, optional subscription.</summary>
-    private async Task<AuthResponse> BuildAuthResponseWithoutOrgAsync(AppUser user, string refreshToken, CancellationToken cancellationToken)
-    {
-        var subscription = await _subscriptionRepo.GetActiveSubscriptionForUserAsync(user.Id, cancellationToken);
-        return new AuthResponse
-        {
-            AccessToken = _jwtTokenService.GenerateAccessToken(user),
-            RefreshToken = refreshToken,
-            ExpiresIn = _jwtTokenService.GetExpiresInSeconds(),
-            User = new UserInfo
-            {
-                Id = user.Id,
-                Email = user.Email!,
-                FullName = user.FullName,
-                Role = user.Role.ToString().ToLower(),
-                Stations = new List<StationInfo>(),
-            },
-            Subscription = subscription,
-        };
-    }
-
-    /// <summary>Returns stations for user: assigned via user_stations if any, else all org stations.</summary>
-    private async Task<List<StationEntity>> GetStationsForUserAsync(Guid userId, Guid organizationId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Resolves the station list for the user: assigned stations (user_stations) or all org stations.
+    /// When <paramref name="orgWithStations"/> is provided, uses its Stations to avoid an extra query.
+    /// </summary>
+    private async Task<List<StationEntity>> GetStationsForUserAsync(Guid userId, Guid organizationId, CancellationToken cancellationToken, Organization? orgWithStations = null)
     {
         var stationIds = await _userStationRepo.GetStationIdsByUserIdAsync(userId, cancellationToken);
         if (stationIds.Count > 0)
             return await _stationRepo.GetByIdsAsync(stationIds, cancellationToken);
+        if (orgWithStations?.Stations != null)
+            return orgWithStations.Stations.Where(s => s.IsActive).ToList();
         return await _stationRepo.GetByOrganizationIdAsync(organizationId);
     }
 
-    /// <summary>Builds full auth response with tokens, user info, station list, and subscription.</summary>
+    /// <summary>
+    /// Builds the auth response DTO: tokens, user info, and optionally org/stations/subscription (null when pre-onboarding).
+    /// </summary>
     private AuthResponse BuildAuthResponse(
         AppUser user,
-        Organization org,
-        List<StationEntity> stations,
-        SubscriptionInfo? subscription,
-        string refreshToken)
+        IList<string> userRoles,
+        string refreshToken,
+        Organization? org = null,
+        List<StationEntity>? stations = null,
+        SubscriptionInfo? subscription = null)
     {
         return new AuthResponse
         {
-            AccessToken = _jwtTokenService.GenerateAccessToken(user),
+            AccessToken = _jwtTokenService.GenerateAccessToken(user, userRoles),
             RefreshToken = refreshToken,
             ExpiresIn = _jwtTokenService.GetExpiresInSeconds(),
             User = new UserInfo
@@ -161,9 +154,10 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
                 Id = user.Id,
                 Email = user.Email!,
                 FullName = user.FullName,
-                Role = user.Role.ToString().ToLower(),
-                Stations = stations.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
+                Roles = userRoles.Select(r => r.ToLower()).ToList(),
             },
+            Organization = org != null ? new OrganizationInfo { Id = org.Id, Name = org.Name } : null,
+            Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
             Subscription = subscription,
         };
     }

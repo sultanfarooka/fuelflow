@@ -39,7 +39,18 @@ public class OnboardingController : ControllerBase
         var data = result.Data!;
         SetAuthCookiesInResponse(data.AccessToken, data.RefreshToken);
 
-        return Ok(new { success = true, data = new { data.ExpiresIn, data.User, data.Subscription } });
+        // Return same shape as login/me so frontend auth store receives org + stations
+        return Ok(new
+        {
+            success = true,
+            data = new
+            {
+                data.User,
+                data.Organization,
+                data.Stations,
+                data.Subscription,
+            }
+        });
     }
 
     private void SetAuthCookiesInResponse(string accessToken, string refreshToken)
