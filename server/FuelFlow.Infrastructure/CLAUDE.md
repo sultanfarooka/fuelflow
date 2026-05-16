@@ -1,0 +1,210 @@
+# FuelFlow.Infrastructure
+
+Implements all Application layer interfaces. This is where data access, external services, and CQRS handlers live. ~70% of backend implementation work happens here.
+
+## Directory Structure
+
+```
+FuelFlow.Infrastructure/
+├── DependencyInjection.cs          # Registers all infra services (single entry point)
+├── Data/
+│   ├── AppDbContext.cs             # IdentityDbContext<AppUser, AppRole, Guid>
+│   ├── Configurations/            # EF Fluent API entity mappings (one per entity)
+│   ├── DataSeeder.cs              # Idempotent startup seeder (OMCs, plans, roles)
+│   ├── SeedData.cs                # Static seed data definitions
+│   └── UserStation.cs             # Junction table model (UserId, StationId)
+├── Features/                      # CQRS handlers (mirrors Application/Features/)
+│   ├── Auth/Commands/             # 8 command handlers
+│   ├── Auth/Queries/              # 1 query handler
+│   ├── Station/                   # Create, GetByOrg
+│   ├── FuelTank/                  # Create, GetByStation
+│   ├── FuelType/                  # Create, Delete, GetByStation
+│   ├── FuelNozzle/                # Create, GetByStation
+│   ├── FuelPrices/                # Set, GetByStation
+│   ├── OMC/                       # Create, GetAll
+│   ├── OMCFuelType/               # Create, GetAll
+│   ├── StationShift/              # Open, Close, GetOpen, GetByStation
+│   ├── ShiftAssignment/           # Create, GetByShift
+│   └── Onboarding/                # Onboarding handler
+├── Identity/
+│   ├── AppUser.cs                 # Extends IdentityUser<Guid> (FullName, PinHash, OrganizationId)
+│   └── AppRole.cs                 # Extends IdentityRole<Guid>
+├── Migrations/                    # EF Core migrations (never edit after creation)
+├── Repositories/                  # One per entity + UnitOfWork
+│   ├── OrganizationRepository.cs
+│   ├── StationRepository.cs
+│   ├── FuelTankRepository.cs
+│   ├── FuelTypeRepository.cs
+│   ├── FuelPricesRepository.cs
+│   ├── FuelNozzleRepository.cs
+│   ├── StationShiftRepository.cs
+│   ├── ShiftAssignmentRepository.cs
+│   ├── OMC-Repository.cs
+│   ├── OMC-FuelTypeRepository.cs
+│   ├── UserStationRepository.cs
+│   ├── SubscriptionRepository.cs
+│   ├── SubscriptionPlanRepository.cs
+│   ├── RefreshTokenRepository.cs
+│   └── UnitOfWork.cs              # BeginTransaction, Commit, Rollback, SaveChanges
+└── Services/
+    ├── AuthService.cs             # Verification/reset email sending
+    ├── JwtTokenService.cs         # JWT generation, refresh token hashing (SHA256)
+    ├── CurrentUserService.cs      # Extracts current user from JWT claims
+    ├── RequestContextService.cs   # ClientIp, UserAgent extraction
+    └── SmtpEmailSender.cs         # MailKit with Gmail SMTP
+```
+
+## EF Core Configuration Conventions (Builder Pattern)
+
+Each entity gets one `IEntityTypeConfiguration<T>` class in `Data/Configurations/`.
+
+### Section Order Inside `Configure()`
+
+Follow this order strictly for consistency across all configurations:
+
+1. **Table & Key** — `ToTable()`, `HasKey()`
+2. **Non-FK Properties** — `Property()` for columns, `HasColumnName()`, `IsRequired()`, `HasMaxLength()`, etc.
+3. **Relationships** — Each as one block: comment -> FK Property -> HasOne/WithMany
+4. **Indexes** — With comments explaining purpose
+5. **Ignore** — If any domain navigations are not mapped
+
+### Relationship Comment Convention
+
+Always state the relationship type and delete behavior:
+
+```csharp
+// Relationship: FuelTank -> FuelType (many-to-one)
+// On delete cascade: if fuel type is deleted, its tanks go too
+```
+
+### FK Property Placement
+
+Keep the FK property definition together with its relationship block — never scatter FK definitions:
+
+```csharp
+// Relationship: FuelNozzle -> FuelTank (many-to-one)
+// On delete cascade: if tank is deleted, its nozzles go too
+builder.Property(n => n.TankId)
+    .HasColumnName("tank_id")
+    .IsRequired();
+builder.HasOne(n => n.FuelTank)
+    .WithMany()
+    .HasForeignKey(n => n.TankId)
+    .OnDelete(DeleteBehavior.Cascade);
+```
+
+### Index Comments
+
+Add short, descriptive comments before each index:
+
+```csharp
+// Index for fast lookups by station
+builder.HasIndex(f => f.StationId);
+
+// Composite index for price history lookups (station + fuel type + effective from)
+builder.HasIndex(p => new { p.StationId, p.FuelTypeId, p.EffectiveFrom });
+```
+
+### Relationship Type Quick Reference
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| **Many-to-one** | `HasOne(...).WithMany()` | Many FuelTanks -> one FuelType |
+| **One-to-one** | `HasOne(...).WithOne(...)` | One FuelTank <-> one DipChart |
+| **One-to-many** | FK on many side | One Station -> many FuelTanks |
+
+When FK is on the other entity (e.g., DipChart has TankId), note it: `(one-to-one, FK on DipChart)`.
+
+### Reference Implementations
+
+Follow these as canonical examples: `FuelTankConfiguration.cs`, `FuelNozzleConfiguration.cs`, `FuelPricesConfiguration.cs`, `FuelTypeConfiguration.cs`, `StationShiftConfiguration.cs`.
+
+## Handler Implementation Pattern (SRP + Mediator)
+
+Each handler has a single responsibility: process one command or query.
+
+```csharp
+public class CreateStationCommandHandler : IRequestHandler<CreateStationCommand, Result<CreateStationResponse>>
+{
+    private readonly IStationRepository _stationRepository;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateStationCommandHandler(
+        IStationRepository stationRepository,
+        ICurrentUserService currentUserService,
+        IUnitOfWork unitOfWork)
+    {
+        _stationRepository = stationRepository;
+        _currentUserService = currentUserService;
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<Result<CreateStationResponse>> Handle(
+        CreateStationCommand request, CancellationToken ct)
+    {
+        // 1. Get current user context
+        // 2. Validate business rules (plan limits, permissions)
+        // 3. Create entity from request DTO
+        // 4. Persist via repository
+        // 5. Return Result<T>.Success(response) or Result<T>.Fail(error)
+    }
+}
+```
+
+**Rules:**
+- Always async/await for DB operations
+- Always inject dependencies via constructor (Dependency Inversion)
+- Always return `Result<T>` — never throw for expected business failures
+- Always apply multi-tenancy filtering (StationId) in queries
+- Always use `IUnitOfWork` for operations that span multiple repositories
+
+## Repository Pattern (Data Access Abstraction)
+
+Interface defined in `Application/Interfaces/Repositories/`. Implementation here injects `AppDbContext`.
+
+```csharp
+// Each repository is focused (Interface Segregation) — only methods that entity needs
+public interface IStationRepository
+{
+    Task<Station?> GetByIdAsync(Guid id);
+    Task<List<Station>> GetByOrganizationIdAsync(Guid orgId);
+    Task<int> CountByOrganizationIdAsync(Guid orgId);
+    Task AddAsync(Station station);
+}
+```
+
+**UnitOfWork** manages transaction boundaries:
+- `BeginTransactionAsync()` — start explicit transaction
+- `CommitAsync()` — commit transaction
+- `RollbackAsync()` — rollback on failure
+- `SaveChangesAsync()` — persist changes without explicit transaction
+
+## DependencyInjection.cs
+
+Single extension method `AddInfrastructure(IServiceCollection, IConfiguration)` registers:
+
+1. **DbContext** — PostgreSQL via Npgsql
+2. **ASP.NET Identity** — AppUser/AppRole with Guid keys, password rules (min 6, digit required), lockout (5 attempts, 5 min), unique email, 24h token expiry
+3. **Repositories** — All 14 as Scoped
+4. **Services** — AuthService, JwtTokenService, CurrentUserService, RequestContextService, SmtpEmailSender
+5. **MediatR** — Assembly scanning for handler auto-registration
+6. **DataSeeder** — `IHostedService` for idempotent startup seeding (OMCs, fuel types, subscription plans, roles)
+
+## Migrations
+
+- **Create:** `./db-migration-add.ps1 <MigrationName>` (or `dotnet ef migrations add <Name> --project FuelFlow.Infrastructure --startup-project FuelFlow.Api`)
+- **Apply:** `./db-update.ps1` (or `dotnet ef database update --project FuelFlow.Infrastructure --startup-project FuelFlow.Api`)
+- **Never** edit migration files after creation
+- **Never** remove applied migrations — create new ones to fix issues
+- Test migrations on staging before production
+
+## Design Patterns Summary
+
+| Pattern | Implementation | Principle |
+|---------|---------------|-----------|
+| **Repository** | `{Entity}Repository` wraps `AppDbContext` | DIP: business logic depends on interface, not EF Core |
+| **Unit of Work** | `UnitOfWork` manages `DbContext` transactions | SRP: transaction management separate from data access |
+| **Builder** | EF Fluent API `IEntityTypeConfiguration<T>` | Declarative, readable entity-to-table mapping |
+| **Mediator** | MediatR handlers auto-discovered from assembly | OCP: new features = new handlers, no existing code changes |
+| **Strategy** | `DataSeeder` with idempotent seed methods | OCP: add new seed data without modifying existing seeds |
