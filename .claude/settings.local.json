@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l c:UserszainbSourcesreposfuelflowfuel-flow-websrcroutes/**/*.tsx)",
+      "Bash(mkdir -p \"C:/Users/zainb/.claude/plans\")",
+      "Read(//dev/**)",
+      "Bash(\"C:/Users/zainb/.claude/plans/linked-foraging-rainbow-agent-af75aadbd9734325a.md\")",
+      "Bash(grep \"\\\\.cs$\")",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(python -m json.tool)",
+      "Bash(node -e \"JSON.parse\\(require\\(''fs''\\).readFileSync\\(''c:/Users/zainb/Sources/repos/fuelflow/.claude/settings.json'',''utf8''\\)\\); console.log\\(''VALID JSON''\\)\")"
+    ]
+  }
+}
