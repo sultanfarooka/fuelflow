@@ -88,11 +88,11 @@ These apply to BOTH frontend and backend — no exceptions:
 
 | Document | Purpose |
 |----------|---------|
-| [`docs/MODULES.md`](docs/MODULES.md) | **Single source of truth** for modules, features, requirements, and their IDs / statuses |
-| [`docs/PRD.md`](docs/PRD.md) | Full technical specs: API endpoints, DB schema, development phases |
+| [`docs/MODULES.md`](docs/MODULES.md) | **Single source of truth** for modules, features, requirements, statuses, and current priorities |
 | [`docs/ProjectOverView.md`](docs/ProjectOverView.md) | Business requirements, 11 modules, user stories |
-| [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md) | Current code-level state, what's done, next priorities |
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Version history, key architectural decisions |
+
+Reference documentation (tech stack, architecture, API conventions, DB schema, UI specs) lives in the **scoped `CLAUDE.md` files** — see Rule 9 below.
 
 ## Development Workflow (MANDATORY)
 
@@ -197,3 +197,28 @@ The MODULES.md status flip is part of the **same PR** — never a follow-up.
 
 - Frontend: ESLint + Prettier must pass.
 - Backend: `dotnet format` must produce no diff.
+
+### 9. Reference content lives in scoped `CLAUDE.md` files — not in a single PRD
+
+There is no top-level `PRD.md`. Tech-stack, architecture, API conventions, DB schema, and UI specs are documented inside the **scoped `CLAUDE.md`** for each project / folder, alongside the code they describe.
+
+| Content | Lives in |
+|---|---|
+| Module / feature / requirement IDs, status, acceptance criteria | [`docs/MODULES.md`](docs/MODULES.md) |
+| Current priorities (next 3 tasks) | [`docs/MODULES.md`](docs/MODULES.md) "Current Priorities" section |
+| Backend tech stack & versions, Clean Architecture, CQRS+MediatR | [`server/CLAUDE.md`](server/CLAUDE.md) |
+| API conventions, sample request/response payloads, controller list | [`server/FuelFlow.Api/CLAUDE.md`](server/FuelFlow.Api/CLAUDE.md) |
+| **Endpoint catalogue (authoritative)** | **Swagger** at `/swagger` — auto-generated |
+| Commands / Queries patterns, DTOs, validators, multi-tenancy guards, Mapperly | [`server/FuelFlow.Application/CLAUDE.md`](server/FuelFlow.Application/CLAUDE.md) |
+| Entity model, ER diagram, key entities | [`server/FuelFlow.Domain/CLAUDE.md`](server/FuelFlow.Domain/CLAUDE.md) |
+| **DB schema (authoritative)** | **EF Core migrations** in [`server/FuelFlow.Infrastructure/Migrations/`](server/FuelFlow.Infrastructure/Migrations/) |
+| EF Core configurations, global query filters, important DB rules | [`server/FuelFlow.Infrastructure/CLAUDE.md`](server/FuelFlow.Infrastructure/CLAUDE.md) |
+| Frontend tech stack, state management, forms, routing, i18n, PWA | [`fuel-flow-web/CLAUDE.md`](fuel-flow-web/CLAUDE.md) |
+| Route → role mapping, registration/onboarding flows | [`fuel-flow-web/src/routes/CLAUDE.md`](fuel-flow-web/src/routes/CLAUDE.md) |
+| Component patterns (shadcn, Field system, Dialog/Sonner/Recharts, subscription UI) | [`fuel-flow-web/src/components/CLAUDE.md`](fuel-flow-web/src/components/CLAUDE.md) |
+| API client, Zod validators, utilities | [`fuel-flow-web/src/lib/CLAUDE.md`](fuel-flow-web/src/lib/CLAUDE.md) |
+
+**How to apply:**
+- Before writing any new top-level reference doc (`docs/something.md`), check whether the content fits a scoped `CLAUDE.md`. It usually does — colocating with code keeps it from drifting.
+- When the authoritative artefact is the code itself (Swagger for endpoints, migrations for schema), the scoped `CLAUDE.md` is a *summary index* — never the primary source. When the two disagree, code wins; update the `CLAUDE.md`.
+- For cross-cutting business specs (a new requirement, a status flip), always update [`docs/MODULES.md`](docs/MODULES.md) per Rules 1 and 2 — never a scoped `CLAUDE.md`.

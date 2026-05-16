@@ -208,3 +208,50 @@ Single extension method `AddInfrastructure(IServiceCollection, IConfiguration)` 
 | **Builder** | EF Fluent API `IEntityTypeConfiguration<T>` | Declarative, readable entity-to-table mapping |
 | **Mediator** | MediatR handlers auto-discovered from assembly | OCP: new features = new handlers, no existing code changes |
 | **Strategy** | `DataSeeder` with idempotent seed methods | OCP: add new seed data without modifying existing seeds |
+
+## Important DB Rules (Cross-Cutting)
+
+These invariants are enforced at the data-access layer (configurations, query filters, or handler discipline). Migrations are the schema source of truth — when a rule and code disagree, code wins; update this list.
+
+| Area | Rule | Enforcement |
+|---|---|---|
+| Refresh tokens | Store hashed only; plain token sent to client only at creation | `RefreshTokenConfiguration` indexes `TokenHash`; service hashes before save |
+| Refresh tokens | Rotation on refresh: each refresh issues a new token, revokes the old; reuse ⇒ revoke chain | `RefreshTokenService.RefreshAsync` |
+| Refresh tokens | 7-day default expiry; session metadata (`ip_address`, `user_agent`, `device_id`) per row | Captured by `RequestContextService` |
+| Multi-tenancy | All operational tables carry `StationId` (or `OrganizationId` for org-scoped); global query filters apply by default | `AppDbContext.OnModelCreating` (see filter example below) |
+| Subscriptions | Exactly one **active** subscription per organisation | Unique partial index on `Subscription(organizationId)` where `status = 'active'` |
+| Pricing | Exactly one active `FuelPrices` per `(stationId, fuelTypeId)` at any time | Application-level check in handler + index on `(stationId, fuelTypeId, effectiveFrom)` |
+| Shifts | At most one open `StationShift` per `stationId` | Application-level check in `OpenShiftCommandHandler` |
+| Audit | Audit rows are append-only — no delete | Configured at the repo level: no `Delete` method on `IAuditLogRepository` |
+
+> Cross-reference: every rule above is also tracked in [`docs/MODULES.md`](../../docs/MODULES.md) with its `MXX-FXX-RXX` ID, status, and acceptance criteria. Use the module file for *what should exist*; use this file for *how it's enforced in EF Core*.
+
+## Global Query Filter Pattern (Multi-Tenancy)
+
+Tenant isolation is enforced by EF Core global query filters — never by relying on every query to add `WHERE station_id = …` manually.
+
+```csharp
+// AppDbContext.OnModelCreating
+protected override void OnModelCreating(ModelBuilder builder)
+{
+    var currentUser = _serviceProvider.GetRequiredService<ICurrentUserService>();
+
+    // Owner role bypasses station filtering (consolidated cross-station view)
+    builder.Entity<FuelTank>().HasQueryFilter(t =>
+        currentUser.Role == "Owner"
+            ? t.Station.OrganizationId == currentUser.OrganizationId
+            : currentUser.StationIds.Contains(t.StationId));
+
+    builder.Entity<Station>().HasQueryFilter(s =>
+        s.OrganizationId == currentUser.OrganizationId);
+
+    // … repeat for FuelNozzle, StationShift, NozzleReadings, FuelTankReading, …
+}
+```
+
+**Rules:**
+- Every station-scoped entity gets a `HasQueryFilter` — no exceptions. If you add a new entity, configure its filter in the SAME PR that adds the entity (per workflow Rule 1).
+- Owner bypass is by **OrganizationId**, not by skipping the filter entirely — keeps cross-organisation isolation safe.
+- Validation in handlers (e.g. `_currentUser.HasAccessToStationAsync`) is the *second* layer; filters are the first. Both must agree.
+- Background jobs (Hangfire) bypass the filter by design — use `IDbContextFactory` to create a context without `ICurrentUserService` for jobs that need to run system-wide.
+- To temporarily bypass for an admin tool: `dbContext.FuelTanks.IgnoreQueryFilters()` — call this out in code review.

@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-05-16
+
+Documentation restructure — single source of truth in `docs/MODULES.md`; reference content distributed to scoped `CLAUDE.md` files.
+
+### Removed
+- **`docs/PRD.md`** — content folded into `docs/MODULES.md` (business rules + dev phases) and the scoped `CLAUDE.md` files (tech stack, architecture, DB schema, API conventions/samples, UI specs).
+- **`docs/IMPLEMENTATION_STATUS.md`** — priority queue migrated to `docs/MODULES.md` "Current Priorities" section; per-area status tables dropped (status is now tracked per `MXX-FXX-RXX` row in MODULES.md); implemented endpoints superseded by Swagger.
+- **`.agent/workflows/update-docs.md`** and **`.agent/workflows/README.md`** — workflow superseded by root `CLAUDE.md` Rules 1–9.
+
+### Added
+- **`docs/MODULES.md` "Current Priorities" section** — replaces "Where to Continue" with `MXX-FXX-RXX` IDs.
+- **New requirement rows** in MODULES.md: `M07-F07` (UI Shell), `M07-F08` (PWA), `M11-F08` (Plan Comparison & Pricing Page), `M01-F08-R06` (Audit log viewer).
+- **Rule 9** in root `CLAUDE.md` — "Reference content lives in scoped `CLAUDE.md` files, not in a single PRD" with a content → location lookup table.
+- **Scoped `CLAUDE.md` updates** absorbing PRD content:
+  - `fuel-flow-web/CLAUDE.md` — "Why these choices?" rationale, Subscription UI section, PWA features
+  - `fuel-flow-web/src/routes/CLAUDE.md` — Page Structure table (route → role), registration / onboarding flow notes
+  - `fuel-flow-web/src/components/CLAUDE.md` — Dialog / Sonner / Recharts patterns, planned Subscription UI components
+  - `fuel-flow-web/src/lib/CLAUDE.md` — Why Zod
+  - `server/CLAUDE.md` — Tech stack table with versions + rationale + PostgreSQL choice + Swagger-as-SoT pointer
+  - `server/FuelFlow.Api/CLAUDE.md` — API conventions, RFC 7807 error format, sample request/response payloads
+  - `server/FuelFlow.Application/CLAUDE.md` — Multi-tenancy guard pattern in handlers, Mapperly usage
+  - `server/FuelFlow.Domain/CLAUDE.md` — ER diagram, key entities table
+  - `server/FuelFlow.Infrastructure/CLAUDE.md` — Important DB rules, global query filter pattern
+
+### Changed
+- **Phase IDs dropped** — old `1.4b`, `2.7`, `6.3` task IDs replaced by hierarchical `MXX-FXX-RXX`. Cross-reference table built once during migration; not preserved.
+- **`docs/CLAUDE.md`** — Document Map and "What Goes Where" rewritten around MODULES.md + scoped CLAUDE.md; old doc-driven / code-driven workflow folded into root `CLAUDE.md` Development Workflow.
+
+### Technical Decisions
+- **MODULES.md as single spec SoT, scoped CLAUDE.md as reference SoT** — colocating reference content with the code prevents drift; one spec file (MODULES.md) at the repo root is small enough to scan; Swagger and EF migrations remain authoritative for endpoints and schema respectively.
+
+### Breaking
+- Internal links to `docs/PRD.md` and `docs/IMPLEMENTATION_STATUS.md` are broken. Updated within this repo's docs/CLAUDE.md files in the same change. External tools (Cursor, Copilot) may cache the old structure briefly. `.cursorrules` retains references but is no longer the canonical guidance.
+
+---
+
 ## [1.12.0] - 2026-02-23
 
 ### Added

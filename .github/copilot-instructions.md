@@ -40,6 +40,6 @@ Purpose: short, actionable guidance to make AI coding agents immediately product
   - Auth flow: `server/Controllers/AuthController.cs`, `server/Options/AuthCookieOptions.cs`, and `server/FuelFlow.Application/Features/Auth`.
   - Frontend route and auth usage: `fuel-flow-web/src/routes/__root.tsx`, `fuel-flow-web/src/components/auth/login-form.tsx`, `fuel-flow-web/src/stores/auth-store.ts`.
 
-- On updating this file: `.cursorrules` is the canonical quick-reference for AI agents; keep this file short and sync changes from `.cursorrules` and `docs/PRD.md` when behavior changes. See `.cursorrules` for more detailed, evolving AI guidance.
+- On updating this file: keep it short — the canonical guidance lives in the root [`CLAUDE.md`](../CLAUDE.md) (workflow rules), scoped `CLAUDE.md` files (project conventions, tech stack, architecture, API, schema, UI), and [`docs/MODULES.md`](../docs/MODULES.md) (module / feature / requirement specs with `MXX-FXX-RXX` IDs). `.cursorrules` is also a quick-reference; sync changes across all three when behavior changes.
 
 - If anything here is incomplete or you want deeper examples (requests, handler examples, or a sample end-to-end dev session), tell me which area to expand.
