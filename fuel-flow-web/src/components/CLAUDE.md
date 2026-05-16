@@ -136,6 +136,56 @@ Multi-step wizard for initial station configuration. Each step is a standalone c
 - Toast notifications for success/error feedback
 - `price-row.tsx` manages inline edit state (saved vs editing) per row
 
+## Dialog Component Pattern
+
+Use shadcn's `Dialog` (from `ui/dialog.tsx` — add via `npx shadcn@latest add dialog` if not present) for any confirmation or modal flow:
+
+- **Confirmations:** Destructive actions (delete tank, deactivate station, downgrade plan) ALWAYS prompt via `Dialog`. Never use `window.confirm()` — it bypasses theme + i18n.
+- **Forms in modals:** Prefer routes over dialogs for multi-field forms; reserve dialogs for ≤3 fields or single-click confirmations.
+- **Closeable on backdrop click** unless the user might lose data — set `onOpenChange` to a no-op if confirmation is required.
+
+## Toast Usage (Sonner)
+
+Sonner is registered once in `ui/sonner.tsx` and mounted in `main.tsx` (or `__root.tsx`). Use `toast` from `sonner` directly — no need to wrap.
+
+| Outcome | Call | When |
+|---|---|---|
+| Success | `toast.success("Tank created")` | After successful mutation (also invalidate queries) |
+| Error | `toast.error(message)` | On mutation error; fall back to `"Failed to perform action"` if no server message |
+| Info | `toast.info(message)` | Non-blocking nudges (e.g. "Trial expires in 3 days") |
+| Promise | `toast.promise(mutation.mutateAsync(...), { loading, success, error })` | Long-running operations with progress feedback |
+
+Pair toasts with inline `<Alert variant="destructive">` for form-level server errors — DON'T rely on only one channel (toasts disappear; alerts persist).
+
+## Recharts Theme
+
+Charts (under `components/charts/` or inline in dashboard widgets) MUST use the CSS-variable-based theme tokens so dark mode works automatically:
+
+```typescript
+<LineChart data={data}>
+  <CartesianGrid stroke="hsl(var(--border))" />
+  <XAxis stroke="hsl(var(--muted-foreground))" />
+  <YAxis stroke="hsl(var(--muted-foreground))" />
+  <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))" }} />
+  <Line stroke="hsl(var(--chart-1))" strokeWidth={2} />
+</LineChart>
+```
+
+Chart colors `--chart-1`..`--chart-5` are defined in `index.css` for both light and dark themes. Don't hard-code hex values.
+
+## Subscription UI Components (Planned)
+
+Components needed for [M11-F02](../../../docs/MODULES.md#m11-f02--trial-period), [M11-F06](../../../docs/MODULES.md#m11-f06--feature-gating), [M11-F08](../../../docs/MODULES.md#m11-f08--plan-comparison--pricing-page):
+
+| Component | Location | Purpose |
+|---|---|---|
+| `<TrialBanner />` | `components/subscription/trial-banner.tsx` | Shown on dashboard layout while subscription is in trial state; days remaining + Upgrade CTA |
+| `<UpgradePrompt />` | `components/subscription/upgrade-prompt.tsx` | Inline lock-icon + message for gated features; links to `/settings/subscription` |
+| `<PlanCard />` | `components/subscription/plan-card.tsx` | Single plan tile used by `/pricing` (M11-F08) — variants: Starter / Professional / Enterprise |
+| `<BillingToggle />` | `components/subscription/billing-toggle.tsx` | Monthly / Yearly switch on `/pricing`; surfaces ~17% yearly discount visually |
+
+These don't exist yet — add when implementing M11-F08 / M11-F02 UI.
+
 ## Adding a New Component
 
 **shadcn primitive:** `npx shadcn@latest add [name]` → lands in `ui/`

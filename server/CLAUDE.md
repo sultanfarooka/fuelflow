@@ -1,5 +1,24 @@
 # Server — ASP.NET Core Backend
 
+## Tech Stack
+
+| Component | Tech | Version | Why |
+|---|---|---|---|
+| Framework | ASP.NET Core | 10.x | Web API, latest LTS-track, minimal hosting model |
+| Language | C# | 12 | Records, primary constructors for terse Commands/Queries |
+| ORM | Entity Framework Core | 10.x | Migrations + LINQ; better than Dapper for complex domain |
+| Auth | ASP.NET Identity + JWT | — | Built-in user/role tables; JWT carried in HTTP-only cookies |
+| CQRS / Messaging | MediatR | 14.x | In-process commands/queries; auto-discovered handlers; thin controllers |
+| Validation | FluentValidation | 12.x | Reusable rule classes; cleaner than data annotations |
+| Mapping | Mapperly | 4.3 | Source-generated mappers; zero runtime reflection |
+| API Docs | Swagger / OpenAPI | — | Auto-generated from controllers; **endpoint SoT** |
+| Background Jobs | Hangfire | 1.8.x | Dashboard + PostgreSQL-persisted jobs (planned for scheduled reports / trial expiry) |
+| Logging | Serilog | 3.x | Structured logging; sinks for console + file + future log aggregator |
+| Caching (optional) | Redis | — | Session/query cache; only if performance demands it |
+| Database | PostgreSQL | 16.x | Open source, JSON support for flexible fields (dip charts, plan features), excellent for reporting queries, first-class AWS RDS support |
+
+> Endpoint catalogue → **Swagger is the source of truth** (auto-generated from controllers at `/swagger`). The list in `server/FuelFlow.Api/CLAUDE.md` is a hand-maintained convenience index — verify against Swagger when in doubt.
+
 ## Clean Architecture (SOLID Foundation)
 
 Four separate .NET projects. Dependencies flow inward only — inner layers never reference outer layers.

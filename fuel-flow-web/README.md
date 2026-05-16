@@ -187,27 +187,21 @@ formatDate(new Date()) // "08/02/2026"
 
 ## 🚀 Next Steps
 
-See **[Implementation Status](../docs/IMPLEMENTATION_STATUS.md)** for current state and where to continue.
-
-**Next up:** 1.4c (Subscription plan seeding), 1.6 (Organization & Station CRUD), 1.8 (Basic UI shell)
+See **[`docs/MODULES.md`](../docs/MODULES.md)** — "Current Priorities" section lists the next 3 tasks with `MXX-FXX-RXX` IDs.
 
 ## 📖 Documentation
 
-- **PRD**: `docs/PRD.md` - Complete technical specifications
-- **Project Overview**: `docs/ProjectOverView.md` - Business requirements
-- **Implementation Status**: `docs/IMPLEMENTATION_STATUS.md` - What's done, where to continue
-- **Cursor Rules**: `.cursorrules` - AI development guidelines
+- **Modules / features / requirements (SoT)**: [`docs/MODULES.md`](../docs/MODULES.md)
+- **Frontend conventions**: [`fuel-flow-web/CLAUDE.md`](./CLAUDE.md) + scoped `src/*/CLAUDE.md`
+- **Backend conventions**: [`server/CLAUDE.md`](../server/CLAUDE.md) + scoped `server/FuelFlow.*/CLAUDE.md`
+- **Project Overview**: [`docs/ProjectOverView.md`](../docs/ProjectOverView.md) — business requirements
+- **Workflow rules**: Root [`CLAUDE.md`](../CLAUDE.md) Development Workflow
 
 ## 🤝 Development Guidelines
 
-Follow the cursor rules in `.cursorrules` for:
+Follow root [`CLAUDE.md`](../CLAUDE.md) and the scoped [`CLAUDE.md`](./CLAUDE.md) files for:
 - Code conventions
 - Architecture patterns
-- Business rules
+- Business rules (with `MXX-FXX-RXX` IDs in [`docs/MODULES.md`](../docs/MODULES.md))
 - Multi-tenancy patterns
 - Testing approach
-
----
-
-**Phase 1.1 Status**: ✅ Complete  
-**Next Phase**: See [Implementation Status](../docs/IMPLEMENTATION_STATUS.md)

@@ -2,6 +2,52 @@
 
 Routes are auto-discovered from the file system by the TanStack Router Vite plugin. `routeTree.gen.ts` is auto-generated — **never edit it manually**.
 
+## Page Structure (Route → Access)
+
+Authoritative mapping of routes to the role(s) allowed to see them. Reference [`docs/MODULES.md`](../../../docs/MODULES.md) for the underlying feature IDs.
+
+| Page | Route | Access | Module |
+|---|---|---|---|
+| Landing | `/` | Public | — |
+| Pricing / Plan Comparison | `/pricing` | Public | [M11-F08](../../../docs/MODULES.md#m11-f08--plan-comparison--pricing-page) |
+| Registration | `/auth/register` | Public | [M01-F01](../../../docs/MODULES.md#m01-f01--self-service-registration) |
+| Login | `/auth/login` | Public | [M01-F03](../../../docs/MODULES.md#m01-f03--login--session) |
+| Email verification | `/auth/verify-email`, `/auth/check-email-register` | Public | [M01-F02](../../../docs/MODULES.md#m01-f02--email-verification) |
+| Password reset | `/auth/forgot-password`, `/auth/reset-password`, `/auth/check-email-reset` | Public | [M01-F04](../../../docs/MODULES.md#m01-f04--password-recovery) |
+| Onboarding (org + first station) | `/onboarding` | Authenticated, no org | [M08-F01](../../../docs/MODULES.md#m08-f01--station-profile) |
+| Dashboard | `/dashboard` | All authenticated | [M07-F05](../../../docs/MODULES.md#m07-f05--dashboard-widgets) |
+| Station detail | `/dashboard/station/:stationId` | Owner, Manager | — |
+| Station setup wizard | `/dashboard/station/:stationId/setup` | Owner, Manager | [M08-F02](../../../docs/MODULES.md#m08-f02--tank-configuration), [M08-F03](../../../docs/MODULES.md#m08-f03--nozzle-configuration) |
+| Shifts | `/dashboard/station/:stationId/shifts` (planned) | Manager, Nozzleman | [M04](../../../docs/MODULES.md#m04--shift-management) |
+| Inventory | `/dashboard/station/:stationId/inventory` (planned) | Manager | [M02](../../../docs/MODULES.md#m02--fuel-inventory--tank-control) |
+| Finance | `/dashboard/station/:stationId/finance` (planned) | Manager | [M05](../../../docs/MODULES.md#m05--finance--accounts) |
+| Reports | `/dashboard/station/:stationId/reports` (planned) | Owner, Manager | [M07-F01..F03](../../../docs/MODULES.md#m07--reporting-analytics--platform-ui) |
+| Settings | `/settings` (planned) | Owner | [M08](../../../docs/MODULES.md#m08--settings--configuration) |
+| Subscription | `/settings/subscription` (planned) | Owner | [M11-F01..F07](../../../docs/MODULES.md#m11--subscription--billing) |
+| Audit log viewer | `/settings/audit` (planned) | Owner | [M01-F08-R06](../../../docs/MODULES.md#m01-f08--audit-trail) |
+| Admin: Payment verification | `/admin/payments` (planned) | SuperAdmin | [M11-F03](../../../docs/MODULES.md#m11-f03--payment--verification) |
+
+**Role enforcement** is two-layered:
+
+1. **`beforeLoad()` guard** (this file's pattern) — short-circuits navigation client-side based on `useAuthStore.getState()`.
+2. **API-level enforcement** — every request is authorised in the backend regardless of what the UI did. Frontend role checks are UX, not security.
+
+## Registration Flow
+
+Multi-step form spread across three routes (see [M01-F01](../../../docs/MODULES.md#m01-f01--self-service-registration)):
+
+| Step | Route | Content |
+|---|---|---|
+| 1 | `/auth/register` | Owner info form (full name, email, phone, password) — single page, multi-step in-component |
+| 2 | `/auth/check-email-register` | "Check your email" confirmation screen |
+| 3 | `/auth/verify-email?token=…` | Verification endpoint hit; on success → redirect to `/auth/login` |
+
+Organization and first station are NOT collected at registration — they're added after first login during onboarding (`/onboarding`).
+
+## Onboarding Flow
+
+After first verified login, users without an organization are redirected to `/onboarding` (enforced by `dashboard/route.tsx`'s `beforeLoad`). The single page hosts a wizard that creates Organization + first Station + Trial Subscription in one transaction. Subsequent logins skip onboarding entirely.
+
 ## Route Structure
 
 ```

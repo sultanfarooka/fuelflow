@@ -16,6 +16,17 @@
 - **Toasts:** Sonner 2.0
 - **Theme:** next-themes 0.4 (light/dark/system)
 
+### Why these choices?
+
+- **TanStack Router** over React Router — type-safe params, file-based routing, better DevTools
+- **TanStack Query** over Redux Toolkit Query — purpose-built for server state, automatic caching/refetching
+- **TanStack Form** over React Hook Form — same ecosystem as Router/Query, framework-agnostic, first-class Zod adapter
+- **Zustand** over Redux — small API, no boilerplate, persistence middleware; suits client-only UI state
+- **shadcn/ui** over MUI / Ant — unstyled components we own (no upstream lock-in), customisable for Pakistani-aesthetic and dark-mode tokens
+- **Zod** over Joi / Yup — schemas inferable to TS types, shareable with backend FluentValidation semantics
+- **Vite** over CRA — faster cold starts, native ESM, simpler PWA plugin
+- **i18next** — RTL-friendly, Urdu pluralisation rules, namespacing for large translation sets
+
 ## Directory Structure
 
 ```
@@ -208,6 +219,30 @@ const canExportReports = subscription?.plan.features.reports_export ?? false;
   <UpgradePrompt feature="Report Exports" />
 )}
 ```
+
+## Subscription Status UI
+
+Three places the subscription state is surfaced to the user — drives [M11-F02](../docs/MODULES.md#m11-f02--trial-period), [M11-F04](../docs/MODULES.md#m11-f04--expiry--grace-period), [M11-F06](../docs/MODULES.md#m11-f06--feature-gating):
+
+| Element | Location | Behaviour |
+|---|---|---|
+| **Trial banner** | Top of dashboard layout (in `dashboard/route.tsx` shell) | Shown for trial subs only; "X days left in trial — Upgrade now". Persistent until trial ends or user upgrades. |
+| **Upgrade prompts** | Inline next to gated features (Reports Export, Lubricants, SMS) | `<UpgradePrompt feature="…" />` component renders a lock icon + "Upgrade to unlock" → links to `/settings/subscription`. |
+| **Subscription page** | `/settings/subscription` (Owner-only route) | Current plan, usage vs limits (stations / users / modules), payment history, "Upgrade" CTA → links to `/pricing` ([M11-F08](../docs/MODULES.md#m11-f08--plan-comparison--pricing-page)). |
+
+Trial banner reads from the auth store's `subscription.status === 'trial'` and `subscription.trialEndsAt`. Don't duplicate the days-remaining calculation across components — derive it once in a shared `useTrialDaysRemaining` hook.
+
+## PWA Features
+
+Configured via `vite-plugin-pwa`. See [M07-F08](../docs/MODULES.md#m07-f08--progressive-web-app-pwa) for the spec.
+
+| Feature | Status | Notes |
+|---|---|---|
+| Offline app shell | Planned | Service worker pre-caches routes + assets; failed API calls show a retry banner (no offline queue). |
+| Add to Home Screen | Planned | Web app manifest with icons (192/512) + name + theme color. Triggers install prompt on supported browsers. |
+| Push notifications | Out of Scope (v2) | Web Push API for stock/price/shortage alerts later — falls back to in-app + SMS in v1. |
+
+When making any change touching the service worker or manifest, bump the build to invalidate the SW cache for already-installed users.
 
 ## Theme & Styling
 

@@ -4,7 +4,7 @@
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
 **Last Updated:** 2026-05-16
-**Synced with:** PRD v1.12.0, ProjectOverView v1.0, IMPLEMENTATION_STATUS 2026-02-23
+**Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
 
@@ -46,6 +46,20 @@
 | [M09](#m09--lubricants--oil-shop) | Lubricants / Oil Shop | Planned | — |
 | [M10](#m10--sms--notifications) | SMS / Notifications | Planned | — |
 | [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
+
+---
+
+## Current Priorities
+
+The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that drives the branch name (Rule 4), commit scopes (Rule 7), PR title (Rule 5), and status flip (Rule 2).
+
+| # | ID | Title | Area |
+|---|---|---|---|
+| 1 | [M07-F07](#m07-f07--ui-shell)   | Basic UI shell (layout, sidebar, navigation) | Frontend |
+| 2 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
+| 3 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
+
+> When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
 ---
 
@@ -193,9 +207,11 @@ All sensitive actions are logged with user, timestamp, and before/after values. 
 | M01-F08-R03 | Manual stock adjustments logged with reason | AUD-003 | Planned |
 | M01-F08-R04 | Credit entry deletions logged | AUD-004 | Planned |
 | M01-F08-R05 | Audit logs never deleted; retention is Owner-configurable | AUD-005 | Planned |
+| M01-F08-R06 | Audit log viewer UI (Owner-only) — filter by user, entity, action, date range | — | Planned |
 
 **Acceptance Criteria:**
 - **AC1** Given an admin attempts to delete an audit row, When the delete is issued, Then the operation is blocked at the DB/repo level.
+- **AC2** Given an Owner opens the audit log viewer, When they filter by user + date range, Then matching audit rows are returned with before/after values and timestamps.
 
 ---
 
@@ -621,9 +637,9 @@ Time-bound promotional rates.
 
 ---
 
-## M07 — Reporting & Analytics
+## M07 — Reporting, Analytics & Platform UI
 
-**Purpose:** Daily/weekly/monthly operational and financial reports, dashboard widgets, export (PDF/Excel/Print), and scheduled email delivery.
+**Purpose:** Daily/weekly/monthly operational and financial reports, dashboard widgets, export (PDF/Excel/Print), scheduled email delivery, and the cross-cutting frontend platform (UI shell, PWA).
 
 ### M07-F01 — Daily Sales Report   [Status: Planned]
 
@@ -710,6 +726,42 @@ Owner-only cross-station aggregation.
 |---|---|---|---|
 | M07-F06-R01 | Owner sees aggregated totals across all owned stations | — | Planned |
 | M07-F06-R02 | Drill-down from aggregate to individual station | — | Planned |
+
+---
+
+### M07-F07 — UI Shell   [Status: Planned]
+
+The cross-cutting layout that wraps every authenticated page: sidebar, top nav, content area, and route-guard composition. Provides the chrome that the per-module pages (M07-F01..F06, M05, M06, …) plug into.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Planned |
+| M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | Planned |
+| M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | Planned |
+| M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | Planned |
+| M07-F07-R05 | Active-route highlighting in sidebar | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a Nozzleman, When they open the dashboard, Then the sidebar shows only shift-related links (no Finance, Reports, Settings).
+- **AC2** Given an Owner with 3 stations, When they click the station switcher, Then a dropdown lists all 3 plus an "All Stations" option.
+- **AC3** Given any viewport < 640px, When the shell renders, Then the sidebar collapses behind a hamburger toggle.
+
+---
+
+### M07-F08 — Progressive Web App (PWA)   [Status: Planned]
+
+Make the app installable and offline-capable for shift operations on shared station tablets.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M07-F08-R01 | Service worker caches the app shell for offline launch | — | Planned |
+| M07-F08-R02 | Web app manifest with icons + name supports "Add to Home Screen" | — | Planned |
+| M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | Planned |
+| M07-F08-R04 | Web push notifications | — | Out of Scope (v2) |
 
 ---
 
@@ -1055,6 +1107,26 @@ Past payments, receipts, subscription timeline.
 
 ---
 
+### M11-F08 — Plan Comparison & Pricing Page   [Status: Planned]
+
+Public-facing pricing page where prospects and existing Owners compare Starter / Professional / Enterprise plans and start a trial or upgrade.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M11-F08-R01 | Public route `/pricing` lists all 3 plans side-by-side | — | Planned |
+| M11-F08-R02 | Monthly / yearly billing toggle; yearly applies the ~17% discount visibly | — | Planned |
+| M11-F08-R03 | Feature matrix per plan (stations, users, modules, support) | — | Planned |
+| M11-F08-R04 | "Start free trial" CTA on each plan → registration flow | — | Planned |
+| M11-F08-R05 | Authenticated Owner sees "Upgrade" CTA instead of trial CTA | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a logged-out visitor, When they open `/pricing`, Then they see 3 plans, a monthly/yearly toggle, and a "Start free trial" CTA per plan.
+- **AC2** Given an Owner on Starter plan, When they open `/pricing`, Then the Starter row shows "Current Plan" and Professional/Enterprise show "Upgrade".
+
+---
+
 ## Appendix A — Legacy → New ID Map
 
 Quick lookup for every legacy business-rule ID. Use this when reading old commits, PRs, code comments, or PRD §5.
@@ -1114,9 +1186,16 @@ Quick lookup for every legacy business-rule ID. Use this when reading old commit
 
 | For… | See… |
 |---|---|
-| API endpoint specs (routes, request/response) | [`PRD.md` §4](PRD.md) |
-| Database schema (tables, columns, relationships) | [`PRD.md` §3](PRD.md) + EF migrations |
-| Current implementation status | [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md) |
+| **API endpoint catalogue (authoritative)** | **Swagger** at `/swagger` (auto-generated); summary index in [`server/FuelFlow.Api/CLAUDE.md`](../server/FuelFlow.Api/CLAUDE.md) |
+| API conventions, sample request/response payloads | [`server/FuelFlow.Api/CLAUDE.md`](../server/FuelFlow.Api/CLAUDE.md) |
+| **Database schema (authoritative)** | **EF Core migrations** in [`server/FuelFlow.Infrastructure/Migrations/`](../server/FuelFlow.Infrastructure/Migrations/) |
+| ER diagram + key entities (conceptual) | [`server/FuelFlow.Domain/CLAUDE.md`](../server/FuelFlow.Domain/CLAUDE.md) |
+| EF Core conventions, global query filters, important DB rules | [`server/FuelFlow.Infrastructure/CLAUDE.md`](../server/FuelFlow.Infrastructure/CLAUDE.md) |
+| Backend tech stack, Clean Architecture, CQRS+MediatR | [`server/CLAUDE.md`](../server/CLAUDE.md) |
+| Commands/Queries/DTO patterns, multi-tenancy guards, Mapperly | [`server/FuelFlow.Application/CLAUDE.md`](../server/FuelFlow.Application/CLAUDE.md) |
+| Frontend tech stack, state, forms, routing, i18n, PWA | [`fuel-flow-web/CLAUDE.md`](../fuel-flow-web/CLAUDE.md) |
+| Route → role mapping, registration / onboarding flows | [`fuel-flow-web/src/routes/CLAUDE.md`](../fuel-flow-web/src/routes/CLAUDE.md) |
+| Component patterns (Dialog, Sonner, Recharts, subscription UI) | [`fuel-flow-web/src/components/CLAUDE.md`](../fuel-flow-web/src/components/CLAUDE.md) |
 | Architectural decisions & version history | [`CHANGELOG.md`](CHANGELOG.md) |
 | Business requirements & user stories | [`ProjectOverView.md`](ProjectOverView.md) |
 | EF Core mapping conventions | [`EF_CONFIGURATION_CONVENTIONS.md`](EF_CONFIGURATION_CONVENTIONS.md) |
@@ -1131,5 +1210,5 @@ Quick lookup for every legacy business-rule ID. Use this when reading old commit
 4. **Status flips are atomic with implementation.** The PR that completes `M04-F03-R01` flips it from Planned → Done in the same diff.
 5. **Acceptance criteria are the test plan.** Write ACs *before* writing the code. If you can't, the requirement isn't clear enough.
 6. **Numbering is append-only.** Never renumber an existing ID. Removed features → mark `Out of Scope`, keep the slot. New features get the next free F-number.
-7. **Mirror PRD changes immediately.** When `PRD.md` gets a new rule, add it here with a new R-id and a Legacy column entry.
+7. **No standalone PRD any more.** New business rules, requirements, and acceptance criteria go directly into this file with a new `MXX-FXX-RXX` row. Tech-stack / architecture / API / schema / UI reference content goes into the scoped `CLAUDE.md` files (see [`docs/CLAUDE.md`](CLAUDE.md) and root [`CLAUDE.md`](../CLAUDE.md) Rule 9).
 8. **One doc owner per sprint.** Reviews every PR that touches `MODULES.md`.

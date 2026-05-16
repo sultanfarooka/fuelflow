@@ -107,6 +107,14 @@ interface LoginApiResponse {
 }
 ```
 
+## Why Zod?
+
+Chosen over Joi / Yup / Valibot for three reasons:
+
+- **TS-first type inference** — `z.infer<typeof schema>` gives the exact form-data type for free; no parallel `interface` definitions to drift.
+- **Schema-as-strategy** — schemas are first-class values usable wherever validation is needed (forms, API client, route loaders). Pairs cleanly with TanStack Form's `validators: { onSubmit: schema }`.
+- **Mirrors backend semantics** — Zod's `.min`, `.regex`, `.refine` map 1:1 to FluentValidation rules on the server, keeping client/server constraints aligned (Pakistani phone, password rules, etc.).
+
 ## Validators (`validators/auth.ts`) — Zod Schemas as Validation Strategies
 
 Each schema exports both the schema and inferred TypeScript type:

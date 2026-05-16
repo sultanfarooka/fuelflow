@@ -156,6 +156,57 @@ public interface ICurrentUserService
 - `IAuthService` returns `bool` (not throw) for idempotent email operations
 - `ICurrentUserService` extracts claims — never read HttpContext in handlers directly
 
+## Multi-Tenancy in Commands & Queries
+
+Every Command or Query that touches station-scoped data MUST be scoped to the current user's authorised station(s). Don't trust station IDs sent by the client.
+
+```csharp
+public class CreateFuelTankCommandHandler : IRequestHandler<CreateFuelTankCommand, Result<FuelTankDto>>
+{
+    private readonly IFuelTankRepository _tanks;
+    private readonly ICurrentUserService _currentUser;
+
+    public async Task<Result<FuelTankDto>> Handle(CreateFuelTankCommand cmd, CancellationToken ct)
+    {
+        // 1. Resolve station from the cmd; backend checks it belongs to the caller's org
+        if (!await _currentUser.HasAccessToStationAsync(cmd.Request.StationId))
+            return Result.Failure<FuelTankDto>("Forbidden");
+
+        // 2. Build entity — the global query filter in DbContext will also enforce StationId on reads
+        var tank = new FuelTank { ... StationId = cmd.Request.StationId ... };
+        await _tanks.AddAsync(tank);
+        return Result.Success(_mapper.ToDto(tank));
+    }
+}
+```
+
+**Rules:**
+- Validate the caller has access to the `StationId` referenced in the request, ALWAYS — even if EF Core's global query filter will block stale reads.
+- Owner role can act across all stations of their organisation (consolidated view).
+- Manager role can act only on stations in their `UserStation` join rows.
+- Nozzleman role can act only on the currently-open shift's station.
+- See [M01-F07](../../docs/MODULES.md#m01-f07--multi-station-access) for the access rules; see `server/FuelFlow.Infrastructure/CLAUDE.md` for the corresponding global query filter pattern.
+
+## DTO ↔ Entity Mapping (Mapperly)
+
+Use Mapperly source-generated mappers — zero reflection, generated as `partial` classes at compile time.
+
+```csharp
+// FuelFlow.Application/Mapping/FuelTankMapper.cs
+[Mapper]
+public partial class FuelTankMapper
+{
+    public partial FuelTankDto ToDto(FuelTank entity);
+    public partial FuelTank ToEntity(CreateFuelTankRequest request);
+}
+```
+
+**Rules:**
+- One mapper per aggregate root (FuelTank, Station, User, …); colocate with the entity's feature folder.
+- DI register as singleton (mappers are stateless).
+- Never hand-write `new FuelTankDto { Id = entity.Id, ... }` — let Mapperly generate it.
+- For complex mappings (Pakistani phone formatting, computed fields), add a partial method or a custom `[MapProperty]` attribute.
+
 ## Adding a New Feature
 
 1. **DTO** — Create request/response in `DTOs/{Feature}/`
