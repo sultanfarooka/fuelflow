@@ -30,6 +30,10 @@ export interface CreateFuelNozzleApiResponse {
   data: FuelNozzleDto
 }
 
+export interface DeleteFuelNozzleApiResponse {
+  success: boolean
+}
+
 /**
  * Get all fuel nozzles for a station.
  * Station must belong to current user's organization.
@@ -52,5 +56,14 @@ export async function createFuelNozzle(
   return api.post<CreateFuelNozzleApiResponse>(
     `/stations/${stationId}/fuel-nozzles`,
     payload
+  )
+}
+
+export async function deleteFuelNozzle(
+  stationId: string,
+  nozzleId: string
+): Promise<DeleteFuelNozzleApiResponse> {
+  return api.delete<DeleteFuelNozzleApiResponse>(
+    `/stations/${stationId}/fuel-nozzles/${nozzleId}`
   )
 }

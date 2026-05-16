@@ -54,6 +54,7 @@ public class AuthService : IAuthService
                 <p>This link expires in 24 hours.</p>
             ";
 
+            _logger.LogInformation("Verification URL for user {UserId}: {VerifyUrl}", user.Id, verifyUrl);
             await _emailSender.SendEmailAsync(user.Email!, "Verify your Fuel Flow account", htmlBody, cancellationToken);
             return true;
         }
@@ -88,6 +89,7 @@ public class AuthService : IAuthService
                 <p>This link expires in 24 hours.</p>
             ";
 
+            _logger.LogInformation("Password reset URL for user {UserId}: {ResetUrl}", user.Id, resetUrl);
             await _emailSender.SendEmailAsync(user.Email!, "Reset your Fuel Flow password", htmlBody, cancellationToken);
             return true;
         }

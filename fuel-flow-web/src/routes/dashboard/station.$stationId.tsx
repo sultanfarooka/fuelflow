@@ -23,7 +23,7 @@ import {
 import { useAuthStore } from "@/stores/auth-store";
 
 export const Route = createFileRoute("/dashboard/station/$stationId")({
-  beforeLoad: ({ params }) => {
+  beforeLoad: ({ params, location }) => {
     const { isAuthenticated, organization, stations } = useAuthStore.getState();
     if (!isAuthenticated) {
       throw redirect({
@@ -37,6 +37,16 @@ export const Route = createFileRoute("/dashboard/station/$stationId")({
     const station = stations?.find((s) => s.id === params.stationId);
     if (!station && (stations?.length ?? 0) > 0) {
       throw redirect({ to: "/dashboard" });
+    }
+    if (
+      station &&
+      station.setupComplete === false &&
+      !location.pathname.endsWith("/setup")
+    ) {
+      throw redirect({
+        to: "/dashboard/station/$stationId/setup",
+        params: { stationId: params.stationId },
+      });
     }
   },
   component: StationDashboardPage,

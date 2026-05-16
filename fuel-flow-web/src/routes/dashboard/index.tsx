@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { getOMCs, type OMC } from "@/lib/api/omcs";
 import { createStation, type CreateStationRequest } from "@/lib/api/station-management";
 import { getCurrentUser } from "@/lib/api/auth/me";
@@ -23,6 +25,7 @@ function OrganizationDashboardPage() {
   const [omcId, setOmcId] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [formError, setFormError] = useState("");
 
   const { data: omcResponse, isLoading: isLoadingOmcs } = useQuery({
     queryKey: ["omcs"],
@@ -44,18 +47,38 @@ function OrganizationDashboardPage() {
       setOmcId("");
       setAddress("");
       setPhone("");
+      setFormError("");
     },
     onError: (error: unknown) => {
-      const message =
-        error instanceof Error ? error.message : "Failed to create station.";
-      toast.error(message);
+      const axiosErr = error as {
+        response?: { data?: { title?: string; detail?: string; errors?: Record<string, string[]> } };
+        message?: string;
+      } | null;
+      if (axiosErr?.response?.data) {
+        const data = axiosErr.response.data;
+        const fieldMessages =
+          data.errors &&
+          Object.values(data.errors)
+            .flat()
+            .filter(Boolean);
+        const message =
+          (fieldMessages && fieldMessages[0]) ||
+          data.detail ||
+          data.title ||
+          "Failed to create station.";
+        setFormError(message);
+      } else {
+        const message =
+          error instanceof Error ? error.message : "Failed to create station.";
+        setFormError(message);
+      }
     },
   });
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!name.trim() || !omcId) {
-      toast.error("Station name and OMC are required.");
+      setFormError("Station name and OMC are required.");
       return;
     }
     const payload: CreateStationRequest = {
@@ -177,6 +200,15 @@ function OrganizationDashboardPage() {
                     />
                   </div>
                 </div>
+                {formError && (
+                  <Alert
+                    variant="destructive"
+                    className="w-full [&>svg+div]:translate-y-0"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{formError}</AlertDescription>
+                  </Alert>
+                )}
                 <div className="flex justify-end">
                   <Button
                     type="submit"

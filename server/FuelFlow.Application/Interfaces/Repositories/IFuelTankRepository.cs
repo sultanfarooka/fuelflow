@@ -10,4 +10,5 @@ public interface IFuelTankRepository
     Task<List<FuelTank>> GetAllByStationIdAsync(Guid stationId, CancellationToken cancellationToken = default);
     Task<FuelTank?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddAsync(FuelTank fuelTank);
+    Task DeleteAsync(FuelTank fuelTank);
 }

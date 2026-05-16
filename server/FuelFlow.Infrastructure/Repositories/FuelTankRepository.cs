@@ -19,6 +19,8 @@ public class FuelTankRepository : IFuelTankRepository
         return await _dbContext.FuelTanks
             .AsNoTracking()
             .Include(f => f.FuelType)
+            .Include(f => f.DipChart)
+                .ThenInclude(d => d.Entries)
             .Where(f => f.StationId == stationId)
             .OrderBy(f => f.Name ?? f.CreatedAt.ToString())
             .ToListAsync(cancellationToken);
@@ -34,5 +36,11 @@ public class FuelTankRepository : IFuelTankRepository
     public async Task AddAsync(FuelTank fuelTank)
     {
         await _dbContext.FuelTanks.AddAsync(fuelTank);
+    }
+
+    public Task DeleteAsync(FuelTank fuelTank)
+    {
+        _dbContext.FuelTanks.Remove(fuelTank);
+        return Task.CompletedTask;
     }
 }

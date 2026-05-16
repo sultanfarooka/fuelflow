@@ -36,4 +36,17 @@ public class FuelNozzleController : ControllerBase
             return BadRequest(new { success = false, error = result.Error });
         return Ok(new { success = true, data = result.Data });
     }
+
+    /// <summary>
+    /// DELETE /api/v1/stations/{stationId}/fuel-nozzles/{nozzleId}
+    /// Deletes a fuel nozzle from the station.
+    /// </summary>
+    [HttpDelete("{nozzleId:guid}")]
+    public async Task<IActionResult> Delete(Guid stationId, Guid nozzleId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DeleteFuelNozzleCommand(stationId, nozzleId), cancellationToken);
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+        return Ok(new { success = true });
+    }
 }

@@ -56,7 +56,16 @@ public class CreateFuelNozzleCommandHandler : IRequestHandler<CreateFuelNozzleCo
         if (tank.StationId != request.StationId)
             return Result<FuelNozzleDto>.Failure("Tank does not belong to this station.");
 
-        // --- Step 4: Create and persist fuel nozzle ---
+        // --- Step 4: Enforce unique nozzle number per tank (case-insensitive) ---
+        var existingNozzles = await _fuelNozzleRepo.GetByStationIdAsync(request.StationId, cancellationToken);
+        var normalizedNewNozzle = request.Request.NozzleNumber.Trim().ToLowerInvariant();
+        if (existingNozzles.Any(n => n.TankId == request.Request.TankId &&
+                                     n.NozzleNumber.ToLowerInvariant() == normalizedNewNozzle))
+        {
+            return Result<FuelNozzleDto>.Failure("A nozzle with this name/number already exists for this tank.");
+        }
+
+        // --- Step 5: Create and persist fuel nozzle ---
         var newFuelNozzle = new Domain.Entities.FuelNozzle
         {
             NozzleNumber = request.Request.NozzleNumber.Trim(),
@@ -67,7 +76,7 @@ public class CreateFuelNozzleCommandHandler : IRequestHandler<CreateFuelNozzleCo
         await _fuelNozzleRepo.AddAsync(newFuelNozzle);
         await _unitOfWork.SaveChangesAsync();
 
-        // --- Step 5: Map to DTO and return ---
+        // --- Step 6: Map to DTO and return ---
         return Result<FuelNozzleDto>.Success(new FuelNozzleDto
         {
             Id = newFuelNozzle.Id,

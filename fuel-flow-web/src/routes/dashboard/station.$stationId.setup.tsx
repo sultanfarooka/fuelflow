@@ -1,5 +1,5 @@
 /**
- * Station setup wizard: one route, steps 1–5.
+ * Station setup wizard: one route, steps 1–4.
  * Data is persisted when the user adds or saves an item; Next only advances the step.
  * Flow: Step 1 product types → Step 2 prices → Step 3 tanks → Step 4 nozzles → Step 5 summary → Finish.
  */
@@ -11,7 +11,6 @@ import { Step1FuelTypes } from "@/components/station-setup/step1-fuel-types";
 import { Step2Prices } from "@/components/station-setup/step2-prices";
 import { Step3Tanks } from "@/components/station-setup/step3-tanks";
 import { Step4Nozzles } from "@/components/station-setup/step4-nozzles";
-import { Step5Summary } from "@/components/station-setup/step5-summary";
 import { useAuthStore } from "@/stores/auth-store";
 
 const STEPS = [
@@ -19,7 +18,6 @@ const STEPS = [
   { title: "Prices", description: "Set price per product type" },
   { title: "Tanks", description: "Add fuel tanks" },
   { title: "Nozzles", description: "Map nozzles to tanks" },
-  { title: "Summary", description: "Review and finish" },
 ] as const;
 
 export const Route = createFileRoute("/dashboard/station/$stationId/setup")({
@@ -35,7 +33,7 @@ function StationSetupPage() {
   const [currentStep, setCurrentStep] = useState(1);
 
   const handleNext = () => {
-    if (currentStep < 5) setCurrentStep((s) => s + 1);
+    if (currentStep < 4) setCurrentStep((s) => s + 1);
   };
 
   const handleBack = () => {
@@ -60,7 +58,7 @@ function StationSetupPage() {
         </Link>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">Set up {station.name}</h1>
         <p className="text-muted-foreground">
-          Step {currentStep} of 5: {STEPS[currentStep - 1].title}
+          Step {currentStep} of 4: {STEPS[currentStep - 1].title}
         </p>
       </div>
 
@@ -87,10 +85,7 @@ function StationSetupPage() {
         <Step3Tanks stationId={stationId} onNext={handleNext} onBack={handleBack} />
       )}
       {currentStep === 4 && (
-        <Step4Nozzles stationId={stationId} onNext={handleNext} onBack={handleBack} />
-      )}
-      {currentStep === 5 && (
-        <Step5Summary stationId={stationId} onFinish={handleFinish} onBack={handleBack} />
+        <Step4Nozzles stationId={stationId} onFinish={handleFinish} onBack={handleBack} />
       )}
     </div>
   );

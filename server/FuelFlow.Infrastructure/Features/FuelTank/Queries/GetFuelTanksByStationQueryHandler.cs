@@ -49,6 +49,8 @@ public class GetFuelTanksByStationQueryHandler : IRequestHandler<GetFuelTanksByS
             CapacityLiters = t.CapacityLiters,
             FuelTypeId = t.FuelTypeId,
             FuelTypeName = t.FuelType?.Name,
+            HasDipChart = t.DipChart != null,
+            DipChartEntryCount = t.DipChart?.Entries?.Count ?? 0,
         }).ToList();
 
         return Result<List<FuelTankDto>>.Success(dtos);

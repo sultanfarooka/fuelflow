@@ -12,6 +12,8 @@ export interface FuelTankDto {
   capacityLiters: number
   fuelTypeId: string
   fuelTypeName?: string | null
+  hasDipChart: boolean
+  dipChartEntryCount: number
 }
 
 export interface CreateFuelTankRequest {
@@ -38,6 +40,21 @@ export interface CreateFuelTankApiResponse {
   data: CreateFuelTankResponse
 }
 
+export interface UpdateFuelTankRequest {
+  name?: string
+  capacityLiters: number
+  fuelTypeId: string
+}
+
+export interface UpdateFuelTankApiResponse {
+  success: boolean
+  data: FuelTankDto
+}
+
+export interface DeleteFuelTankApiResponse {
+  success: boolean
+}
+
 /**
  * Get all fuel tanks for a station.
  * Station must belong to current user's organization.
@@ -59,5 +76,25 @@ export async function createFuelTank(
   return api.post<CreateFuelTankApiResponse>(
     `/stations/${stationId}/fuel-tanks`,
     payload
+  )
+}
+
+export async function updateFuelTank(
+  stationId: string,
+  tankId: string,
+  payload: UpdateFuelTankRequest
+): Promise<UpdateFuelTankApiResponse> {
+  return api.put<UpdateFuelTankApiResponse>(
+    `/stations/${stationId}/fuel-tanks/${tankId}`,
+    payload
+  )
+}
+
+export async function deleteFuelTank(
+  stationId: string,
+  tankId: string
+): Promise<DeleteFuelTankApiResponse> {
+  return api.delete<DeleteFuelTankApiResponse>(
+    `/stations/${stationId}/fuel-tanks/${tankId}`
   )
 }

@@ -48,4 +48,34 @@ public class FuelTankController : ControllerBase
 
         return Ok(new { success = true, data = result.Data });
     }
+
+    /// <summary>
+    /// PUT /api/v1/stations/{stationId}/fuel-tanks/{tankId}
+    /// Updates name, capacity, or fuel type of an existing tank.
+    /// </summary>
+    [HttpPut("{tankId:guid}")]
+    public async Task<IActionResult> Update(Guid stationId, Guid tankId, [FromBody] UpdateFuelTankRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new UpdateFuelTankCommand(stationId, tankId, request), cancellationToken);
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
+    /// DELETE /api/v1/stations/{stationId}/fuel-tanks/{tankId}
+    /// Deletes a fuel tank from the station.
+    /// </summary>
+    [HttpDelete("{tankId:guid}")]
+    public async Task<IActionResult> Delete(Guid stationId, Guid tankId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DeleteFuelTankCommand(stationId, tankId), cancellationToken);
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true });
+    }
 }

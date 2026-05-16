@@ -10,4 +10,6 @@ public class FuelTankDto
     public decimal CapacityLiters { get; set; }
     public Guid FuelTypeId { get; set; }
     public string? FuelTypeName { get; set; }
+    public bool HasDipChart { get; set; }
+    public int DipChartEntryCount { get; set; }
 }

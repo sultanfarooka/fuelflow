@@ -66,6 +66,7 @@ public static class DependencyInjection
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IStationRepository, StationRepository>();
         services.AddScoped<IFuelTankRepository, FuelTankRepository>();
+        services.AddScoped<IDipChartRepository, DipChartRepository>();
         services.AddScoped<IFuelTypeRepository, FuelTypeRepository>();
         services.AddScoped<IFuelPricesRepository, FuelPricesRepository>();
         services.AddScoped<IFuelNozzleRepository, FuelNozzleRepository>();

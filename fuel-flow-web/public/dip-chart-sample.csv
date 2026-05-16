@@ -1,0 +1,14 @@
+# Dip chart sample file - comments line
+DepthMm,VolumeLiters
+0,0
+100,500
+200,1200
+300,1900
+400,2600
+500,3300
+600,4000
+700,4700
+800,5400
+900,6100
+1000,6800
+

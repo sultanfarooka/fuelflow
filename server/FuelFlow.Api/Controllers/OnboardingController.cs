@@ -45,6 +45,7 @@ public class OnboardingController : ControllerBase
             success = true,
             data = new
             {
+                data.ExpiresIn,
                 data.User,
                 data.Organization,
                 data.Stations,

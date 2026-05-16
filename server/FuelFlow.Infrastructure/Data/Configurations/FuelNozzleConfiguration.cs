@@ -64,5 +64,9 @@ public class FuelNozzleConfiguration : IEntityTypeConfiguration<FuelNozzle>
         builder.HasIndex(n => n.TankId);
         // Index for fast lookups by station
         builder.HasIndex(n => n.StationId);
+
+        // Unique index: nozzle number per tank
+        builder.HasIndex(n => new { n.TankId, n.NozzleNumber })
+            .IsUnique();
     }
 }

@@ -14,10 +14,9 @@
 
 | Priority | Task ID | Task                                                          | Area     |
 | -------- | ------- | ------------------------------------------------------------- | -------- |
-| 1        | 1.4c    | Subscription plan seeding (Starter, Professional, Enterprise) | Backend  |
-| 2        | 1.6     | Organization & Station CRUD                                   | Backend  |
-| 3        | 1.8     | Basic UI shell (layout, sidebar, navigation)                  | Frontend |
-| 4        | 1.7     | User management (create, permissions)                         | Backend  |
+| 1        | 1.8     | Basic UI shell (layout, sidebar, navigation)                  | Frontend |
+| 2        | 1.7     | User management (create, permissions)                         | Backend  |
+| 3        | 1.8c    | Pricing page (plan comparison, monthly/yearly toggle)         | Frontend |
 
 
 ---
@@ -30,10 +29,10 @@
 | Area             | Status        | Notes                                         |
 | ---------------- | ------------- | --------------------------------------------- |
 | **Auth**         | ✅ Implemented | Register (email verification), Login, RefreshToken, VerifyEmail, ResendVerification, ForgotPassword, ResetPassword, Logout, GetCurrentUser |
-
+| **Onboarding**   | ✅ Implemented | Organization + First Station creation, Trial Sub assignment, Fuel Type setup |
 | **Dashboard**    | ✅ Implemented | Summary (Owner/Manager only)                  |
-| **Subscription** | ⬜ Planned     | Plans, management, payments                   |
-| **Stations**     | ⬜ Planned     | CRUD, tank/nozzle config                      |
+| **Subscription** | ✅ Implemented | Plans seeding, Trial assignment (post-onboarding)  |
+| **Stations**     | ✅ Implemented | Creation (onboarding), Setup (fuel types)     |
 | **Shifts**       | ⬜ Planned     | Open/close, meter readings                    |
 | **Finance**      | ⬜ Planned     | Credit customers, suppliers, expenses         |
 | **Pricing**      | ⬜ Planned     | Fuel prices, special rates                    |
@@ -49,6 +48,7 @@
 | **API client**    | ✅ Done    | Axios, cookie-based auth (withCredentials)             |
 | **UI shell**      | ⬜ Planned | Layout, sidebar, navigation           |
 | **Auth pages**    | ✅ Done    | Login, Register (multi-step), Verify-email, Check-email; submit-only validation |
+| **Onboarding**    | ✅ Done    | Station setup (Organization + First Station)          |
 | **Dashboard**     | ✅ Done    | Basic placeholder with route guard, cookie-based auth   |
 | **Pricing page**  | ⬜ Planned | Plan comparison                       |
 
@@ -61,8 +61,8 @@
 | **Migrations**         | ✅ Applied | InitialCreate, AddRefreshTokens, AddDeviceIdToRefreshTokens |
 | **Identity**           | ✅ Done    | AspNetUsers, AspNetRoles                                    |
 | **Refresh tokens**     | ✅ Done    | Hashed storage, rotation                                    |
-| **Subscription plans** | ⬜ Pending | Needs seeding                                               |
-| **Stations, Tanks**    | ⬜ Pending | Schema in migrations, no API yet                            |
+| **Subscription plans** | ✅ Done    | Seeding implemented and applied                             |
+| **Stations, Tanks**    | ✅ Done    | Schema in migrations, Stations created during onboarding     |
 
 
 ---
@@ -96,10 +96,10 @@
 | 1.3  | Database setup (PostgreSQL + migrations)              | ✅            |
 | 1.4  | Authentication system (JWT + refresh tokens)          | ✅            |
 | 1.4b | Owner registration endpoint                           | ✅            |
-| 1.4c | Subscription plan seeding                             | ⬜ **← Next** |
+| 1.4c | Subscription plan seeding                             | ✅            |
 | 1.5  | Role-based authorization middleware                   | ✅            |
-| 1.6  | Organization & Station CRUD                           | ⬜            |
-| 1.7  | User management (create, permissions)                 | ⬜            |
+| 1.6  | Organization & Station CRUD (Onboarding flow)         | ✅            |
+| 1.7  | User management (create, permissions)                 | ⬜ **← Next** |
 | 1.8  | Basic UI shell (layout, sidebar, navigation)          | ⬜            |
 | 1.8b | Registration page (multi-step form)                   | ✅            |
 | 1.8c | Pricing page (plan comparison, monthly/yearly toggle) | ⬜            |

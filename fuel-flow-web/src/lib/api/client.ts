@@ -101,12 +101,38 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    const data = error.response?.data as
+      | {
+          error?: string
+          message?: string
+          title?: string
+          detail?: string
+          errors?: Record<string, string[]>
+        }
+      | undefined
+
+    const fieldMessages =
+      data?.errors &&
+      Object.values(data.errors)
+        .flat()
+        .filter(Boolean)
+
     const message =
-      error.response?.data?.error ??
-      error.response?.data?.message ??
+      (fieldMessages && fieldMessages[0]) ??
+      data?.error ??
+      data?.message ??
+      data?.detail ??
+      data?.title ??
       error.message ??
       `HTTP ${error.response?.status ?? 'Unknown'}`
-    throw new Error(message)
+
+    const wrappedError = new Error(message) as Error & {
+      response?: typeof error.response
+    }
+    if (error.response) {
+      wrappedError.response = error.response
+    }
+    throw wrappedError
   }
 )
 

@@ -27,12 +27,28 @@ export {
 export {
   getFuelTanksByStation,
   createFuelTank,
+  updateFuelTank,
+  deleteFuelTank,
   type FuelTankDto,
   type CreateFuelTankRequest,
   type CreateFuelTankResponse,
+  type UpdateFuelTankRequest,
+  type UpdateFuelTankApiResponse,
   type FuelTankListApiResponse,
   type CreateFuelTankApiResponse,
+  type DeleteFuelTankApiResponse,
 } from './fuel-tanks'
+
+export {
+  getDipChart,
+  uploadDipChart,
+  type DipChartDto,
+  type DipChartEntryDto,
+  type UploadDipChartEntry,
+  type UploadDipChartRequest,
+  type GetDipChartApiResponse,
+  type UploadDipChartApiResponse,
+} from './dip-chart'
 
 export {
   getFuelNozzlesByStation,
@@ -41,4 +57,6 @@ export {
   type CreateFuelNozzleRequest,
   type FuelNozzleListApiResponse,
   type CreateFuelNozzleApiResponse,
+  deleteFuelNozzle,
+  type DeleteFuelNozzleApiResponse,
 } from './fuel-nozzles'

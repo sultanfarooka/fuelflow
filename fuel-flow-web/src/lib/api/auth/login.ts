@@ -25,6 +25,7 @@ export interface OrganizationInfo {
 export interface StationInfo {
   id: string
   name: string
+  setupComplete?: boolean
 }
 
 export interface SubscriptionInfo {

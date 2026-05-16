@@ -35,4 +35,10 @@ public class FuelNozzleRepository : IFuelNozzleRepository
     {
         await _dbContext.FuelNozzles.AddAsync(fuelNozzle);
     }
+
+    public Task DeleteAsync(FuelNozzle fuelNozzle)
+    {
+        _dbContext.FuelNozzles.Remove(fuelNozzle);
+        return Task.CompletedTask;
+    }
 }
