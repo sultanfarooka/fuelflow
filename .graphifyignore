@@ -1,0 +1,22 @@
+@"
+# .NET build output
+**/bin/
+**/obj/
+**/TestResults/
+**/artifacts/
+*.user
+
+# React build output
+fuel-flow-web/node_modules/
+fuel-flow-web/dist/
+fuel-flow-web/.vite/
+fuel-flow-web/coverage/
+
+# misc
+.git/
+*.log
+
+**/tsconfig*.json
+components.json
+.claude/
+**/launchSettings.json
