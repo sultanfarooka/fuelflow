@@ -24,17 +24,23 @@ the user before writing code.
 
 State the chosen `MXX-FXX[-RXX]` ID explicitly (Rule 1).
 
-### 2. Branch and set status
+### 2. Verify branch and flip status
 
-Per Rule 3 and 4, branch off the latest `main`:
+The feature branch is created by `/feature-planning`, not here. Inspect HEAD
+and confirm it matches the expected `feat-<id-lowercased>-<short-kebab-name>`
+shape for the chosen item (per root `CLAUDE.md` Rules 3 + 4),
+e.g. `feat-m04-f03-open-shift-endpoint`.
 
-```
-git checkout main && git pull --ff-only origin main
-git checkout -b feat-<id-lowercased>-<short-kebab-name>
-```
+- If HEAD is on the expected branch, continue.
+- If HEAD is on `main` or any other branch, **stop** and tell the user to
+  run `/feature-planning <id>` first — that skill cuts the branch off
+  `main` and writes the implementation doc onto it. Do not branch from
+  this skill.
 
-e.g. `feat-m04-f03-open-shift-endpoint`. Flip the item's `MODULES.md` row to
-`In Progress` in the **same commit that starts the work** (Rule 2).
+Once on the right branch, flip the item's `MODULES.md` row to `In Progress`
+in the **same commit that starts the work** (Rule 2). That first commit
+typically also carries the planning doc and any earlier discovery edits
+that have been sitting uncommitted on the branch.
 
 ### 3. Implement phase by phase
 

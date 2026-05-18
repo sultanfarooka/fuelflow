@@ -314,8 +314,10 @@ Tell the user:
 
 - The new ID(s).
 - What was modified elsewhere (both files, if applicable).
-- Next step: `/feature-planning <new-id>` to produce
-  `docs/implementation/<new-id>.md`.
+- Next step: `/feature-planning <new-id>` — it cuts the
+  `feat-<new-id>-<short>` branch off `main` (carrying these
+  working-tree edits along) and writes
+  `docs/implementation/<new-id>.md` onto it.
 - Per root Rules 1 + 2: these doc edits ship in the **same PR** as
   the implementation, not a follow-up.
 
