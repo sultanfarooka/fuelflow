@@ -85,10 +85,10 @@
 
 | Feature           | Specification                                                          |
 | :---------------- | :--------------------------------------------------------------------- |
-| Login Methods     | Username/Password + PIN-based quick login                              |
+| Login Methods     | Phone+Password (primary) · Email+Password (fallback, when email is set & verified) · PIN-based quick login |
 | Password Rules    | Minimum 6 characters, must include numbers                             |
 | Session Timeout   | User-configurable idle timeout                                         |
-| Password Recovery | Email OTP, SMS OTP, or Owner reset                                     |
+| Password Recovery | Phone OTP, Email reset link, or Owner reset (user picks at recovery time when both channels are set) |
 | Multi-Device      | Simultaneous login on multiple devices allowed                         |
 | Refresh Tokens    | DB-backed; rotation on each refresh; 7-day expiry (configurable later) |
 | Session Tracking  | IP, User-Agent, optional DeviceId stored per refresh token for audit   |
@@ -110,10 +110,10 @@
 ### 1.6 Registration & Onboarding
 
 - **Self-service registration** for station owners (public, no invitation required)
-- Registration form: owner info only (full name, email, phone, password)
+- Registration form: owner info only (full name, **phone (required)**, email (optional), password). Pakistani users frequently lack persistent email access, so phone is the canonical identifier.
 - Organization and first station are added **after first login** during onboarding
 - **14-day free trial** starts automatically with Professional plan features (once organization is created)
-- Email verification required before login
+- **Phone verification (SMS OTP) required before first login.** Email, if provided, must be verified separately before it can be used as a fallback login or recovery channel.
 
 ---
 

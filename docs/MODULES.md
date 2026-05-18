@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-16
+**Last Updated:** 2026-05-19
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -56,8 +56,9 @@ The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that
 | # | ID | Title | Area |
 |---|---|---|---|
 | 1 | [M07-F07](#m07-f07--ui-shell)   | Basic UI shell (layout, sidebar, navigation) | Frontend |
-| 2 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
-| 3 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
+| 2 | [M01-F09](#m01-f09--phone-first-authentication) | Phone-first authentication (SMS OTP, phone-primary login, email optional) | Full-stack |
+| 3 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
+| 4 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
 
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -75,10 +76,10 @@ Public station-owner registration. Form captures owner info only — organizatio
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M01-F01-R01 | Email must be unique across all users | REG-001 | Done |
+| M01-F01-R01 | Email, **when provided**, must be unique across all users (refined by [M01-F09-R01](#m01-f09--phone-first-authentication): email optional once phone is captured) | REG-001 | Done |
 | M01-F01-R02 | Registration creates Owner user only; org + first station deferred to onboarding | REG-002 | Done |
 | M01-F01-R03 | Phone number validated as Pakistani format `+92XXXXXXXXXX` | REG-003 | Done |
-| M01-F01-R04 | Email must be verified before first login (verification link sent on registration) | REG-004 | Done |
+| M01-F01-R04 | Email must be verified before it can be used as a fallback login channel (refined by [M01-F09-R03](#m01-f09--phone-first-authentication): SMS OTP is the primary verification at signup; email verification is only required if the user opts in to email as fallback login) | REG-004 | Done |
 | M01-F01-R05 | Password minimum 6 characters, must include at least one number | — | Done |
 
 **Acceptance Criteria:**
@@ -115,7 +116,7 @@ Email/password login + PIN-based quick login, with DB-backed refresh tokens stor
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M01-F03-R01 | Email + password login issues short-lived JWT + DB-backed refresh token | — | Done |
+| M01-F03-R01 | Phone + password login issues short-lived JWT + DB-backed refresh token; email + password is a fallback path that resolves only when the user has a verified email (refined by [M01-F09-R05](#m01-f09--phone-first-authentication)) | — | Done |
 | M01-F03-R02 | PIN-based quick login for nozzlemen/managers on shared devices | — | Planned |
 | M01-F03-R03 | Refresh tokens stored hashed, rotated on every refresh, reuse triggers revocation | — | Done |
 | M01-F03-R04 | Multi-device simultaneous login allowed (one row per session) | — | Done |
@@ -138,10 +139,10 @@ Self-service password reset via email, plus Owner-initiated reset for sub-users.
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M01-F04-R01 | Forgot-password sends a one-time reset link by email | — | Done |
+| M01-F04-R01 | Forgot-password sends a one-time reset link by email when the user has a verified email; offered alongside phone OTP when both channels are set (extended by [M01-F09-R08](#m01-f09--phone-first-authentication)) | — | Done |
 | M01-F04-R02 | Reset token expires after 24 hours and is single-use | — | Done |
 | M01-F04-R03 | Owner can force-reset password for any user in their organization | — | Planned |
-| M01-F04-R04 | SMS OTP recovery (secondary channel) | — | Out of Scope (v2) |
+| M01-F04-R04 | SMS OTP recovery — user chooses phone OTP or email link when both are set (revived by, and implemented as part of, [M01-F09-R08](#m01-f09--phone-first-authentication)) | — | Planned |
 
 ---
 
@@ -212,6 +213,42 @@ All sensitive actions are logged with user, timestamp, and before/after values. 
 **Acceptance Criteria:**
 - **AC1** Given an admin attempts to delete an audit row, When the delete is issued, Then the operation is blocked at the DB/repo level.
 - **AC2** Given an Owner opens the audit log viewer, When they filter by user + date range, Then matching audit rows are returned with before/after values and timestamps.
+
+---
+
+### M01-F09 — Phone-First Authentication   [Status: Planned]
+
+> _Discovery (2026-05-19): self-identified gap — own observation, no specific customer ask · outcome = enable signup and recovery in the Pakistani market where many target users lack or lose track of email credentials · maps to ProjectOverView §1.6 Registration & Onboarding and §1.3 Authentication & Security; reinforces Pakistan-market context (M08-F05, M11-F03) · cost-of-not-building: signups abandoned and recovery flows fail for the target audience_
+
+**Tags:** tenant-scope=platform-global; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=yes; notification-trigger=yes; money-touch=none; shift-lifecycle-touch=none
+
+Phone (+92 format) becomes the primary identifier for registration, login, verification, and recovery. Email is optional and, when provided and verified, can be used as a fallback login and recovery channel. Refines and supersedes parts of [M01-F01](#m01-f01--self-service-registration), [M01-F02](#m01-f02--email-verification), [M01-F03](#m01-f03--login--session), and [M01-F04](#m01-f04--password-recovery). Has a hard dependency on a minimum-viable SMS sender (a subset of [M10-F03](#m10-f03--notification-channels)) being available for pre-organization signup OTP delivery.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M01-F09-R01 | Phone number is required at registration; email is optional | — | Planned |
+| M01-F09-R02 | Phone number is unique across all users (in addition to format check in [M01-F01-R03](#m01-f01--self-service-registration)) | — | Planned |
+| M01-F09-R03 | SMS OTP sent at signup; account remains pending and login is blocked until phone is verified | — | Planned |
+| M01-F09-R04 | OTP is 6 digits, single-use, 5-minute TTL, max 3 verification attempts, max 1 resend per 60 seconds | — | Planned |
+| M01-F09-R05 | Login accepts phone+password as primary credential; email+password resolves only when the email is set AND verified | — | Planned |
+| M01-F09-R06 | Existing email-only users are routed through a one-time "add and verify phone" flow on next login; account is restricted to that flow until phone is verified | — | Planned |
+| M01-F09-R07 | When a Manager creates a sub-user, Manager chooses per user whether OTP verification is required before first login (default = required) | — | Planned |
+| M01-F09-R08 | Password recovery offers both channels when both are set (phone OTP and email link); falls back to whichever channel is available when only one is set/verified | — | Planned |
+| M01-F09-R09 | Sensitive auth actions are written to audit trail (see [M01-F08](#m01-f08--audit-trail)): phone added/changed, OTP failures past threshold, forced-phone-add completion, recovery channel used | — | Planned |
+| M01-F09-R10 | Platform provides a default SMS sender for pre-organization signup OTP (organization-configured providers from [M10-F03-R02](#m10-f03--notification-channels) apply post-onboarding) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a new registration with a valid phone and no email, When the user submits, Then the API returns success, an SMS OTP is queued, and the account is created with `PhoneConfirmed=false`.
+- **AC2** Given a registration payload missing a phone number, When submitted, Then the API returns `400 Bad Request` with a phone-required validation error.
+- **AC3** Given a phone number already on file, When a new registration uses it, Then the API returns `409 Conflict`.
+- **AC4** Given an unverified phone, When the user attempts to log in, Then login is blocked with a "verify your phone" message and a resend-OTP action.
+- **AC5** Given an existing user whose account has only an email, When they log in after this feature ships, Then they are routed to a one-time "add and verify phone" screen and can only complete login after phone verification.
+- **AC6** Given a Manager creating a sub-user with "require OTP verification = true", When the sub-user first attempts to log in, Then OTP verification is enforced. Given the flag = false, login proceeds without OTP.
+- **AC7** Given a user with both phone and verified email, When they request password recovery, Then the UI offers a choice of phone OTP or email link.
+- **AC8** Given an OTP past its 5-minute TTL or after 3 failed verification attempts, When verification is attempted, Then the API responds with a clear "expired or exhausted" error and offers a resend action.
+- **AC9** Given any successful or failed phone-OTP event, When it occurs, Then a row is written to the audit trail per [M01-F08](#m01-f08--audit-trail).
 
 ---
 
