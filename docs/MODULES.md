@@ -887,6 +887,7 @@ Currency, language, date format, fiscal year start.
 | M08-F05-R02 | Language: English & Urdu, switchable per user | — | In Progress |
 | M08-F05-R03 | Date format: DD/MM/YYYY | — | Planned |
 | M08-F05-R04 | Fiscal year start configurable by Owner | — | Planned |
+| M08-F05-R05 | Bootstrap i18next runtime (init code + `main.tsx` wiring + per-user language switcher) and retro-wire `useTranslation` across all auth, dashboard, and onboarding screens. Translation resources for the F09 auth surface (`auth.*` namespace, en + ur) landed via [M01-F09-R12](#m01-f09--phone-first-authentication); this row tracks the runtime hookup and broader-app sweep | — | Planned |
 
 ---
 

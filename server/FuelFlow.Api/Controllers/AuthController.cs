@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using FuelFlow.Application.DTOs.Auth;
 using FuelFlow.Application.Features.Auth.Commands;
 using FuelFlow.Application.Features.Auth.Queries;
@@ -25,6 +26,7 @@ namespace FuelFlow.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/auth")]
+[EnableRateLimiting("auth-ip")]  // Per-IP sliding window ([M01-F09-R12]); see Program.cs.
 public class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;

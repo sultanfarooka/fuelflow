@@ -17,5 +17,63 @@
     "finance": "مالیات",
     "reports": "رپورٹس",
     "settings": "ترتیبات"
+  },
+  "auth": {
+    "common": {
+      "back": "واپس",
+      "signIn": "سائن ان کریں",
+      "alreadyVerified": "پہلے ہی تصدیق شدہ؟",
+      "wrongNumber": "غلط نمبر؟",
+      "startOver": "دوبارہ شروع کریں",
+      "sending": "بھیجا جا رہا ہے...",
+      "verifying": "تصدیق ہو رہی ہے...",
+      "confirming": "تصدیق ہو رہی ہے...",
+      "updating": "اپ ڈیٹ ہو رہا ہے..."
+    },
+    "verifyPhone": {
+      "title": "اپنا فون نمبر تصدیق کریں",
+      "subtitle": "ہم نے {{phone}} پر 6 ہندسوں کا کوڈ بھیجا ہے۔ اکاؤنٹ فعال کرنے کے لیے نیچے درج کریں۔",
+      "codeLabel": "تصدیقی کوڈ",
+      "codeHelper": "ابھی بھیجے گئے ایس ایم ایس سے 6 ہندسے۔",
+      "verifyButton": "فون تصدیق کریں",
+      "resendButton": "کوڈ دوبارہ بھیجیں",
+      "resendCountdown": "{{seconds}} سیکنڈ میں کوڈ دوبارہ بھیجیں",
+      "resentToast": "نیا کوڈ بھیج دیا گیا ہے۔",
+      "missingPhoneTitle": "فون نمبر موجود نہیں",
+      "missingPhoneBody": "ہم یہ نہیں بتا سکے کہ کس فون کی تصدیق کرنی ہے۔ براہ کرم رجسٹریشن صفحے سے دوبارہ شروع کریں۔",
+      "backToRegister": "رجسٹریشن پر واپس جائیں",
+      "haveAccount": "میرا پہلے سے اکاؤنٹ ہے",
+      "verificationFailedTitle": "تصدیق ناکام",
+      "verifiedToast": "فون نمبر کی تصدیق ہو گئی — اب آپ سائن ان کر سکتے ہیں۔"
+    },
+    "resetPasswordOtp": {
+      "title": "نیا پاس ورڈ سیٹ کریں",
+      "subtitle": "ہم نے جو کوڈ {{phone}} پر بھیجا ہے اور اپنا نیا پاس ورڈ درج کریں۔",
+      "codeLabel": "تصدیقی کوڈ",
+      "newPasswordLabel": "نیا پاس ورڈ",
+      "newPasswordHelper": "کم از کم 6 حروف، کم از کم ایک نمبر۔",
+      "confirmPasswordLabel": "نئے پاس ورڈ کی تصدیق کریں",
+      "submitButton": "نیا پاس ورڈ سیٹ کریں",
+      "missingPhoneTitle": "فون نمبر موجود نہیں",
+      "missingPhoneBody": "ہم یہ نہیں بتا سکے کہ کس فون کا پاس ورڈ ری سیٹ کرنا ہے۔ پاس ورڈ بھول گئے صفحے سے دوبارہ شروع کریں۔",
+      "backToForgot": "پاس ورڈ بھول گئے پر واپس",
+      "resetFailedTitle": "ری سیٹ ناکام",
+      "updatedToast": "پاس ورڈ اپ ڈیٹ ہو گیا۔ اب آپ سائن ان کر سکتے ہیں۔"
+    },
+    "changePhone": {
+      "title": "فون نمبر تبدیل کریں",
+      "requestSubtitle": "اپنا نیا فون نمبر درج کریں۔ ہم نئے نمبر پر 6 ہندسوں کا تصدیقی کوڈ بھیجیں گے۔ آپ کا موجودہ لاگ ان تصدیق تک کام کرتا رہے گا۔",
+      "newPhoneLabel": "نیا فون نمبر",
+      "currentlyLoggedInAs": "اس وقت {{name}} کے طور پر لاگ ان ہیں۔",
+      "sendCodeButton": "کوڈ بھیجیں",
+      "sendFailedTitle": "کوڈ نہیں بھیجا جا سکا",
+      "confirmSubtitle": "ہم نے {{phone}} پر 6 ہندسوں کا کوڈ بھیجا ہے۔ تبدیلی مکمل کرنے کے لیے نیچے درج کریں۔",
+      "codeLabel": "تصدیقی کوڈ",
+      "confirmButton": "تبدیلی کی تصدیق کریں",
+      "useDifferentNumber": "مختلف نمبر استعمال کریں",
+      "verificationFailedTitle": "تصدیق ناکام",
+      "doneSubtitle": "آپ کا فون نمبر {{phone}} میں اپ ڈیٹ ہو گیا ہے۔ مستقبل میں سائن ان کے لیے نیا نمبر استعمال کریں۔",
+      "backToDashboard": "ڈیش بورڈ پر واپس"
+    }
   }
 }
