@@ -29,6 +29,7 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Station> Stations => Set<Station>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<PhoneVerification> PhoneVerifications => Set<PhoneVerification>();
     public DbSet<UserStation> UserStations => Set<UserStation>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<SubscriptionPlans> SubscriptionPlans => Set<SubscriptionPlans>();

@@ -80,6 +80,7 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // 4. Register services
