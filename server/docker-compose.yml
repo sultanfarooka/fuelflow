@@ -1,6 +1,15 @@
 # Docker Compose for Fuel Flow development services
 # Run: docker compose up -d
 # Stop: docker compose down
+#
+# Services:
+#   - postgres     — main application database
+#   - mariadb      — backing store for the self-hosted SMS gateway (capcom6/sms-gateway)
+#   - sms-gateway  — capcom6/sms-gateway in private mode; required by M01-F09 phone OTP
+#
+# The SMS gateway also needs a paired Android device running the SMS Gateway app
+# and a Firebase Cloud Messaging service-account JSON. See server/sms-gateway/README.md
+# for the one-time setup steps.
 
 services:
   postgres:
@@ -16,5 +25,32 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data   # persist data across restarts
 
+  mariadb:
+    image: mariadb:11
+    container_name: fuelflow-sms-db
+    environment:
+      MARIADB_ROOT_PASSWORD: smsgw_root_dev
+      MARIADB_DATABASE: sms_gateway
+      MARIADB_USER: sms_gateway
+      MARIADB_PASSWORD: smsgw_dev
+    volumes:
+      - mariadb-data:/var/lib/mysql
+
+  sms-gateway:
+    image: capcom6/sms-gateway:latest
+    container_name: fuelflow-sms-gateway
+    depends_on:
+      - mariadb
+    ports:
+      # Published only to localhost — the API on the host reaches the gateway at http://localhost:3000.
+      # If/when the API is dockerized, it can reach the gateway as http://sms-gateway:3000 on the default compose network.
+      - "127.0.0.1:3000:3000"
+    volumes:
+      # Copy server/sms-gateway/config.example.yml to server/sms-gateway/config.yml and fill it in.
+      - ./sms-gateway/config.yml:/app/config.yml:ro
+      # Drop your Firebase service-account JSON here. See server/sms-gateway/README.md.
+      - ./sms-gateway/fcm-credentials.json:/app/fcm-credentials.json:ro
+
 volumes:
   pgdata:
+  mariadb-data:

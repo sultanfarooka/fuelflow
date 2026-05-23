@@ -24,6 +24,10 @@ appsettings.*.json
 **/secrets.json
 **/user-secrets/
 
+# SMS gateway operational secrets (per-env config + FCM service account)
+server/sms-gateway/config.yml
+server/sms-gateway/fcm-credentials.json
+
 # .NET
 [Bb]in/
 [Oo]bj/

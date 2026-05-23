@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Application.Interfaces.Services;
 using FuelFlow.Infrastructure.Data;
@@ -11,6 +12,7 @@ using FuelFlow.Infrastructure.Features.Auth.Commands;
 using FuelFlow.Infrastructure.Identity;
 using FuelFlow.Infrastructure.Repositories;
 using FuelFlow.Infrastructure.Services;
+using FuelFlow.Infrastructure.Services.Options;
 
 namespace FuelFlow.Infrastructure;
 
@@ -82,6 +84,24 @@ public static class DependencyInjection
 
         // 4. Register services
         services.AddScoped<IEmailSender, SmtpEmailSender>();
+
+        // 4a. SMS sender — typed HttpClient against the self-hosted capcom6/sms-gateway.
+        // See server/sms-gateway/README.md for the gateway docker-compose stack + FCM setup.
+        services.Configure<SmsGatewayOptions>(configuration.GetSection(SmsGatewayOptions.SectionName));
+        services.AddHttpClient<ISmsSender, CapcomSmsSender>((sp, client) =>
+        {
+            var opts = sp.GetRequiredService<IOptions<SmsGatewayOptions>>().Value;
+            if (!string.IsNullOrWhiteSpace(opts.BaseUrl))
+            {
+                // HttpClient relative-URI resolution requires a trailing slash on BaseAddress.
+                var baseUrl = opts.BaseUrl.EndsWith('/') ? opts.BaseUrl : opts.BaseUrl + "/";
+                client.BaseAddress = new Uri(baseUrl);
+                client.DefaultRequestHeaders.Authorization =
+                    CapcomSmsSender.BuildBasicAuthHeader(opts.Username, opts.Password);
+            }
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<JwtTokenService>();
         services.AddHttpContextAccessor();

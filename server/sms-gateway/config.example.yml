@@ -1,0 +1,35 @@
+# capcom6/sms-gateway configuration (private mode)
+# Copy this file to `config.yml` and fill in the secrets. `config.yml` is git-ignored.
+#
+# Full schema and option reference:
+#   https://github.com/capcom6/sms-gateway
+#   https://sms-gate.app/getting-started/private-server/
+#
+# This file is mounted into the gateway container at /app/config.yml by docker-compose.yml.
+# After editing, restart the gateway: `docker compose restart sms-gateway`.
+
+gateway:
+  # 'private' restricts the device-registration API to clients holding `private_token`.
+  mode: private
+  # Generated token shared with the Android device app when it pairs with this server.
+  # Generate with e.g. `openssl rand -hex 32`.
+  private_token: REPLACE_WITH_RANDOM_TOKEN
+
+# MariaDB connection — must match the credentials in docker-compose.yml `mariadb` service.
+database:
+  dialect: mysql
+  host: mariadb
+  port: 3306
+  user: sms_gateway
+  password: smsgw_dev
+  name: sms_gateway
+
+# Firebase Cloud Messaging — used by the gateway to push outgoing-message notifications
+# to the paired Android device. Mount your service-account JSON into the container
+# (see docker-compose.yml volumes) and point this at it.
+fcm:
+  credentials_file: /app/fcm-credentials.json
+
+# HTTP API binding inside the container.
+http:
+  port: 3000
