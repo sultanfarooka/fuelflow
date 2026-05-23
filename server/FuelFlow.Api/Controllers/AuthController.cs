@@ -265,6 +265,23 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// POST /api/v1/auth/reset-password-otp
+    /// Public endpoint — resets password using an SMS OTP from the forgot-password
+    /// SMS branch ([M01-F09-R08], [M01-F04-R04]).
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("reset-password-otp")]
+    public async Task<IActionResult> ResetPasswordWithOtp([FromBody] ResetPasswordWithOtpRequest request)
+    {
+        var result = await _mediator.Send(new ResetPasswordWithOtpCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
     /// POST /api/v1/auth/logout
     /// Public endpoint — revokes the refresh token (from cookie or body). Clears auth cookies.
     /// </summary>

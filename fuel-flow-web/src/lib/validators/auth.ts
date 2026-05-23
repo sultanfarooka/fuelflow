@@ -80,12 +80,41 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>
 
-/** Forgot password form schema — email only */
+/**
+ * Forgot password — phone-or-email identifier per [M01-F09-R08].
+ * Re-uses the same phone/email regexes as loginSchema.
+ */
 export const forgotPasswordSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email format'),
+  identifier: z
+    .string()
+    .min(1, 'Phone or email is required')
+    .refine((v) => phoneRegex.test(v) || emailRegex.test(v), {
+      message: 'Enter your +92 phone number or email address',
+    }),
 })
 
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
+
+/** Reset password via SMS OTP — code + new password ([M01-F09-R08], [M01-F04-R04]). */
+export const resetPasswordOtpSchema = z
+  .object({
+    code: z
+      .string()
+      .min(1, 'Verification code is required')
+      .regex(/^\d{4,8}$/, 'Verification code must be 4-8 digits'),
+    newPassword: z
+      .string()
+      .min(1, 'Password is required')
+      .min(6, 'Password must be at least 6 characters')
+      .regex(/\d/, 'Password must contain at least one number'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
+export type ResetPasswordOtpFormData = z.infer<typeof resetPasswordOtpSchema>
 
 /** Reset password form schema — mirrors backend ResetPasswordRequestValidator */
 export const resetPasswordSchema = z

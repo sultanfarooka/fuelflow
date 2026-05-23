@@ -37,6 +37,10 @@ export {
   confirmPhoneChange,
   type ConfirmPhoneChangeRequest,
 } from './confirmPhoneChange'
+export {
+  resetPasswordWithOtp,
+  type ResetPasswordWithOtpRequest,
+} from './resetPasswordOtp'
 export { logout } from './logout'
 export { getCurrentUser, type MeApiResponse } from './me'
 export {

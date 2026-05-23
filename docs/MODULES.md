@@ -151,7 +151,7 @@ Self-service password reset via email, plus Owner-initiated reset for sub-users.
 | M01-F04-R01 | Forgot-password sends a one-time reset link by email when the user has a verified email; offered alongside phone OTP when both channels are set | — | Done · extended by [M01-F09-R08](#m01-f09--phone-first-authentication) |
 | M01-F04-R02 | Reset token expires after 24 hours and is single-use | — | Done |
 | M01-F04-R03 | Owner can force-reset password for any user in their organization | — | Planned |
-| M01-F04-R04 | SMS OTP recovery — user chooses phone OTP or email link when both are set (revived by, and implemented as part of, [M01-F09-R08](#m01-f09--phone-first-authentication)) | — | Planned |
+| M01-F04-R04 | SMS OTP recovery — user chooses phone OTP or email link when both are set (revived by, and implemented as part of, [M01-F09-R08](#m01-f09--phone-first-authentication)) | — | Done |
 
 ---
 
