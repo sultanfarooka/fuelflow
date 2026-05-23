@@ -247,7 +247,7 @@ Phone (+92 format) becomes the primary identifier for registration, login, verif
 | M01-F09-R07 | When a Manager creates a sub-user, Manager chooses per user whether OTP verification is required before first login (default = required) | — | Planned · deferred to M01-F05-R02 PR |
 | M01-F09-R08 | Password recovery offers both channels when both are set (phone OTP and email link); falls back to whichever channel is available when only one is set/verified | — | Done |
 | M01-F09-R09 | Sensitive auth actions are written to audit trail (see [M01-F08](#m01-f08--audit-trail)): phone added/changed, OTP failures past threshold, forced-phone-add completion, recovery channel used | — | Planned · deferred to M01-F08 PR |
-| M01-F09-R10 | Platform provides a default SMS sender for pre-organization signup OTP (organization-configured providers from [M10-F03-R02](#m10-f03--notification-channels) apply post-onboarding) | — | Done |
+| M01-F09-R10 | Platform provides a default SMS sender for pre-organization signup OTP (organization-configured providers from [M10-F03-R02](#m10-f03--notification-channels) apply post-onboarding) | — | Done · extended by [M10-F03-R04](#m10-f03--notification-channels) |
 | M01-F09-R11 | Authenticated user can change phone number; new number requires SMS OTP verification before the swap is committed | — | Done |
 | M01-F09-R12 | OTP issuance is rate-limited per phone (configurable daily cap, default 10) and per IP (sliding window) on `/register`, `/login`, `/verify-phone`, `/resend-otp`, `/forgot-password`, `/phone/change/request`, `/reset-password-otp` | — | Done |
 
@@ -1015,6 +1015,7 @@ Per-user channel preferences; configurable SMS provider; cost control per alert 
 | M10-F03-R01 | Channels: In-app, SMS, Email, WhatsApp — configurable per user | — | Planned |
 | M10-F03-R02 | SMS provider configurable per organization (Telenor, Jazz, custom API) | — | Planned |
 | M10-F03-R03 | Owner can enable/disable SMS per alert type for cost control | — | Planned |
+| M10-F03-R04 | Production-grade SMS sender for the PK market, replacing the Play-Protect-blocked Android relay used by the [M01-F09-R10](#m01-f09--phone-first-authentication) platform default. Recommended path: USB GSM modem (Huawei E303 / similar) running Gammu or Kannel, exposing an HTTP API consumable by the existing `ISmsSender` contract via a small `GammuSmsSender` impl or a thin Gammu→HTTP shim that `CapcomSmsSender` can already talk to unchanged | — | Planned |
 
 ---
 

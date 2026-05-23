@@ -32,7 +32,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         // 1. Register PostgreSQL + EF Core
         services.AddDbContext<AppDbContext>(options =>
@@ -90,22 +91,39 @@ public static class DependencyInjection
         // 4. Register services
         services.AddScoped<IEmailSender, SmtpEmailSender>();
 
-        // 4a. SMS sender — typed HttpClient against the self-hosted capcom6/sms-gateway.
-        // See server/sms-gateway/README.md for the gateway docker-compose stack + FCM setup.
+        // 4a. SMS sender — Sms:Provider picks between the self-hosted capcom6/sms-gateway
+        // (production / staging) and a dev-only log-to-console sender. Defaults to
+        // "console" in Development when unset; "capcom" otherwise. See server/sms-gateway/README.md
+        // for the gateway docker-compose stack + FCM setup, and docs/ENV-MAP.md for the keys.
         services.Configure<SmsGatewayOptions>(configuration.GetSection(SmsGatewayOptions.SectionName));
-        services.AddHttpClient<ISmsSender, CapcomSmsSender>((sp, client) =>
+
+        var configuredProvider = configuration["Sms:Provider"];
+        var effectiveProvider = !string.IsNullOrWhiteSpace(configuredProvider)
+            ? configuredProvider.Trim().ToLowerInvariant()
+            : (environment.IsDevelopment() ? "console" : "capcom");
+
+        if (effectiveProvider == "console")
         {
-            var opts = sp.GetRequiredService<IOptions<SmsGatewayOptions>>().Value;
-            if (!string.IsNullOrWhiteSpace(opts.BaseUrl))
+            // Singleton — stateless logger; the constructor emits a one-time Warning
+            // if console is selected outside Development.
+            services.AddSingleton<ISmsSender, LogOnlySmsSender>();
+        }
+        else
+        {
+            services.AddHttpClient<ISmsSender, CapcomSmsSender>((sp, client) =>
             {
-                // HttpClient relative-URI resolution requires a trailing slash on BaseAddress.
-                var baseUrl = opts.BaseUrl.EndsWith('/') ? opts.BaseUrl : opts.BaseUrl + "/";
-                client.BaseAddress = new Uri(baseUrl);
-                client.DefaultRequestHeaders.Authorization =
-                    CapcomSmsSender.BuildBasicAuthHeader(opts.Username, opts.Password);
-            }
-            client.Timeout = TimeSpan.FromSeconds(10);
-        });
+                var opts = sp.GetRequiredService<IOptions<SmsGatewayOptions>>().Value;
+                if (!string.IsNullOrWhiteSpace(opts.BaseUrl))
+                {
+                    // HttpClient relative-URI resolution requires a trailing slash on BaseAddress.
+                    var baseUrl = opts.BaseUrl.EndsWith('/') ? opts.BaseUrl : opts.BaseUrl + "/";
+                    client.BaseAddress = new Uri(baseUrl);
+                    client.DefaultRequestHeaders.Authorization =
+                        CapcomSmsSender.BuildBasicAuthHeader(opts.Username, opts.Password);
+                }
+                client.Timeout = TimeSpan.FromSeconds(10);
+            });
+        }
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<JwtTokenService>();

@@ -2,6 +2,8 @@
 
 This is the dev / on-prem self-hosted [`capcom6/sms-gateway`](https://github.com/capcom6/android-sms-gateway) used by **[M01-F09 Phone-First Authentication](../../docs/MODULES.md#m01-f09--phone-first-authentication)** for signup OTPs, password-recovery OTPs, and phone-change OTPs.
 
+> **Dev shortcut — you probably don't need this stack on your laptop.** If you just want to exercise the full M01-F09 flow locally, leave `Sms:Provider` unset (or set `Sms:Provider=console`). In `Development` the API uses [`LogOnlySmsSender`](../FuelFlow.Infrastructure/Services/LogOnlySmsSender.cs), which prints OTPs to the API console — no Firebase, no Android device, no Docker stack needed. The setup below is only required when an environment actually has a working gateway, and is currently superseded for production by the Play-Protect-driven follow-up tracked at [M10-F03-R04](../../docs/MODULES.md#m10-f03--notification-channels).
+
 The gateway has two parts:
 
 1. **Server** — runs in Docker on your machine / VM (this folder).

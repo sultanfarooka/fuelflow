@@ -51,7 +51,9 @@ builder.Host.UseSerilog();
 // ── 2. Infrastructure (DB, Identity, repos, services) ────────────
 // One line registers EVERYTHING from the Infrastructure layer.
 // This calls the extension method we created in DependencyInjection.cs.
-builder.Services.AddInfrastructure(builder.Configuration);
+// IHostEnvironment is needed so DI can pick the dev-only LogOnlySmsSender
+// when Sms:Provider is unset (see [M01-F09-R10] / [M10-F03-R04]).
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 
 // Cookie configuration for auth tokens (HTTP-only, Secure in prod)
 builder.Services.AddScoped<AuthCookieOptions>();

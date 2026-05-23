@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Per-IP rate limit** — `auth-ip` sliding-window middleware on every auth endpoint (30 req / 1 min), backed by handler-level per-phone daily cap.
 - **New frontend routes** — `/auth/verify-phone`, `/auth/reset-password-otp`, `/dashboard/account/phone`.
 - **i18n resources** — `auth.{common,verifyPhone,resetPasswordOtp,changePhone}` namespace with English + Urdu translations for the three new screens.
+- **`LogOnlySmsSender` + `Sms:Provider` switch** — log-to-console `ISmsSender` impl that writes OTPs to Serilog instead of dispatching SMS. Picked when `Sms:Provider=console`, and defaults to `console` in `Development` when unset (else `capcom`). Unblocks dev / PR review after Google Play Protect refused to install the `capcom6/sms-gateway` Android relay APK on the target devices. Constructor emits a `Warning` if `console` is selected outside `Development` so staging/prod can't silently leak codes to logs.
 
 ### Changed
 - **Registration** — phone is required, email is optional. `RegisterCommandHandler` enforces phone uniqueness, conditionally enforces email uniqueness, sets `UserName = phone`, issues a signup OTP via SMS. Email verification email still dispatched when an email is supplied.
@@ -47,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Audit-trail rows for phone-auth events (R09, tracked by `M01-F08-R07`).
 - Forced "add phone" flow for existing email-only users (R06, out of scope pre-launch).
 - Sub-user "require OTP on first login" toggle (R07, belongs to `M01-F05-R02` PR).
+- **Production-grade SMS sender for PK market** (USB GSM modem + Gammu/Kannel) — tracked by new row `M10-F03-R04`. Motivated by the Play Protect blocker; `LogOnlySmsSender` is the dev mitigation in this release.
 
 ---
 
