@@ -22,6 +22,13 @@ export {
   type VerifyEmailRequest,
   type VerifyEmailResponse,
 } from './verifyEmail'
+export {
+  verifyPhone,
+  type VerifyPhoneRequest,
+  type VerifyPhoneResponse,
+  type VerifyPhoneApiResponse,
+} from './verifyPhone'
+export { resendOtp, type ResendOtpRequest } from './resendOtp'
 export { logout } from './logout'
 export { getCurrentUser, type MeApiResponse } from './me'
 export {

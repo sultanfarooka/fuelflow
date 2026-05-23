@@ -152,6 +152,39 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// POST /api/v1/auth/verify-phone
+    /// Public endpoint — verifies the SMS OTP issued at signup ([M01-F09-R03]).
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("verify-phone")]
+    public async Task<IActionResult> VerifyPhone([FromBody] VerifyPhoneRequest request)
+    {
+        var result = await _mediator.Send(new VerifyPhoneCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
+    /// POST /api/v1/auth/resend-otp
+    /// Public endpoint — re-issues the signup phone OTP ([M01-F09-R04], [R12]).
+    /// Returns a generic success for unknown phones to avoid enumeration.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest request)
+    {
+        var result = await _mediator.Send(new ResendOtpCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
     /// POST /api/v1/auth/resend-verification
     /// Public endpoint — resends verification email. Returns generic message for security.
     /// </summary>

@@ -4,17 +4,13 @@ using FuelFlow.Application.DTOs.Auth;
 namespace FuelFlow.Application.Validators;
 
 /// <summary>
-/// Validates the registration request before it reaches the service layer.
-/// 
-/// WHY validate here (Application) and not in the Controller?
-/// - Validation rules are business logic ("phone must be Pakistani format")
-/// - They can be reused across different entry points (API, background job, etc.)
-/// - FluentValidation gives us clear, readable rule definitions
-/// 
-/// From PRD:
-/// - REG-001: Email must be unique (checked in service, not here — needs DB)
-/// - REG-004: Phone validated for Pakistani format (+92XXXXXXXXXX)
-/// - Password: minimum 6 characters, must include numbers
+/// Validates the registration request before it reaches the handler.
+///
+/// Phone-first per [M01-F09]:
+///   - Phone is required and must match the Pakistani format.
+///   - Email is optional; when provided, must look like a real email.
+///   - Email uniqueness is enforced in the handler (needs the DB).
+/// Password rules: min 6 chars, must include at least one digit.
 /// </summary>
 public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 {
@@ -25,9 +21,10 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
             .NotEmpty().WithMessage("Full name is required")
             .MaximumLength(200);
 
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required")
-            .EmailAddress().WithMessage("Invalid email format");
+        // Email is optional; validate format only when supplied.
+        RuleFor(x => x.Email!)
+            .EmailAddress().WithMessage("Invalid email format")
+            .When(x => !string.IsNullOrWhiteSpace(x.Email));
 
         RuleFor(x => x.Phone)
             .NotEmpty().WithMessage("Phone number is required")

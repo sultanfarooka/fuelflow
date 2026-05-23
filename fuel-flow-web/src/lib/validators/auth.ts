@@ -2,14 +2,18 @@ import { z } from 'zod'
 
 /**
  * Registration form schema — mirrors backend RegisterRequestValidator.
- * Used for client-side validation before submit.
+ * Phone-first per [M01-F09]: phone is required, email is optional.
  *
  * Organization is added after first login during onboarding.
  */
 export const registerSchema = z.object({
   // Owner info
   fullName: z.string().min(1, 'Full name is required').max(200),
-  email: z.string().min(1, 'Email is required').email('Invalid email format'),
+  // Email is optional. Empty string is allowed; if non-empty, must be a valid email.
+  email: z
+    .string()
+    .email('Invalid email format')
+    .or(z.literal('')),
   phone: z
     .string()
     .min(1, 'Phone number is required')
@@ -26,6 +30,16 @@ export const registerSchema = z.object({
 })
 
 export type RegisterFormData = z.infer<typeof registerSchema>
+
+/** Phone OTP verification schema — 4-8 digit code accepted; backend trims. */
+export const verifyPhoneSchema = z.object({
+  code: z
+    .string()
+    .min(1, 'Verification code is required')
+    .regex(/^\d{4,8}$/, 'Verification code must be 4-8 digits'),
+})
+
+export type VerifyPhoneFormData = z.infer<typeof verifyPhoneSchema>
 
 /** Login form schema — mirrors backend LoginRequestValidator */
 export const loginSchema = z.object({

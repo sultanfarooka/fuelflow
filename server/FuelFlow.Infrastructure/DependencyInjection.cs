@@ -13,6 +13,7 @@ using FuelFlow.Infrastructure.Identity;
 using FuelFlow.Infrastructure.Repositories;
 using FuelFlow.Infrastructure.Services;
 using FuelFlow.Infrastructure.Services.Options;
+using FuelFlow.Infrastructure.Services.Otp;
 
 namespace FuelFlow.Infrastructure;
 
@@ -53,7 +54,10 @@ public static class DependencyInjection
             options.Lockout.MaxFailedAccessAttempts = 5;
 
             // User settings
-            options.User.RequireUniqueEmail = true;
+            // RequireUniqueEmail flipped to false for [M01-F09]: phone is the primary identifier,
+            // email is optional. Email uniqueness is enforced in RegisterCommandHandler when an
+            // email is actually provided.
+            options.User.RequireUniqueEmail = false;
         })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();
@@ -105,6 +109,11 @@ public static class DependencyInjection
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<JwtTokenService>();
+
+        // 4b. OTP subsystem ([M01-F09]) — options + HMAC-SHA256 hasher.
+        services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
+        services.AddSingleton<IOtpHasher, OtpHasher>();
+
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IRequestContextService, RequestContextService>();
