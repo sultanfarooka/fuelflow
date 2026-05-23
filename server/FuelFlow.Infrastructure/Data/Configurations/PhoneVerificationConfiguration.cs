@@ -51,6 +51,10 @@ public class PhoneVerificationConfiguration : IEntityTypeConfiguration<PhoneVeri
             .HasMaxLength(30)
             .IsRequired();
 
+        builder.Property(pv => pv.TargetPhone)
+            .HasColumnName("target_phone")
+            .HasMaxLength(20);
+
         builder.Property(pv => pv.CreatedAt)
             .HasColumnName("created_at")
             .HasDefaultValueSql("NOW()");

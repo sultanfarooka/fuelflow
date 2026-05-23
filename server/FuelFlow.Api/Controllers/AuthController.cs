@@ -185,6 +185,38 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// POST /api/v1/auth/phone/change/request
+    /// Authenticated — issues an OTP to a new phone number ([M01-F09-R11]).
+    /// </summary>
+    [Authorize]
+    [HttpPost("phone/change/request")]
+    public async Task<IActionResult> RequestPhoneChange([FromBody] RequestPhoneChangeRequest request)
+    {
+        var result = await _mediator.Send(new RequestPhoneChangeCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
+    /// POST /api/v1/auth/phone/change/confirm
+    /// Authenticated — confirms the OTP and swaps the user's phone number ([M01-F09-R11]).
+    /// </summary>
+    [Authorize]
+    [HttpPost("phone/change/confirm")]
+    public async Task<IActionResult> ConfirmPhoneChange([FromBody] ConfirmPhoneChangeRequest request)
+    {
+        var result = await _mediator.Send(new ConfirmPhoneChangeCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
     /// POST /api/v1/auth/resend-verification
     /// Public endpoint — resends verification email. Returns generic message for security.
     /// </summary>

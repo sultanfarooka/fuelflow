@@ -48,4 +48,12 @@ public class PhoneVerification : BaseEntity
 
     /// <summary>Why this OTP was issued.</summary>
     public OtpPurpose Purpose { get; set; }
+
+    /// <summary>
+    /// For <see cref="OtpPurpose.PhoneChange"/>: the phone number the user intends
+    /// to switch to. The OTP is delivered to this number and, on successful
+    /// verification, becomes the user's new <c>PhoneNumber</c>.
+    /// Null for Signup / PasswordRecovery (those target the user's current phone).
+    /// </summary>
+    public string? TargetPhone { get; set; }
 }

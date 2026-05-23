@@ -29,6 +29,14 @@ export {
   type VerifyPhoneApiResponse,
 } from './verifyPhone'
 export { resendOtp, type ResendOtpRequest } from './resendOtp'
+export {
+  requestPhoneChange,
+  type RequestPhoneChangeRequest,
+} from './requestPhoneChange'
+export {
+  confirmPhoneChange,
+  type ConfirmPhoneChangeRequest,
+} from './confirmPhoneChange'
 export { logout } from './logout'
 export { getCurrentUser, type MeApiResponse } from './me'
 export {

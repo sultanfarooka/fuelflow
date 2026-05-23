@@ -41,6 +41,26 @@ export const verifyPhoneSchema = z.object({
 
 export type VerifyPhoneFormData = z.infer<typeof verifyPhoneSchema>
 
+/** Phone change step 1 — request OTP for new phone ([M01-F09-R11]). */
+export const requestPhoneChangeSchema = z.object({
+  newPhone: z
+    .string()
+    .min(1, 'New phone number is required')
+    .regex(/^\+92\d{10}$/, 'Phone must be in Pakistani format: +92XXXXXXXXXX'),
+})
+
+export type RequestPhoneChangeFormData = z.infer<typeof requestPhoneChangeSchema>
+
+/** Phone change step 2 — confirm OTP. NewPhone is read-only in the UI; user types only the code. */
+export const confirmPhoneChangeSchema = z.object({
+  code: z
+    .string()
+    .min(1, 'Verification code is required')
+    .regex(/^\d{4,8}$/, 'Verification code must be 4-8 digits'),
+})
+
+export type ConfirmPhoneChangeFormData = z.infer<typeof confirmPhoneChangeSchema>
+
 /**
  * Login form schema — phone-or-email identifier per [M01-F09-R05].
  * Accepts either a Pakistani phone (+92XXXXXXXXXX) or an email address.
