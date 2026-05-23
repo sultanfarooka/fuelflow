@@ -226,7 +226,7 @@ All sensitive actions are logged with user, timestamp, and before/after values. 
 
 ---
 
-### M01-F09 — Phone-First Authentication   [Status: In Progress]
+### M01-F09 — Phone-First Authentication   [Status: Done]
 
 > _Discovery (2026-05-19): self-identified gap — own observation, no specific customer ask · outcome = enable signup and recovery in the Pakistani market where many target users lack or lose track of email credentials · maps to ProjectOverView §1.6 Registration & Onboarding and §1.3 Authentication & Security; reinforces Pakistan-market context (M08-F05, M11-F03) · cost-of-not-building: signups abandoned and recovery flows fail for the target audience_
 
@@ -238,18 +238,18 @@ Phone (+92 format) becomes the primary identifier for registration, login, verif
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M01-F09-R01 | Phone number is required at registration; email is optional | — | Planned |
-| M01-F09-R02 | Phone number is unique across all users (in addition to format check in [M01-F01-R03](#m01-f01--self-service-registration)) | — | Planned |
-| M01-F09-R03 | SMS OTP sent at signup; account remains pending and login is blocked until phone is verified | — | Planned |
-| M01-F09-R04 | OTP is 6 digits, single-use, 5-minute TTL, max 3 verification attempts, max 1 resend per 60 seconds | — | Planned |
-| M01-F09-R05 | Login accepts phone+password as primary credential; email+password resolves only when the email is set AND verified | — | Planned |
+| M01-F09-R01 | Phone number is required at registration; email is optional | — | Done |
+| M01-F09-R02 | Phone number is unique across all users (in addition to format check in [M01-F01-R03](#m01-f01--self-service-registration)) | — | Done |
+| M01-F09-R03 | SMS OTP sent at signup; account remains pending and login is blocked until phone is verified | — | Done |
+| M01-F09-R04 | OTP is 6 digits, single-use, 5-minute TTL, max 3 verification attempts, max 1 resend per 60 seconds | — | Done |
+| M01-F09-R05 | Login accepts phone+password as primary credential; email+password resolves only when the email is set AND verified | — | Done |
 | M01-F09-R06 | Existing email-only users are routed through a one-time "add and verify phone" flow on next login; account is restricted to that flow until phone is verified | — | Out of Scope · pre-launch, no email-only users to migrate |
 | M01-F09-R07 | When a Manager creates a sub-user, Manager chooses per user whether OTP verification is required before first login (default = required) | — | Planned · deferred to M01-F05-R02 PR |
-| M01-F09-R08 | Password recovery offers both channels when both are set (phone OTP and email link); falls back to whichever channel is available when only one is set/verified | — | Planned |
+| M01-F09-R08 | Password recovery offers both channels when both are set (phone OTP and email link); falls back to whichever channel is available when only one is set/verified | — | Done |
 | M01-F09-R09 | Sensitive auth actions are written to audit trail (see [M01-F08](#m01-f08--audit-trail)): phone added/changed, OTP failures past threshold, forced-phone-add completion, recovery channel used | — | Planned · deferred to M01-F08 PR |
-| M01-F09-R10 | Platform provides a default SMS sender for pre-organization signup OTP (organization-configured providers from [M10-F03-R02](#m10-f03--notification-channels) apply post-onboarding) | — | Planned |
-| M01-F09-R11 | Authenticated user can change phone number; new number requires SMS OTP verification before the swap is committed | — | Planned |
-| M01-F09-R12 | OTP issuance is rate-limited per phone (configurable daily cap, default 10) and per IP (sliding window) on `/register`, `/login`, `/verify-phone`, `/resend-otp`, `/forgot-password`, `/phone/change/request`, `/reset-password-otp` | — | Planned |
+| M01-F09-R10 | Platform provides a default SMS sender for pre-organization signup OTP (organization-configured providers from [M10-F03-R02](#m10-f03--notification-channels) apply post-onboarding) | — | Done |
+| M01-F09-R11 | Authenticated user can change phone number; new number requires SMS OTP verification before the swap is committed | — | Done |
+| M01-F09-R12 | OTP issuance is rate-limited per phone (configurable daily cap, default 10) and per IP (sliding window) on `/register`, `/login`, `/verify-phone`, `/resend-otp`, `/forgot-password`, `/phone/change/request`, `/reset-password-otp` | — | Done |
 
 **Acceptance Criteria:**
 - **AC1** Given a new registration with a valid phone and no email, When the user submits, Then the API returns success, an SMS OTP is queued, and the account is created with `PhoneConfirmed=false`.

@@ -1,13 +1,13 @@
 # Active task
 
 ## Task: [M01-F09](MODULES.md#m01-f09--phone-first-authentication) — Phone-First Authentication
-## Status: In Progress — Phase 0 (registry edits + scope fence)
+## Status: Done (awaiting PR review + merge)
 
 ### Last action
-Cut branch `feat-m01-f09-phone-first-authentication` from `main` (post PR #8). Wrote planning artefact at [docs/implementation/M01-F09.md](implementation/M01-F09.md). Flipped `M01-F09` to `In Progress` in [MODULES.md](MODULES.md); marked R06 `Out of Scope`, annotated R07 (`· deferred to M01-F05-R02 PR`) and R09 (`· deferred to M01-F08 PR`); added new rows R11 (phone change) and R12 (rate-limit) plus follow-up R07 under M01-F08.
+Phase 8 complete. CHANGELOG 2.1.0 entry, DECISIONS row D-04 (capcom6 SMS gateway), MODULES.md status flips (F09 header → Done; R01/R02/R03/R04/R05/R08/R10/R11/R12 → Done; M01-F04-R04 → Done; new M01-F08-R07 backfill row; new M08-F05-R05 i18n bootstrap follow-up). Branch `feat-m01-f09-phone-first-authentication` pushed; PR opened against `main`.
 
 ### Next action
-Phase 1 — SMS gateway abstraction + Docker services. Add `ISmsSender` interface (Application), `CapcomSmsSender` HTTP client (Infrastructure) with HTTP Basic + Polly retry, options class bound to `Sms:Gateway:*`, DI registration, MariaDB + `capcom6/sms-gateway` services in `server/docker-compose.yml`, FCM/setup `server/sms-gateway/README.md`, and config-key rows in [ENV-MAP.md](ENV-MAP.md).
+User review + merge. Follow-up work captured by: `M01-F05-R02` PR (R07 sub-user OTP toggle), `M01-F08` PR (R09 audit backfill via new R07), `M08-F05-R05` (i18n bootstrap + retro-wire), test scaffolding (no xUnit/Vitest project exists yet).
 
 ### Files touched
 - [docs/MODULES.md](MODULES.md) — status flips, new R11/R12, M01-F08-R07 backfill row, AC10/AC11

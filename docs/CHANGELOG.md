@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-05-23
+
+[M01-F09](MODULES.md#m01-f09--phone-first-authentication) — Phone-first authentication for the Pakistani market. Phone (+92) becomes the primary identifier across registration, login, verification, and recovery; email is optional and acts as a verified fallback. Ships in eight phased commits on `feat-m01-f09-phone-first-authentication`.
+
+### Added
+- **SMS gateway abstraction** — `ISmsSender` (Application) + `CapcomSmsSender` (Infrastructure: HTTP Basic to capcom6/sms-gateway, manual retry, phone redaction in logs).
+- **Self-hosted SMS infra** — `mariadb` + `capcom6/sms-gateway` Docker services in `server/docker-compose.yml`; full setup guide in `server/sms-gateway/README.md` (Firebase Cloud Messaging credentials, Android relay device pairing).
+- **OTP subsystem** — `IOtpHasher` / `OtpHasher` (HMAC-SHA256 with peppered key from `Otp:HashPepper`, `FixedTimeEquals` constant-time compare), `OtpOptions` (`Otp:CodeLength`/`TtlMinutes`/`MaxAttempts`/`ResendCooldownSeconds`/`DailyCapPerPhone`).
+- **`PhoneVerification` entity + table** with two indexes for active-OTP lookups and the per-phone daily-cap query. Two migrations: `AddPhoneVerification` and `AddTargetPhoneToPhoneVerification` (the second adds the column needed for safe phone-change confirmation).
+- **New endpoints** — `POST /auth/verify-phone`, `POST /auth/resend-otp`, `POST /auth/reset-password-otp`, `POST /auth/phone/change/{request,confirm}`. All anti-enumeration: generic responses for unknown identifiers.
+- **Per-IP rate limit** — `auth-ip` sliding-window middleware on every auth endpoint (30 req / 1 min), backed by handler-level per-phone daily cap.
+- **New frontend routes** — `/auth/verify-phone`, `/auth/reset-password-otp`, `/dashboard/account/phone`.
+- **i18n resources** — `auth.{common,verifyPhone,resetPasswordOtp,changePhone}` namespace with English + Urdu translations for the three new screens.
+
+### Changed
+- **Registration** — phone is required, email is optional. `RegisterCommandHandler` enforces phone uniqueness, conditionally enforces email uniqueness, sets `UserName = phone`, issues a signup OTP via SMS. Email verification email still dispatched when an email is supplied.
+- **Login** — accepts phone (primary) or verified email (fallback) via the new `Identifier` field. Universal `PhoneNumberConfirmed` gate; returns the `phone_verification_required:` prefixed error so the frontend can show a resend-OTP affordance.
+- **Forgot password** — phone-or-email identifier; backend returns eligible channels with masked targets; auto-dispatches when only one channel is eligible; chooser UI for users with both channels verified.
+- **`IdentityOptions.RequireUniqueEmail`** flipped to `false` (Identity's `UserValidator` rejects null emails when true). Email uniqueness is enforced explicitly in `RegisterCommandHandler` when an email is actually provided.
+
+### Status (MODULES.md)
+- `M01-F09`: header → `Done`; rows `R01, R02, R03, R04, R05, R08, R10, R11, R12` → `Done`; `R06` → `Out of Scope` (pre-launch, no email-only users); `R07` → `Planned · deferred to M01-F05-R02 PR`; `R09` → `Planned · deferred to M01-F08 PR`.
+- `M01-F04-R04` (SMS OTP recovery) → `Done` (delivered via M01-F09-R08).
+- New row `M01-F08-R07` — backfill audit events for M01-F09 phone-auth flows when audit ships.
+- New row `M08-F05-R05` — bootstrap i18next runtime + retro-i18n auth/dashboard/onboarding screens (Phase 7 deviation).
+- `ACs added`: `AC10` (R11), `AC11` (R12). `AC5/AC6/AC9` annotated `Out of Scope` per R06/R07/R09 status.
+
+### Technical Decisions
+- **Self-hosted `capcom6/sms-gateway` over Twilio / Jazz / Telenor** — see new [DECISIONS.md](DECISIONS.md) row `D-04`.
+- **OTP hashing: HMAC-SHA256 with server pepper** — right primitive for short-lived 6-digit codes; BCrypt's compute cost is overkill at that length.
+- **Anti-substitution on phone change** — new `target_phone` column on `phone_verifications` pins the swap target so a valid OTP cannot move to an arbitrary phone. Re-validated at confirm time for TOCTOU safety.
+- **`UserName = phone` on signup** — phone is the canonical, always-present identifier; email is optional.
+- **Single per-IP `auth-ip` rate limit + handler-level daily cap** — middleware partitioning by request-body fields is awkward, so the handler-level `CountIssuedSinceAsync` is the authoritative per-phone defense.
+
+### Deferred to follow-up PRs
+- xUnit + Vitest test suites (no test project exists in the repo yet — scaffolding is its own work).
+- i18next runtime bootstrap + retro-`useTranslation` across auth/dashboard/onboarding (tracked by `M08-F05-R05`).
+- Audit-trail rows for phone-auth events (R09, tracked by `M01-F08-R07`).
+- Forced "add phone" flow for existing email-only users (R06, out of scope pre-launch).
+- Sub-user "require OTP on first login" toggle (R07, belongs to `M01-F05-R02` PR).
+
+---
+
 ## [2.0.0] - 2026-05-16
 
 Documentation restructure — single source of truth in `docs/MODULES.md`; reference content distributed to scoped `CLAUDE.md` files.
