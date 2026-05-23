@@ -8,6 +8,12 @@
 | `ProjectOverView.md` | Business requirements | Module descriptions, user stories, feature specs, subscription tiers |
 | `CHANGELOG.md` | Version history | Architectural decisions, tech changes, feature additions |
 | `EF_CONFIGURATION_CONVENTIONS.md` | EF Core mapping standards | Fluent API section ordering, relationship comments (also in `server/FuelFlow.Infrastructure/CLAUDE.md`) |
+| `ACTIVE-TASK.md` | Per-session handoff scratchpad | Last action, next action, files touched, decisions made this session, blockers (1-2 lines per field) |
+| `SCOPE-FENCE.md` | Current sprint scope + frozen paths + deferred ideas | In-scope items mirroring `MODULES.md` "Current Priorities", paths temporarily off-limits, ideas captured but not yet planned |
+| `KNOWN-ISSUES.md` | Workarounds and intentional technical debt catalogue | `KI-XX` rows: known bugs not yet fixed, shipped workarounds, performance/accuracy compromises |
+| `ENV-MAP.md` | Environment variable / user-secret map (no values) | Every `Configuration["…"]` + `import.meta.env.VITE_*` key, where it's read, whether required, server-only vs public |
+| `DECISIONS.md` | Index of non-trivial technical decisions | `D-XX` rows: one-line decision + link to scoped `CLAUDE.md` / CHANGELOG / `docs/adr/` for the full reasoning |
+| `ADR-template.md` | Scaffold for new Architecture Decision Records | Copy → `docs/adr/ADR-NNN-…md` when a decision warrants more than a one-line `DECISIONS.md` row |
 
 Reference content (tech stack, architecture, API conventions, DB schema, UI specs) lives in the **scoped `CLAUDE.md`** files next to the code — see the "What Goes Where" table below and the root [`CLAUDE.md`](../CLAUDE.md) Rule 9.
 
@@ -32,7 +38,13 @@ Reference content (tech stack, architecture, API conventions, DB schema, UI spec
 | Component patterns (shadcn, Field system, Dialog/Sonner/Recharts, subscription UI) | `fuel-flow-web/src/components/CLAUDE.md` |
 | API client, Zod validators, utilities | `fuel-flow-web/src/lib/CLAUDE.md` |
 | Module descriptions (what it does, user stories) | `ProjectOverView.md` |
-| Architecture decisions and rationale | `CHANGELOG.md` |
+| Architecture decisions and rationale (full narrative) | `CHANGELOG.md` |
+| Per-session handoff (last action, next action, files touched) | `ACTIVE-TASK.md` |
+| Current sprint scope, frozen paths, deferred ideas | `SCOPE-FENCE.md` |
+| Known bugs, workarounds, intentional tech debt | `KNOWN-ISSUES.md` |
+| Env var / user-secret / `VITE_*` map (keys only, no values) | `ENV-MAP.md` |
+| Index of non-trivial technical decisions | `DECISIONS.md` |
+| Scaffold for new ADR files | `ADR-template.md` |
 
 **Rule:** Never duplicate detailed specs across documents. `CLAUDE.md` files describe *conventions and rules* — not full specifications — alongside the code they describe.
 

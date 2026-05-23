@@ -1,21 +1,28 @@
 ---
 name: feature-discovery
-description: Intake step for a new module / feature / requirement before /feature-planning. Loads docs/MODULES.md and docs/ProjectOverView.md, takes a one-paragraph idea card from the user, then collaboratively refines it (who asked, measurable outcome, motivation link, subscription tier, domain tags) and decides whether the idea already exists, is cross-cutting tooling (skip the registry), or needs a new row. Picks granularity (R / F / M), detects ripple effects, confirms with the user, then edits docs/MODULES.md and — when warranted — docs/ProjectOverView.md. Invoke with /feature-discovery. Hands back the new ID for /feature-planning to plan against.
+description: Intake step for a new module / feature / requirement before /feature-planning, plus a rediscovery mode that re-critiques an already-discovered feature for flow gaps, AC holes, missing tags, and ripple coverage. Loads docs/MODULES.md and docs/ProjectOverView.md, then either (a) takes a one-paragraph idea card and collaboratively refines it (who asked, measurable outcome, motivation link, subscription tier, domain tags) or (b) re-opens a recently discovered feature, walks a lifecycle/AC/tag/dependency critique matrix, and proposes additions. Decides whether to skip the registry (existing item, cross-cutting tooling) or write changes. Picks granularity (R / F / M), detects ripple effects, confirms with the user, then edits docs/MODULES.md and — when warranted — docs/ProjectOverView.md. Invoke with /feature-discovery (new) or /feature-discovery rediscover [id]. Hands back the new or modified ID(s) for /feature-planning.
 disable-model-invocation: true
 ---
 
 # Feature Discovery — Fuel Flow
 
-The intake skill that runs **before** `/feature-planning`. Use when the
-user has an idea that is not yet in `docs/MODULES.md`. Manually
-invoked (`/feature-discovery`). Output is one (or two) edits to the
-working tree — never code, never a commit, never a PR.
+The intake skill that runs **before** `/feature-planning`. Two modes:
+
+1. **New-idea mode** (default) — use when the user has an idea that
+   is not yet in `docs/MODULES.md`.
+2. **Rediscovery mode** — use when a feature was already added (often
+   recently via this same skill) and the user wants to re-critique
+   it: complete-flow gaps, AC holes, missing tags, unstated
+   dependencies, ripple effects on `Done` items.
+
+Manually invoked. Output is one (or two) edits to the working tree —
+never code, never a commit, never a PR.
 
 This skill is a **refinement partner**, not a gate. The user shares a
-rough idea; Claude helps shape it by surfacing the signals a strong
-spec needs (who asked, what outcome, which motivation, which tier,
-which domain dimensions) and proposing answers when the user is
-unsure. Claude does not block weak ideas — it improves them.
+rough idea (or an existing ID); Claude helps shape or sharpen it by
+surfacing the signals a strong spec needs and proposing answers when
+the user is unsure. Claude does not block weak ideas — it improves
+them.
 
 Conventions are referenced from root [`CLAUDE.md`](../../../CLAUDE.md)
 Rules 1, 2, 6, 9 and [`docs/MODULES.md`](../../../docs/MODULES.md)
@@ -23,16 +30,32 @@ Maintenance Conventions. They are never restated.
 
 ## What this skill is, and isn't
 
-- **Is:** intake. Loads context, takes an idea card, refines it,
-  classifies it, places it in `MODULES.md` (and, when warranted,
+- **Is:** intake and re-intake. Loads context, takes an idea card
+  *or* a target ID, refines/critiques it, classifies it, places or
+  amends it in `MODULES.md` (and, when warranted,
   `ProjectOverView.md`).
 - **Isn't:** `feature-planning`. Stops at the registry. User runs
-  `/feature-planning <new-id>` next.
+  `/feature-planning <id>` next.
 - **Isn't:** a PR step. No commits, branches, or `gh`. Per root
   Rules 1 + 2 the registry edits ship in the **same PR** as the
   implementation — so the working-tree edit is the right hand-off.
+- **Isn't:** a lifecycle-flip step. Rediscovery never downgrades a
+  `Done` item to `Planned` because a gap was found — gaps become
+  new `RXX` rows or refinements, not status reversals.
 
-## Procedure
+## Mode selection
+
+After Step 0 loads context, decide the mode:
+
+- **Explicit invocation** — if the user invoked
+  `/feature-discovery rediscover [id]` (or said
+  "rediscover M01-F09", "let's re-examine X", "audit the
+  flow of …"), go to **Procedure — rediscovery**.
+- **Default** — go to **Procedure — new idea**.
+- **Ambiguous** — ask one `AskUserQuestion` with two options:
+  "Start a new idea" vs "Rediscover an existing feature".
+
+## Procedure — new idea
 
 The skill walks 10 steps. Each step has a clear stop condition. Use
 `AskUserQuestion` for any question where the answer is finite
@@ -321,6 +344,186 @@ Tell the user:
 - Per root Rules 1 + 2: these doc edits ship in the **same PR** as
   the implementation, not a follow-up.
 
+## Procedure — rediscovery
+
+Use when the user wants to re-critique an existing feature (often
+recently discovered via this same skill). The shape mirrors the
+new-idea procedure — Step 0 is shared, then it pivots from *intake*
+to *critique*, and rejoins the shared confirm/apply path.
+
+### R-Step 0 — Load domain context
+
+Same as new-idea Step 0. Read `docs/MODULES.md` and
+`docs/ProjectOverView.md` in full on every invocation.
+
+### R-Step 1 — Pick the target
+
+Grep `MODULES.md` for the Discovery blockquote pattern
+(`> _Discovery (`). List the matches as `MXX-FXX — <title>
+(YYYY-MM-DD)` most-recent-first. Present with `AskUserQuestion`
+when the count fits (≤ 4); otherwise show the list and ask the
+user to name an ID.
+
+If the user supplies an ID that has no Discovery note, accept it
+anyway — older items can still be critiqued. If `MODULES.md` has
+no Discovery blockquotes yet, prompt directly for an ID.
+
+### R-Step 2 — Reload the target in full
+
+Capture, in working memory:
+
+- The full feature section: description, requirements table, ACs,
+  `**Tags:**` line, Discovery blockquote.
+- Parent module's `**Purpose:**` line.
+- Every other `MXX-FXX-RXX` referenced from the feature (linked
+  precursors, refinements, ripple targets).
+- Matching `ProjectOverView.md` passages (search by title and key
+  terms from the description).
+
+State back to the user: "Rediscovering `<id> — <title>` discovered
+`<date>`. Tags: `<tags>`. `<n>` requirements, `<m>` ACs. Linked
+to: `<list of linked IDs>`. Ready to walk the critique matrix."
+
+### R-Step 3 — Run the critique matrix (5 dimensions)
+
+For each dimension, list **specific** observed gaps as one-line
+candidate findings. Do not propose fixes yet — separation of
+diagnosis from prescription keeps the user in control.
+
+**3a. Lifecycle / flow completeness.** Walk the feature's lifecycle
+and ask, for each stage, "is there an AC or a requirement?":
+
+- Initiation — who can perform it? (role check explicit?)
+- Trigger — time-based / user-action / system-event?
+- Input — format / range / uniqueness validation?
+- Persistence — atomic / multi-step? rollback path?
+- Idempotency — replay-safe? duplicate-submit protection?
+- Failure paths — invalid input / permission denied / quota
+  exceeded / external dependency down (e.g. SMS provider) /
+  partial success?
+- Compensating actions — rollback / retry / notify on failure?
+- Side effects — audit (M01-F08), notifications (M10-F01),
+  billing (M11), shift state (M04), variance (M02-F05)?
+- Exit / cleanup — what cancels the flow? what's the timeout?
+
+**3b. AC coverage matrix.** For each requirement row, check whether
+ACs cover: happy path / each input-validation failure / permission-
+denied per non-authorized role / multi-tenant boundary (Station A
+vs B; Owner vs scoped) / race conditions / trial & plan-limit
+edges / mobile-PWA / i18n (English + Urdu) and PKR formatting.
+
+**3c. Tag completeness.** Inspect the 8 tags
+(`tenant-scope`, `tier`, `capacity-impact`, `locale`,
+`sensitive-action`, `notification-trigger`, `money-touch`,
+`shift-lifecycle-touch`). Flag missing values; flag values that
+look wrong given the feature's behavior (e.g. `sensitive-action=no`
+on a feature that obviously touches auth or money).
+
+**3d. Dependencies & ripples.** Identify:
+
+- Precursor IDs the feature depends on but doesn't reference
+  (e.g. `M01-F09` depends on `M10-F03`).
+- `Done` items the feature modifies — refinement or
+  supersession (see "Status rule for Done items" below).
+- Downstream features this enables that should now link back.
+
+**3e. `ProjectOverView.md` alignment.** Does the narrative still
+match the registry after this feature? Are there passages that
+describe pre-feature behavior in present tense?
+
+### R-Step 4 — Findings table
+
+Render the gaps as a single table. Empty dimensions are fine.
+
+| # | Dimension | Issue (observed gap) | Proposed action |
+|---|---|---|---|
+| 1 | Lifecycle | OTP provider outage path unspecified | New R: fallback to email when verified, else max-3 retry with backoff |
+| 2 | AC coverage | No AC for max-attempts lockout (R04) | Add AC9: "Given OTP attempts > 3, When user retries, Then 15-min lockout returned" |
+| 3 | Dependency | M01-F08 audit not explicitly linked | Add inline `(see M01-F08)` to R09 description |
+| 4 | Tags | `notification-trigger=yes` but no `M10-F01` event ID | Add new `M10-F01-RXX` event for "phone-changed" + cross-link |
+
+For each row ask the user one of three answers:
+
+- **Accept** — incorporate into the proposed edit (next step).
+- **Defer** — record as a known gap in the Discovery blockquote
+  but don't change anything else now.
+- **Reject** — won't-fix; do not record.
+
+Use a numbered free-form prompt: "For each row reply with
+`<#> accept|defer|reject [optional note]`. Multiple lines OK."
+
+### R-Step 5 — Refine accepted findings
+
+Group accepted findings by the edit they imply:
+
+- **New `RXX` row(s)** — same shape and rules as new-idea
+  Step 7. Append-only numbering; pick next free `RXX` in the
+  feature's table.
+- **New `ACx` bullet(s)** on an existing requirement — append-only;
+  next free `ACx` after the last existing one.
+- **Inline cross-reference edits** on existing rows — narrowly
+  scoped wording add, no behavior change.
+- **Tag edits** on the `**Tags:**` line — add missing tags or
+  correct a clearly wrong value.
+
+If an accepted finding involves a `Done` item, apply the **Status
+rule for Done items** (next section). If it would affect
+`ProjectOverView.md`, draft that edit too (new-idea Step 6 logic
+applies).
+
+If `Current Priorities` should change (e.g. accepted findings
+escalate the work), propose a slot and ask the user to confirm —
+do not auto-move.
+
+### R-Step 6 — Status rule for Done items
+
+When an accepted finding touches a `Done` feature or requirement,
+classify the change first:
+
+| Case | What to write | Status action |
+|---|---|---|
+| Feature header (e.g. `M01-F01`) | — | **Stays Done.** Never flip a feature header to In Progress just because new requirements were added. |
+| Existing `Done` row that is *refined* (extended, not contradicted) | Inline append: `(refined by [MXX-FXX-RYY](#…))` | **Stays Done.** No status change. |
+| Existing `Done` row that is *superseded* (old behavior must go away) | Inline append: `(superseded by [MXX-FXX-RYY](#…))` | **Flips to `Out of Scope`.** The corrected behavior now lives at the new `RYY`. |
+| New `RYY` row added through rediscovery | Full new row | **Starts at `Planned`.** |
+
+This matches the existing precedent in `MODULES.md`: `M01-F01-R01`
+and `M01-F01-R04` are `Done` with `(refined by M01-F09-…)` inline
+pointers — no status reversal, no rewritten history. The only
+status change permitted on a `Done` row is the `Done → Out of
+Scope` supersession case.
+
+Confirm the classification with the user for every Done-touching
+finding before drafting the edit. If unclear whether a finding
+refines vs supersedes, ask: "After this ships, does the old rule
+still hold or is it gone?"
+
+### R-Step 7 — Rediscovery log line
+
+Append a one-line rediscovery entry to the feature's Discovery
+blockquote so the in-file audit trail survives:
+
+```
+> _Discovery (2026-05-19): … original note …_
+> _Rediscovered 2026-05-23: added R11–R13 (provider outage,
+> SIM-swap audit, recovery channel exhaust); refined R03 with
+> AC9; deferred 1 finding (quiet-hours OTP suppression)._
+```
+
+One line per rediscovery pass. Today's date from system context.
+
+### R-Step 8 — Present, confirm, apply
+
+Reuse new-idea Steps 7 → 8 → 9 verbatim: render the full diff
+(both files when applicable), get explicit yes/no, write the
+edits. Hand back the new/modified IDs and remind the user that
+these working-tree edits ship in the same PR as the
+implementation (root Rules 1 + 2).
+
+If the user runs rediscovery and accepts zero findings, the
+correct outcome is **no edits** — tell them the feature looks
+sound and exit cleanly.
+
 ## Boundaries
 
 - Never opens a PR, never commits, never creates a branch. Edits sit
@@ -328,22 +531,28 @@ Tell the user:
 - Never adds a row for cross-cutting tooling — ships as
   `feat-tooling-<name>` with no registry edit.
 - Never reuses or renumbers a retired ID (Maintenance Convention #6).
-- Never flips status of existing items as a side effect — discovery
-  is intake, not lifecycle. Status flips happen in
+- Never flips status of existing items as a side effect of new-idea
+  intake — discovery is intake, not lifecycle. The only status
+  changes this skill is allowed to write are (a) `Done → Out of
+  Scope` supersession in rediscovery R-Step 6 and (b) initial
+  `Planned` for brand-new rows. All other status flips happen in
   `feature-implementation` and the shipping PR (root Rule 2).
-- Never deletes a row. `Out of Scope` is how items are retired and
-  even that is an explicit user action — not a discovery action.
+- Never downgrades a `Done` feature header. Rediscovery surfaces
+  gaps as new `RXX` rows or refinements, not as `Done → Planned`
+  reversals. What shipped, shipped.
+- Never deletes a row. `Out of Scope` is how items are retired.
 - Never edits scoped `CLAUDE.md` files. `ProjectOverView.md` is the
-  only other file this skill may edit, and only when step 6
-  warrants it.
+  only other file this skill may edit, and only when step 6 (new
+  idea) or R-Step 5 (rediscovery) warrants it.
 - Never edits `docs/implementation/<id>.md`. That belongs to
   `feature-planning`.
 - Never edits `docs/CHANGELOG.md`. CHANGELOG entries are added in
   the shipping PR per `docs/CLAUDE.md`, not at discovery.
-- Never refuses an idea on the user's behalf. If a value signal is
-  missing, the skill helps the user articulate it; if it remains
-  missing, the gap is **recorded** in the Discovery note and the
-  user proceeds.
+- Never refuses an idea (or a rediscovery finding) on the user's
+  behalf. If a value signal is missing, the skill helps the user
+  articulate it; if it remains missing, the gap is **recorded**
+  (in the Discovery note for new ideas; as a `Defer` row in the
+  Findings table for rediscovery) and the user proceeds.
 
 ## Conventions referenced (not redefined)
 
@@ -365,28 +574,33 @@ Tell the user:
 ## How this slots into the existing pipeline
 
 ```
-User has a new idea (paragraph)
-       │
-       ▼
-/feature-discovery
-       │ (loads MODULES.md + ProjectOverView.md, refines with user)
-       │
-       ├─ already exists?         → stop, return existing ID
-       ├─ cross-cutting tooling?  → stop, "branch as feat-tooling-…"
-       └─ new R / F / M           → edits MODULES.md (+ ProjectOverView.md
-                                    when warranted), returns new ID
-                                    │
-                                    ▼
-                            /feature-planning <new-id>
-                                    │
-                                    ▼
-                            /feature-implementation
-                                    │
-                                    ▼
-                            /pr-workflow
-                                    │
-                                    ▼
-                            One PR, all doc edits + impl in same diff
+User has a new idea (paragraph)       User wants to re-critique an existing feature
+       │                                          │
+       ▼                                          ▼
+/feature-discovery                       /feature-discovery rediscover [id]
+       │ (loads MODULES.md +                      │ (loads MODULES.md +
+       │  ProjectOverView.md,                     │  ProjectOverView.md,
+       │  refines with user)                      │  walks 5-dimension critique)
+       │                                          │
+       ├─ already exists? → stop, return ID       ├─ zero findings? → stop, no edits
+       ├─ cross-cutting?  → stop, "feat-tooling-…"├─ findings accepted → edits MODULES.md
+       └─ new R / F / M  → edits MODULES.md       │   (+ ProjectOverView.md when warranted)
+                          (+ ProjectOverView.md   │   appends Rediscovered log line
+                          when warranted),        │   applies Done-row status rule
+                          returns new ID          │   returns new/modified IDs
+                                    │             │
+                                    └─────┬───────┘
+                                          ▼
+                                  /feature-planning <id>
+                                          │
+                                          ▼
+                                  /feature-implementation
+                                          │
+                                          ▼
+                                  /pr-workflow
+                                          │
+                                          ▼
+                                  One PR, all doc edits + impl in same diff
 ```
 
 Each step has its own user-confirmation gate; nothing chains
