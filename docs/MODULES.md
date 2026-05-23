@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-05-23
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -22,12 +22,21 @@
 
 ## Status Legend
 
-| Symbol | Meaning |
-|---|---|
-| Done | Merged to main, tested |
-| In Progress | Active development |
-| Planned | Not yet started |
-| Out of Scope | Explicitly deferred / v2+ |
+> **Done means shipped — forever. Suffix it `· refined by [ID]` / `· extended by [ID]` when the new row adds, `· superseded by [ID]` when the new row replaces. `· superseded` rolls up; the rest stay Done.**
+
+| Status | Meaning | Counts as for feature-header roll-up |
+|---|---|---|
+| `Done` | Merged to main, tested. Untouched since. | Done |
+| `Done · refined by [ID]` | Shipped, but a later row at `[ID]` narrows / clarifies it. The original rule still holds. | Done |
+| `Done · extended by [ID]` | Shipped, but a later row at `[ID]` adds new branches / options. The original rule still holds. | Done |
+| `Done · superseded by [ID]` | Shipped, but a later row at `[ID]` replaces its behavior. The original row is reference-only. | **In Progress** (rolls up) |
+| `In Progress` | Active development | In Progress |
+| `Planned` | Not yet started | Planned |
+| `Out of Scope` | Explicitly deferred / v2+ | Doesn't block roll-up |
+
+**Header roll-up.** A feature header's status equals the *lowest* status of any row underneath it, where `Done` and `Done · refined/extended` count as Done, and `Done · superseded` / `In Progress` / `Planned` count as not-yet-done. `Out of Scope` rows are excluded from roll-up.
+
+**When to use which suffix.** When a later row touches an existing `Done` row, ask: *could this missing piece have been written when the original feature shipped, with the knowledge available at that time?* If **no** (a new feature introduced new context), use `· refined by` or `· extended by` — the original was complete-for-its-time. If **yes** (the original was wrong or incomplete by its own standards), use `· superseded by` — the row is no longer authoritative and the header rolls up.
 
 ---
 
@@ -76,10 +85,10 @@ Public station-owner registration. Form captures owner info only — organizatio
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M01-F01-R01 | Email, **when provided**, must be unique across all users (refined by [M01-F09-R01](#m01-f09--phone-first-authentication): email optional once phone is captured) | REG-001 | Done |
+| M01-F01-R01 | Email, **when provided**, must be unique across all users | REG-001 | Done · refined by [M01-F09-R01](#m01-f09--phone-first-authentication) |
 | M01-F01-R02 | Registration creates Owner user only; org + first station deferred to onboarding | REG-002 | Done |
 | M01-F01-R03 | Phone number validated as Pakistani format `+92XXXXXXXXXX` | REG-003 | Done |
-| M01-F01-R04 | Email must be verified before it can be used as a fallback login channel (refined by [M01-F09-R03](#m01-f09--phone-first-authentication): SMS OTP is the primary verification at signup; email verification is only required if the user opts in to email as fallback login) | REG-004 | Done |
+| M01-F01-R04 | Email must be verified before it can be used as a fallback login channel | REG-004 | Done · refined by [M01-F09-R03](#m01-f09--phone-first-authentication) |
 | M01-F01-R05 | Password minimum 6 characters, must include at least one number | — | Done |
 
 **Acceptance Criteria:**
@@ -116,7 +125,7 @@ Email/password login + PIN-based quick login, with DB-backed refresh tokens stor
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M01-F03-R01 | Phone + password login issues short-lived JWT + DB-backed refresh token; email + password is a fallback path that resolves only when the user has a verified email (refined by [M01-F09-R05](#m01-f09--phone-first-authentication)) | — | Done |
+| M01-F03-R01 | Phone + password login issues short-lived JWT + DB-backed refresh token; email + password is a fallback path that resolves only when the user has a verified email | — | Done · refined by [M01-F09-R05](#m01-f09--phone-first-authentication) |
 | M01-F03-R02 | PIN-based quick login for nozzlemen/managers on shared devices | — | Planned |
 | M01-F03-R03 | Refresh tokens stored hashed, rotated on every refresh, reuse triggers revocation | — | Done |
 | M01-F03-R04 | Multi-device simultaneous login allowed (one row per session) | — | Done |
@@ -139,7 +148,7 @@ Self-service password reset via email, plus Owner-initiated reset for sub-users.
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M01-F04-R01 | Forgot-password sends a one-time reset link by email when the user has a verified email; offered alongside phone OTP when both channels are set (extended by [M01-F09-R08](#m01-f09--phone-first-authentication)) | — | Done |
+| M01-F04-R01 | Forgot-password sends a one-time reset link by email when the user has a verified email; offered alongside phone OTP when both channels are set | — | Done · extended by [M01-F09-R08](#m01-f09--phone-first-authentication) |
 | M01-F04-R02 | Reset token expires after 24 hours and is single-use | — | Done |
 | M01-F04-R03 | Owner can force-reset password for any user in their organization | — | Planned |
 | M01-F04-R04 | SMS OTP recovery — user chooses phone OTP or email link when both are set (revived by, and implemented as part of, [M01-F09-R08](#m01-f09--phone-first-authentication)) | — | Planned |
