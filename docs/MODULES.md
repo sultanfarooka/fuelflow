@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-23
+**Last Updated:** 2026-05-24
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -64,10 +64,11 @@ The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that
 
 | # | ID | Title | Area |
 |---|---|---|---|
-| 1 | [M07-F07](#m07-f07--ui-shell)   | Basic UI shell (layout, sidebar, navigation) | Frontend |
-| 2 | [M01-F09](#m01-f09--phone-first-authentication) | Phone-first authentication (SMS OTP, phone-primary login, email optional) | Full-stack |
-| 3 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
-| 4 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
+| 1 | [M07-F09](#m07-f09--design-system--theme-foundation) | Design system & theme foundation (shadcn `b3lo6Vpia` preset, dark mode, RTL, migration of shipped screens) | Frontend |
+| 2 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
+| 3 | [M01-F09](#m01-f09--phone-first-authentication) | Phone-first authentication (SMS OTP, phone-primary login, email optional) | Full-stack |
+| 4 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
+| 5 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
 
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -777,7 +778,7 @@ Owner-only cross-station aggregation.
 
 ### M07-F07 — UI Shell   [Status: Planned]
 
-The cross-cutting layout that wraps every authenticated page: sidebar, top nav, content area, and route-guard composition. Provides the chrome that the per-module pages (M07-F01..F06, M05, M06, …) plug into.
+The cross-cutting layout that wraps every authenticated page: sidebar, top nav, content area, and route-guard composition. Provides the chrome that the per-module pages (M07-F01..F06, M05, M06, …) plug into. Built on top of the design system from [M07-F09](#m07-f09--design-system--theme-foundation).
 
 **Requirements:**
 
@@ -808,6 +809,34 @@ Make the app installable and offline-capable for shift operations on shared stat
 | M07-F08-R02 | Web app manifest with icons + name supports "Add to Home Screen" | — | Planned |
 | M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | Planned |
 | M07-F08-R04 | Web push notifications | — | Out of Scope (v2) |
+
+---
+
+### M07-F09 — Design System & Theme Foundation   [Status: Planned]
+
+> _Discovery (2026-05-24): self-identified gap — own observation that the existing frontend doesn't yet use shadcn primitives or consistent theme tokens · outcome = every authenticated and public page renders through shadcn primitives styled by the `b3lo6Vpia` preset, dark mode works everywhere, Urdu / RTL behaves consistently · maps to ProjectOverView (no single motivation — underpins every M07 / M05 / M06 / M11 UI feature; closest narrative anchor is "Bilingual support" under §Localization) · cost-of-not-building: M07-F07, M07-F01..F06 reports, M05 / M06 admin screens, M01-F09 auth screens, and M11-F08 pricing page all get rebuilt twice if shipped without this foundation · install command: `npx shadcn@latest apply --preset b3lo6Vpia` (applied to the existing Vite + React 19 project)._
+
+**Tags:** tenant-scope=platform-global; tier=All; capacity-impact=none; locale=Urdu-needed; sensitive-action=no; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+Provides the shadcn-based design tokens, theme preset, component primitives, dark-mode behaviour, RTL handling, and going-forward conventions that every authenticated and public page is built on. Includes the foundation (tokens, primitives, dark mode, RTL) and the bulk migration of every shipped screen so the codebase ends in a consistent state. Precursor to [M07-F07](#m07-f07--ui-shell), [M11-F08](#m11-f08--plan-comparison--pricing-page), and effectively every other Planned UI feature.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M07-F09-R01 | Apply the `b3lo6Vpia` shadcn theme preset to the Vite + React 19 frontend via `npx shadcn@latest apply --preset b3lo6Vpia`; design tokens for colours, radii, spacing, and typography come from this preset | — | Planned |
+| M07-F09-R02 | All shadcn baseline primitives needed by the shipped surface (Button, Input, Select, Dialog, Sheet, Sonner, Form, Card, Table, Tabs, Tooltip, Badge, etc.) are installed under `fuel-flow-web/src/components/ui/` using the canonical shadcn structure | — | Planned |
+| M07-F09-R03 | Dark-mode toggle works on every page; switching modes flips theme tokens with no rogue colours, hard-coded hex values, or one-off styles remaining | — | Planned |
+| M07-F09-R04 | Urdu locale switches layout direction to RTL; all primitives, layouts, icons, and inputs mirror correctly (triggered by [M08-F05-R02](#m08-f05--system-preferences)) | — | Planned |
+| M07-F09-R05 | Every authenticated screen shipped before this feature (registration, email verification, login, password recovery, station profile, dashboard summary) is migrated to use shadcn primitives and theme tokens — zero rogue inline styles or one-off colours | — | Planned |
+| M07-F09-R06 | Every public-facing screen shipped before this feature (registration landing, any marketing route) is migrated to the new system | — | Planned |
+| M07-F09-R07 | Going-forward standards documented in [`fuel-flow-web/src/components/CLAUDE.md`](../fuel-flow-web/src/components/CLAUDE.md): when to use a shadcn primitive vs build a custom component, naming conventions, theming hooks, RTL guidance, dark-mode test checklist | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given any authenticated page after migration, When inspected, Then every interactive element resolves to a shadcn primitive (Button, Input, Select, Dialog, …) and no `style={...}` color / radius / spacing overrides exist outside the design-token system.
+- **AC2** Given the theme toggle in the top bar, When the user switches dark/light, Then all surfaces, text, borders, and overlays update consistently and no rogue colours persist.
+- **AC3** Given the language toggle in the top bar (per [M08-F05-R02](#m08-f05--system-preferences)), When the user switches to Urdu, Then the entire layout flips to RTL, including sidebars, primitive components, and icon positions.
+- **AC4** Given the migration is complete, When [`fuel-flow-web/src/components/CLAUDE.md`](../fuel-flow-web/src/components/CLAUDE.md) is opened, Then it documents the going-forward standards for adding new components with examples of compliant vs non-compliant patterns.
 
 ---
 
