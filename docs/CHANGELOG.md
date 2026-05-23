@@ -42,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`UserName = phone` on signup** — phone is the canonical, always-present identifier; email is optional.
 - **Single per-IP `auth-ip` rate limit + handler-level daily cap** — middleware partitioning by request-body fields is awkward, so the handler-level `CountIssuedSinceAsync` is the authoritative per-phone defense.
 
+### Fixed
+- **`POST /auth/login` 500 for email-less users** — `JwtTokenService.GenerateAccessToken` threw `ArgumentNullException` when adding the `ClaimTypes.Email` claim, and the three response-builders (`LoginCommandHandler.BuildAuthResponse`, `GetCurrentUserQueryHandler`, `OnboardingCommandHandler`) all null-banged `user.Email` into a non-nullable `UserInfo.Email`. The Email and MobilePhone claims are now conditional on the user actually having one; `UserInfo.Email` is `string?`; `UserInfo.Phone` is now exposed alongside it. Surfaced by smoke-testing the `LogOnlySmsSender` path against an email-less registration.
+
 ### Deferred to follow-up PRs
 - xUnit + Vitest test suites (no test project exists in the repo yet — scaffolding is its own work).
 - i18next runtime bootstrap + retro-`useTranslation` across auth/dashboard/onboarding (tracked by `M08-F05-R05`).

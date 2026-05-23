@@ -16,8 +16,10 @@ import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as AuthVerifyPhoneRouteImport } from './routes/auth/verify-phone'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth/verify-email'
 import { Route as AuthResetPasswordSuccessRouteImport } from './routes/auth/reset-password-success'
+import { Route as AuthResetPasswordOtpRouteImport } from './routes/auth/reset-password-otp'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -25,6 +27,7 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-pas
 import { Route as AuthCheckEmailResetRouteImport } from './routes/auth/check-email-reset'
 import { Route as AuthCheckEmailRegisterRouteImport } from './routes/auth/check-email-register'
 import { Route as DashboardStationStationIdRouteImport } from './routes/dashboard/station.$stationId'
+import { Route as DashboardAccountPhoneRouteImport } from './routes/dashboard/account.phone'
 import { Route as DashboardStationStationIdSetupRouteImport } from './routes/dashboard/station.$stationId.setup'
 
 const AboutRoute = AboutRouteImport.update({
@@ -62,6 +65,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const AuthVerifyPhoneRoute = AuthVerifyPhoneRouteImport.update({
+  id: '/verify-phone',
+  path: '/verify-phone',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
@@ -73,6 +81,11 @@ const AuthResetPasswordSuccessRoute =
     path: '/reset-password-success',
     getParentRoute: () => AuthRouteRoute,
   } as any)
+const AuthResetPasswordOtpRoute = AuthResetPasswordOtpRouteImport.update({
+  id: '/reset-password-otp',
+  path: '/reset-password-otp',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -109,6 +122,11 @@ const DashboardStationStationIdRoute =
     path: '/station/$stationId',
     getParentRoute: () => DashboardRouteRoute,
   } as any)
+const DashboardAccountPhoneRoute = DashboardAccountPhoneRouteImport.update({
+  id: '/account/phone',
+  path: '/account/phone',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardStationStationIdSetupRoute =
   DashboardStationStationIdSetupRouteImport.update({
     id: '/setup',
@@ -128,10 +146,13 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/reset-password-otp': typeof AuthResetPasswordOtpRoute
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/auth/verify-phone': typeof AuthVerifyPhoneRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
 }
@@ -145,10 +166,13 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/reset-password-otp': typeof AuthResetPasswordOtpRoute
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/auth/verify-phone': typeof AuthVerifyPhoneRoute
   '/dashboard': typeof DashboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
 }
@@ -165,10 +189,13 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/reset-password-otp': typeof AuthResetPasswordOtpRoute
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
+  '/auth/verify-phone': typeof AuthVerifyPhoneRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
 }
@@ -186,10 +213,13 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/auth/reset-password'
+    | '/auth/reset-password-otp'
     | '/auth/reset-password-success'
     | '/auth/verify-email'
+    | '/auth/verify-phone'
     | '/dashboard/'
     | '/onboarding/'
+    | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
     | '/dashboard/station/$stationId/setup'
   fileRoutesByTo: FileRoutesByTo
@@ -203,10 +233,13 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/auth/reset-password'
+    | '/auth/reset-password-otp'
     | '/auth/reset-password-success'
     | '/auth/verify-email'
+    | '/auth/verify-phone'
     | '/dashboard'
     | '/onboarding'
+    | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
     | '/dashboard/station/$stationId/setup'
   id:
@@ -222,10 +255,13 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/register'
     | '/auth/reset-password'
+    | '/auth/reset-password-otp'
     | '/auth/reset-password-success'
     | '/auth/verify-email'
+    | '/auth/verify-phone'
     | '/dashboard/'
     | '/onboarding/'
+    | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
     | '/dashboard/station/$stationId/setup'
   fileRoutesById: FileRoutesById
@@ -289,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/auth/verify-phone': {
+      id: '/auth/verify-phone'
+      path: '/verify-phone'
+      fullPath: '/auth/verify-phone'
+      preLoaderRoute: typeof AuthVerifyPhoneRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/auth/verify-email': {
       id: '/auth/verify-email'
       path: '/verify-email'
@@ -301,6 +344,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password-success'
       fullPath: '/auth/reset-password-success'
       preLoaderRoute: typeof AuthResetPasswordSuccessRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/auth/reset-password-otp': {
+      id: '/auth/reset-password-otp'
+      path: '/reset-password-otp'
+      fullPath: '/auth/reset-password-otp'
+      preLoaderRoute: typeof AuthResetPasswordOtpRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/auth/reset-password': {
@@ -352,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStationStationIdRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/account/phone': {
+      id: '/dashboard/account/phone'
+      path: '/account/phone'
+      fullPath: '/dashboard/account/phone'
+      preLoaderRoute: typeof DashboardAccountPhoneRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/station/$stationId/setup': {
       id: '/dashboard/station/$stationId/setup'
       path: '/setup'
@@ -369,8 +426,10 @@ interface AuthRouteRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+  AuthResetPasswordOtpRoute: typeof AuthResetPasswordOtpRoute
   AuthResetPasswordSuccessRoute: typeof AuthResetPasswordSuccessRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
+  AuthVerifyPhoneRoute: typeof AuthVerifyPhoneRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
@@ -380,8 +439,10 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
+  AuthResetPasswordOtpRoute: AuthResetPasswordOtpRoute,
   AuthResetPasswordSuccessRoute: AuthResetPasswordSuccessRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRoute,
+  AuthVerifyPhoneRoute: AuthVerifyPhoneRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
@@ -404,11 +465,13 @@ const DashboardStationStationIdRouteWithChildren =
 
 interface DashboardRouteRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardAccountPhoneRoute: typeof DashboardAccountPhoneRoute
   DashboardStationStationIdRoute: typeof DashboardStationStationIdRouteWithChildren
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardAccountPhoneRoute: DashboardAccountPhoneRoute,
   DashboardStationStationIdRoute: DashboardStationStationIdRouteWithChildren,
 }
 

@@ -161,7 +161,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
             User = new UserInfo
             {
                 Id = user.Id,
-                Email = user.Email!,
+                Email = user.Email,
+                Phone = user.PhoneNumber,
                 FullName = user.FullName,
                 Roles = userRoles.Select(r => r.ToLower()).ToList(),
             },
