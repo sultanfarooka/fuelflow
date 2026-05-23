@@ -399,6 +399,20 @@
 - **Current stock levels**
 - **Recent alerts/notifications**
 
+### 7.6 Design System & Theme Foundation
+
+A consistent shadcn-based design system underpins every screen in the application.
+
+| Aspect              | Specification                                                       |
+| :------------------ | :------------------------------------------------------------------ |
+| Component Library   | shadcn/ui primitives under `fuel-flow-web/src/components/ui/`       |
+| Theme Preset        | `b3lo6Vpia` from shadcn's theme creator                             |
+| Install Command     | `npx shadcn@latest apply --preset b3lo6Vpia`                        |
+| Tokens              | Colours, radii, spacing, typography sourced from the preset         |
+| Dark Mode           | Toggle in top bar; tokens swap consistently across all surfaces     |
+| RTL                 | Layout flips when locale switches to Urdu (per §8.5)                |
+| Going-Forward Rules | Documented in `fuel-flow-web/src/components/CLAUDE.md`              |
+
 ---
 
 ## Module 8: Settings & Configuration
