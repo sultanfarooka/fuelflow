@@ -41,9 +41,20 @@ export const verifyPhoneSchema = z.object({
 
 export type VerifyPhoneFormData = z.infer<typeof verifyPhoneSchema>
 
-/** Login form schema — mirrors backend LoginRequestValidator */
+/**
+ * Login form schema — phone-or-email identifier per [M01-F09-R05].
+ * Accepts either a Pakistani phone (+92XXXXXXXXXX) or an email address.
+ */
+const phoneRegex = /^\+92\d{10}$/
+const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
 export const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email format'),
+  identifier: z
+    .string()
+    .min(1, 'Phone or email is required')
+    .refine((v) => phoneRegex.test(v) || emailRegex.test(v), {
+      message: 'Enter your +92 phone number or email address',
+    }),
   password: z.string().min(1, 'Password is required'),
 })
 

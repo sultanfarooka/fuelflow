@@ -5,7 +5,8 @@
 import { api } from '../client'
 
 export interface LoginRequest {
-  email: string
+  /** Pakistani phone (+92XXXXXXXXXX) or email address. Phone-first per [M01-F09-R05]. */
+  identifier: string
   password: string
   deviceId?: string
 }
