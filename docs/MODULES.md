@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-05-23
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -22,12 +22,21 @@
 
 ## Status Legend
 
-| Symbol | Meaning |
-|---|---|
-| Done | Merged to main, tested |
-| In Progress | Active development |
-| Planned | Not yet started |
-| Out of Scope | Explicitly deferred / v2+ |
+> **Done means shipped — forever. Suffix it `· refined by [ID]` / `· extended by [ID]` when the new row adds, `· superseded by [ID]` when the new row replaces. `· superseded` rolls up; the rest stay Done.**
+
+| Status | Meaning | Counts as for feature-header roll-up |
+|---|---|---|
+| `Done` | Merged to main, tested. Untouched since. | Done |
+| `Done · refined by [ID]` | Shipped, but a later row at `[ID]` narrows / clarifies it. The original rule still holds. | Done |
+| `Done · extended by [ID]` | Shipped, but a later row at `[ID]` adds new branches / options. The original rule still holds. | Done |
+| `Done · superseded by [ID]` | Shipped, but a later row at `[ID]` replaces its behavior. The original row is reference-only. | **In Progress** (rolls up) |
+| `In Progress` | Active development | In Progress |
+| `Planned` | Not yet started | Planned |
+| `Out of Scope` | Explicitly deferred / v2+ | Doesn't block roll-up |
+
+**Header roll-up.** A feature header's status equals the *lowest* status of any row underneath it, where `Done` and `Done · refined/extended` count as Done, and `Done · superseded` / `In Progress` / `Planned` count as not-yet-done. `Out of Scope` rows are excluded from roll-up.
+
+**When to use which suffix.** When a later row touches an existing `Done` row, ask: *could this missing piece have been written when the original feature shipped, with the knowledge available at that time?* If **no** (a new feature introduced new context), use `· refined by` or `· extended by` — the original was complete-for-its-time. If **yes** (the original was wrong or incomplete by its own standards), use `· superseded by` — the row is no longer authoritative and the header rolls up.
 
 ---
 
