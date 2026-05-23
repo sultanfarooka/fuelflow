@@ -423,8 +423,8 @@ on a feature that obviously touches auth or money).
 
 - Precursor IDs the feature depends on but doesn't reference
   (e.g. `M01-F09` depends on `M10-F03`).
-- `Done` items the feature modifies — refinement or
-  supersession (see "Status rule for Done items" below).
+- `Done` items the feature modifies — refinement, extension, or
+  supersession (see R-Step 6 below for status-suffix classification).
 - Downstream features this enables that should now link back.
 
 **3e. `ProjectOverView.md` alignment.** Does the narrative still
@@ -477,26 +477,56 @@ do not auto-move.
 
 ### R-Step 6 — Status rule for Done items
 
-When an accepted finding touches a `Done` feature or requirement,
-classify the change first:
+> **Done means shipped — forever. Suffix it `· refined by [ID]` / `· extended by [ID]` when the new row adds, `· superseded by [ID]` when the new row replaces. `· superseded` rolls up; the rest stay Done.**
 
-| Case | What to write | Status action |
+When an accepted finding touches a `Done` row, **write the
+cross-reference into the Status column as a suffix** — not into the
+requirement text. The same schema is canonicalised in
+[`docs/MODULES.md`](../../../docs/MODULES.md) Status Legend.
+
+| Case | Status value to write | Header roll-up effect |
 |---|---|---|
-| Feature header (e.g. `M01-F01`) | — | **Stays Done.** Never flip a feature header to In Progress just because new requirements were added. |
-| Existing `Done` row that is *refined* (extended, not contradicted) | Inline append: `(refined by [MXX-FXX-RYY](#…))` | **Stays Done.** No status change. |
-| Existing `Done` row that is *superseded* (old behavior must go away) | Inline append: `(superseded by [MXX-FXX-RYY](#…))` | **Flips to `Out of Scope`.** The corrected behavior now lives at the new `RYY`. |
-| New `RYY` row added through rediscovery | Full new row | **Starts at `Planned`.** |
+| Feature header (e.g. `M01-F01`) | — | Rolls up from its row statuses; never edit the header directly. |
+| Existing `Done` row that is *refined* (narrowed / clarified by `[RYY]`; original rule still holds) | `Done · refined by [MXX-FXX-RYY](#…)` | Counts as **Done**. Header stays Done. |
+| Existing `Done` row that is *extended* (new branches / options added by `[RYY]`; original rule still holds) | `Done · extended by [MXX-FXX-RYY](#…)` | Counts as **Done**. Header stays Done. |
+| Existing `Done` row that is *superseded* (original behavior replaced; row is reference-only) | `Done · superseded by [MXX-FXX-RYY](#…)` | Counts as **In Progress**. Header rolls up. |
+| New `RYY` row added through rediscovery | Status `Planned` (full new row) | Counts as **Planned**. Header rolls up. |
 
-This matches the existing precedent in `MODULES.md`: `M01-F01-R01`
-and `M01-F01-R04` are `Done` with `(refined by M01-F09-…)` inline
-pointers — no status reversal, no rewritten history. The only
-status change permitted on a `Done` row is the `Done → Out of
-Scope` supersession case.
+**The decision test — refine/extended vs superseded.** Ask, for the
+finding at hand:
+
+> *Could this missing piece have been written when the original
+> feature shipped, with the knowledge available at that time?*
+
+- **No** → genuinely new context introduced by a later feature (a
+  new failure mode, a new dependency, a new locale). The original
+  was complete-for-its-time. Use **`· refined by`** (narrows /
+  clarifies) or **`· extended by`** (adds branches).
+- **Yes** → the original was wrong or incomplete by its own
+  standards. Use **`· superseded by`** — the row is no longer
+  authoritative, and the feature header rolls up.
+
+If unclear, ask the user: "After this new row ships, does the old
+rule still hold as written, or is it gone?"
+
+**Worked example.** During M01-F09 rediscovery, finding #17 adds
+"platform absorbs signup SMS cost" as a new R-row on M11-F02
+(Trial Period, currently `Done`). Apply the test: could M11-F02
+have written this when it shipped? No — signup SMS didn't exist
+until M01-F09 introduced it. So the new R is `Planned`, the
+existing M11-F02 R-rows stay plain `Done`, and the M11-F02 header
+rolls up to `In Progress` automatically (because of the new
+`Planned` child). No suffix needed on the existing rows.
+
+**Anti-example.** A finding that says "M01-F01 AC1 should return
+202 instead of 409 to avoid enumeration" *would* be a supersession
+of M01-F01-R01: anti-enumeration was achievable when the feature
+shipped (well-known web pattern). Status would become
+`Done · superseded by [the new R-row]`, and M01-F01's header rolls
+up.
 
 Confirm the classification with the user for every Done-touching
-finding before drafting the edit. If unclear whether a finding
-refines vs supersedes, ask: "After this ships, does the old rule
-still hold or is it gone?"
+finding before drafting the edit.
 
 ### R-Step 7 — Rediscovery log line
 
@@ -532,14 +562,19 @@ sound and exit cleanly.
   `feat-tooling-<name>` with no registry edit.
 - Never reuses or renumbers a retired ID (Maintenance Convention #6).
 - Never flips status of existing items as a side effect of new-idea
-  intake — discovery is intake, not lifecycle. The only status
-  changes this skill is allowed to write are (a) `Done → Out of
-  Scope` supersession in rediscovery R-Step 6 and (b) initial
-  `Planned` for brand-new rows. All other status flips happen in
-  `feature-implementation` and the shipping PR (root Rule 2).
-- Never downgrades a `Done` feature header. Rediscovery surfaces
-  gaps as new `RXX` rows or refinements, not as `Done → Planned`
-  reversals. What shipped, shipped.
+  intake — discovery is intake, not lifecycle. The status changes
+  this skill is allowed to write are (a) appending a `· refined by`
+  / `· extended by` / `· superseded by` suffix on an existing `Done`
+  row per rediscovery R-Step 6 and (b) initial `Planned` for brand-
+  new rows. All other status flips happen in `feature-implementation`
+  and the shipping PR (root Rule 2).
+- Never downgrades a `Done` row to plain `In Progress` or `Planned`.
+  When a `Done` row needs to surface follow-up work, suffix it
+  (`Done · refined/extended/superseded by [ID]`) — never strip the
+  `Done`. What shipped, shipped.
+- Never edits a feature header's status directly. Headers roll up
+  from row statuses per the rule in
+  [`docs/MODULES.md`](../../../docs/MODULES.md) Status Legend.
 - Never deletes a row. `Out of Scope` is how items are retired.
 - Never edits scoped `CLAUDE.md` files. `ProjectOverView.md` is the
   only other file this skill may edit, and only when step 6 (new
@@ -557,7 +592,7 @@ sound and exit cleanly.
 ## Conventions referenced (not redefined)
 
 - ID format: `MXX-FXX-RXX`, three-tier hierarchical, append-only.
-- Status legend: `Planned` / `In Progress` / `Done` / `Out of Scope`.
+- Status legend: `Planned` / `In Progress` / `Done` / `Done · refined by [ID]` / `Done · extended by [ID]` / `Done · superseded by [ID]` / `Out of Scope` — full schema and roll-up rule in [`docs/MODULES.md`](../../../docs/MODULES.md) Status Legend.
 - Acceptance criteria are the test plan (Maintenance Convention #5),
   shape: `- **AC1** Given… When… Then…`.
 - Status flip ships in the same PR as the code (root Rule 2).

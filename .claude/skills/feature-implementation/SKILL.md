@@ -18,9 +18,15 @@ scoped `CLAUDE.md` files as work moves between folders.
 ### 1. Load and verify
 
 Read `docs/implementation/<id>.md`. Confirm every item in **Dependencies** is
-`Done` in `MODULES.md`. If a dependency is unmet, stop and tell the user — do
-not implement against missing work. If blocking **Open questions** remain, ask
-the user before writing code.
+shipped in `MODULES.md`. A dependency is shipped when its status is `Done`,
+`Done · refined by [ID]`, or `Done · extended by [ID]` — the `· refined` /
+`· extended` suffix means the original row still holds and is safe to depend
+on. **`Done · superseded by [ID]`** is **not** a satisfied dependency: the
+old row is reference-only, the behavior now lives at the row referenced by
+the supersession pointer. In that case, treat the referenced row as the real
+dependency and confirm *its* status before continuing. If any dependency is
+unmet, stop and tell the user — do not implement against missing work. If
+blocking **Open questions** remain, ask the user before writing code.
 
 State the chosen `MXX-FXX[-RXX]` ID explicitly (Rule 1).
 
