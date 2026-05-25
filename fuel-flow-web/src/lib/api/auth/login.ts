@@ -5,14 +5,18 @@
 import { api } from '../client'
 
 export interface LoginRequest {
-  email: string
+  /** Pakistani phone (+92XXXXXXXXXX) or email address. Phone-first per [M01-F09-R05]. */
+  identifier: string
   password: string
   deviceId?: string
 }
 
 export interface UserInfo {
   id: string
-  email: string
+  /** Optional per [M01-F09-R01] — phone-first auth allows email-less accounts. */
+  email?: string
+  /** Primary identifier for phone-first auth ([M01-F09-R01]). */
+  phone?: string
   fullName: string
   roles: string[]
 }

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using FuelFlow.Application.DTOs.Auth;
 using FuelFlow.Application.Features.Auth.Commands;
 using FuelFlow.Application.Features.Auth.Queries;
@@ -25,6 +26,7 @@ namespace FuelFlow.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/v1/auth")]
+[EnableRateLimiting("auth-ip")]  // Per-IP sliding window ([M01-F09-R12]); see Program.cs.
 public class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -152,6 +154,71 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// POST /api/v1/auth/verify-phone
+    /// Public endpoint — verifies the SMS OTP issued at signup ([M01-F09-R03]).
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("verify-phone")]
+    public async Task<IActionResult> VerifyPhone([FromBody] VerifyPhoneRequest request)
+    {
+        var result = await _mediator.Send(new VerifyPhoneCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
+    /// POST /api/v1/auth/resend-otp
+    /// Public endpoint — re-issues the signup phone OTP ([M01-F09-R04], [R12]).
+    /// Returns a generic success for unknown phones to avoid enumeration.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest request)
+    {
+        var result = await _mediator.Send(new ResendOtpCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
+    /// POST /api/v1/auth/phone/change/request
+    /// Authenticated — issues an OTP to a new phone number ([M01-F09-R11]).
+    /// </summary>
+    [Authorize]
+    [HttpPost("phone/change/request")]
+    public async Task<IActionResult> RequestPhoneChange([FromBody] RequestPhoneChangeRequest request)
+    {
+        var result = await _mediator.Send(new RequestPhoneChangeCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
+    /// POST /api/v1/auth/phone/change/confirm
+    /// Authenticated — confirms the OTP and swaps the user's phone number ([M01-F09-R11]).
+    /// </summary>
+    [Authorize]
+    [HttpPost("phone/change/confirm")]
+    public async Task<IActionResult> ConfirmPhoneChange([FromBody] ConfirmPhoneChangeRequest request)
+    {
+        var result = await _mediator.Send(new ConfirmPhoneChangeCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
     /// POST /api/v1/auth/resend-verification
     /// Public endpoint — resends verification email. Returns generic message for security.
     /// </summary>
@@ -192,6 +259,23 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         var result = await _mediator.Send(new ResetPasswordCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
+    /// POST /api/v1/auth/reset-password-otp
+    /// Public endpoint — resets password using an SMS OTP from the forgot-password
+    /// SMS branch ([M01-F09-R08], [M01-F04-R04]).
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("reset-password-otp")]
+    public async Task<IActionResult> ResetPasswordWithOtp([FromBody] ResetPasswordWithOtpRequest request)
+    {
+        var result = await _mediator.Send(new ResetPasswordWithOtpCommand(request));
 
         if (!result.IsSuccess)
             return BadRequest(new { success = false, error = result.Error });

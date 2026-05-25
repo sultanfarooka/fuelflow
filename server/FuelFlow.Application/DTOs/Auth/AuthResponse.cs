@@ -35,11 +35,14 @@ public class AuthResponse
 /// <summary>
 /// Basic user info included in the auth response.
 /// Only the fields the frontend needs — not the full entity.
+/// <see cref="Email"/> is nullable per [M01-F09-R01] (phone-first auth allows email-less accounts).
+/// <see cref="Phone"/> mirrors that — exposes the primary identifier to the frontend.
 /// </summary>
 public class UserInfo
 {
     public Guid Id { get; set; }
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
     public string FullName { get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new List<string>();
 

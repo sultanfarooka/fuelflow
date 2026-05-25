@@ -34,11 +34,13 @@ export function RegisterForm() {
     onSuccess: (data, variables) => {
       toast.success(
         data.data?.message ??
-          "Account created. Please check your email to verify.",
+          "Account created. We've sent a verification code to your phone.",
       );
+      // Phone-first per [M01-F09]: always land on /auth/verify-phone after register.
+      // Email verification (when email is supplied) happens via the link in parallel.
       navigate({
-        to: "/auth/check-email-register",
-        search: { email: variables.email, fromRegistration: true },
+        to: "/auth/verify-phone",
+        search: { phone: variables.phone },
       });
     },
     onError: (error: Error) => {
@@ -63,8 +65,13 @@ export function RegisterForm() {
       // Clear any previous submit error when user tries again
       setRegisterMutationError(null);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars -- confirmPassword is UI-only, not sent to API
-      const { confirmPassword, ...apiPayload } = value;
-      await registerMutation.mutateAsync(apiPayload as RegisterRequest);
+      const { confirmPassword, ...rest } = value;
+      // Email is optional in the schema; send undefined (not "") so the backend treats it as absent.
+      const apiPayload: RegisterRequest = {
+        ...rest,
+        email: rest.email && rest.email.length > 0 ? rest.email : undefined,
+      };
+      await registerMutation.mutateAsync(apiPayload);
     },
   });
 
@@ -102,12 +109,12 @@ export function RegisterForm() {
             children={(field) => (
               <FormTextField
                 field={field}
-                label="Email"
+                label="Email (optional)"
                 type="email"
                 inputMode="email"
                 placeholder="m@example.com"
                 autoComplete="email"
-                description="We'll use this to contact you."
+                description="Optional — adds a fallback login channel."
               />
             )}
           />

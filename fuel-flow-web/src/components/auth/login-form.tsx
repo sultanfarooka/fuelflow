@@ -24,9 +24,13 @@ import { useAuthStore } from "@/stores/auth-store";
 import { loginSchema, type LoginFormData } from "@/lib/validators/auth";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
+const PHONE_VERIFICATION_PREFIX = "phone_verification_required";
+const phoneRegex = /^\+92\d{10}$/;
+
 /**
- * Login form — signup-02 design (matching register).
- * Tokens are set in HTTP-only cookies by the backend; UserInfo persisted via auth store.
+ * Login form — accepts phone or email per [M01-F09-R05].
+ * On "phone_verification_required" the user is offered a direct link to
+ * /auth/verify-phone with their phone pre-filled.
  */
 export function LoginForm() {
   const setAuthState = useAuthStore((s) => s.setAuthState);
@@ -35,18 +39,21 @@ export function LoginForm() {
   const [loginMutationError, setLoginMutationError] = useState<string | null>(
     null,
   );
+  const [needsPhoneVerification, setNeedsPhoneVerification] = useState<
+    string | null
+  >(null);
 
   const form = useForm({
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     } satisfies LoginFormData,
     validators: {
       onSubmit: loginSchema,
     },
     onSubmit: async ({ value }) => {
-      // Clear any previous submit error when user tries again
       setLoginMutationError(null);
+      setNeedsPhoneVerification(null);
       await loginMutation.mutateAsync(value as LoginRequest);
     },
   });
@@ -69,9 +76,19 @@ export function LoginForm() {
       }
       toast.success(`Welcome back, ${auth?.user?.fullName ?? "User"}!`);
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       const apiMessage =
         error.response?.data?.error ?? error.response?.data?.message;
+      if (apiMessage?.startsWith(PHONE_VERIFICATION_PREFIX)) {
+        const friendly = apiMessage.slice(PHONE_VERIFICATION_PREFIX.length).replace(/^:\s*/, "");
+        setLoginMutationError(friendly || "Please verify your phone before signing in.");
+        // Only offer the resend link when the identifier actually looks like a phone we can pass through.
+        const pendingPhone = phoneRegex.test(variables.identifier)
+          ? variables.identifier
+          : null;
+        setNeedsPhoneVerification(pendingPhone);
+        return;
+      }
       setLoginMutationError(apiMessage ?? "Login failed. Please try again.");
     },
   });
@@ -94,15 +111,16 @@ export function LoginForm() {
           </p>
         </div>
         <form.Field
-          name="email"
+          name="identifier"
           children={(field) => (
             <FormTextField
               field={field}
-              label="Email"
-              type="email"
-              inputMode="email"
-              placeholder="m@example.com"
-              autoComplete="email"
+              label="Phone or email"
+              type="text"
+              inputMode="text"
+              placeholder="+92XXXXXXXXXX or m@example.com"
+              autoComplete="username"
+              description="Use your +92 phone number, or a verified email address."
             />
           )}
         />
@@ -132,7 +150,20 @@ export function LoginForm() {
           <Alert variant="destructive" className="max-w-md">
             <AlertCircleIcon />
             <AlertTitle>Login failed</AlertTitle>
-            <AlertDescription>{loginMutationError}</AlertDescription>
+            <AlertDescription>
+              {loginMutationError}
+              {needsPhoneVerification && (
+                <div className="mt-2">
+                  <Link
+                    to="/auth/verify-phone"
+                    search={{ phone: needsPhoneVerification }}
+                    className="font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    Resend verification code
+                  </Link>
+                </div>
+              )}
+            </AlertDescription>
           </Alert>
         )}
         <Field>

@@ -22,6 +22,25 @@ export {
   type VerifyEmailRequest,
   type VerifyEmailResponse,
 } from './verifyEmail'
+export {
+  verifyPhone,
+  type VerifyPhoneRequest,
+  type VerifyPhoneResponse,
+  type VerifyPhoneApiResponse,
+} from './verifyPhone'
+export { resendOtp, type ResendOtpRequest } from './resendOtp'
+export {
+  requestPhoneChange,
+  type RequestPhoneChangeRequest,
+} from './requestPhoneChange'
+export {
+  confirmPhoneChange,
+  type ConfirmPhoneChangeRequest,
+} from './confirmPhoneChange'
+export {
+  resetPasswordWithOtp,
+  type ResetPasswordWithOtpRequest,
+} from './resetPasswordOtp'
 export { logout } from './logout'
 export { getCurrentUser, type MeApiResponse } from './me'
 export {

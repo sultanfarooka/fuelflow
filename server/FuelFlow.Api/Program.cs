@@ -1,7 +1,9 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using FuelFlow.Infrastructure;
@@ -49,7 +51,9 @@ builder.Host.UseSerilog();
 // ── 2. Infrastructure (DB, Identity, repos, services) ────────────
 // One line registers EVERYTHING from the Infrastructure layer.
 // This calls the extension method we created in DependencyInjection.cs.
-builder.Services.AddInfrastructure(builder.Configuration);
+// IHostEnvironment is needed so DI can pick the dev-only LogOnlySmsSender
+// when Sms:Provider is unset (see [M01-F09-R10] / [M10-F03-R04]).
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 
 // Cookie configuration for auth tokens (HTTP-only, Secure in prod)
 builder.Services.AddScoped<AuthCookieOptions>();
@@ -93,6 +97,29 @@ builder.Services.AddAuthentication(options =>
 // When a request comes in, validators run BEFORE the controller action.
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<FuelFlow.Application.Validators.RegisterRequestValidator>();
+
+// ── 4b. Rate limiting ([M01-F09-R12]) ────────────────────────────
+// Per-IP sliding window on auth endpoints (defense in depth on top of the
+// handler-level per-phone daily cap enforced in OTP-issuing handlers via
+// IPhoneVerificationRepository.CountIssuedSinceAsync).
+//
+// AuthController actions opt into this via [EnableRateLimiting("auth-ip")].
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth-ip", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetSlidingWindowLimiter(ip, _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window = TimeSpan.FromMinutes(1),
+            SegmentsPerWindow = 6,
+            QueueLimit = 0,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+        });
+    });
+});
 
 // ── 5. CORS ──────────────────────────────────────────────────────
 // Cross-Origin Resource Sharing: allows the React frontend (different port)
@@ -147,6 +174,7 @@ if (app.Environment.IsDevelopment())
 // 2. Authentication must be before Authorization
 // 3. Authorization must be before Controllers
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();     // Applies named policies declared via [EnableRateLimiting] ([M01-F09-R12])
 app.UseAuthentication();  // Validates JWT token
 app.UseAuthorization();   // Checks [Authorize] attributes
 app.MapControllers();

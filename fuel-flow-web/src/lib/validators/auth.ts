@@ -2,14 +2,18 @@ import { z } from 'zod'
 
 /**
  * Registration form schema — mirrors backend RegisterRequestValidator.
- * Used for client-side validation before submit.
+ * Phone-first per [M01-F09]: phone is required, email is optional.
  *
  * Organization is added after first login during onboarding.
  */
 export const registerSchema = z.object({
   // Owner info
   fullName: z.string().min(1, 'Full name is required').max(200),
-  email: z.string().min(1, 'Email is required').email('Invalid email format'),
+  // Email is optional. Empty string is allowed; if non-empty, must be a valid email.
+  email: z
+    .string()
+    .email('Invalid email format')
+    .or(z.literal('')),
   phone: z
     .string()
     .min(1, 'Phone number is required')
@@ -27,20 +31,90 @@ export const registerSchema = z.object({
 
 export type RegisterFormData = z.infer<typeof registerSchema>
 
-/** Login form schema — mirrors backend LoginRequestValidator */
+/** Phone OTP verification schema — 4-8 digit code accepted; backend trims. */
+export const verifyPhoneSchema = z.object({
+  code: z
+    .string()
+    .min(1, 'Verification code is required')
+    .regex(/^\d{4,8}$/, 'Verification code must be 4-8 digits'),
+})
+
+export type VerifyPhoneFormData = z.infer<typeof verifyPhoneSchema>
+
+/** Phone change step 1 — request OTP for new phone ([M01-F09-R11]). */
+export const requestPhoneChangeSchema = z.object({
+  newPhone: z
+    .string()
+    .min(1, 'New phone number is required')
+    .regex(/^\+92\d{10}$/, 'Phone must be in Pakistani format: +92XXXXXXXXXX'),
+})
+
+export type RequestPhoneChangeFormData = z.infer<typeof requestPhoneChangeSchema>
+
+/** Phone change step 2 — confirm OTP. NewPhone is read-only in the UI; user types only the code. */
+export const confirmPhoneChangeSchema = z.object({
+  code: z
+    .string()
+    .min(1, 'Verification code is required')
+    .regex(/^\d{4,8}$/, 'Verification code must be 4-8 digits'),
+})
+
+export type ConfirmPhoneChangeFormData = z.infer<typeof confirmPhoneChangeSchema>
+
+/**
+ * Login form schema — phone-or-email identifier per [M01-F09-R05].
+ * Accepts either a Pakistani phone (+92XXXXXXXXXX) or an email address.
+ */
+const phoneRegex = /^\+92\d{10}$/
+const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
 export const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email format'),
+  identifier: z
+    .string()
+    .min(1, 'Phone or email is required')
+    .refine((v) => phoneRegex.test(v) || emailRegex.test(v), {
+      message: 'Enter your +92 phone number or email address',
+    }),
   password: z.string().min(1, 'Password is required'),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
 
-/** Forgot password form schema — email only */
+/**
+ * Forgot password — phone-or-email identifier per [M01-F09-R08].
+ * Re-uses the same phone/email regexes as loginSchema.
+ */
 export const forgotPasswordSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email format'),
+  identifier: z
+    .string()
+    .min(1, 'Phone or email is required')
+    .refine((v) => phoneRegex.test(v) || emailRegex.test(v), {
+      message: 'Enter your +92 phone number or email address',
+    }),
 })
 
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
+
+/** Reset password via SMS OTP — code + new password ([M01-F09-R08], [M01-F04-R04]). */
+export const resetPasswordOtpSchema = z
+  .object({
+    code: z
+      .string()
+      .min(1, 'Verification code is required')
+      .regex(/^\d{4,8}$/, 'Verification code must be 4-8 digits'),
+    newPassword: z
+      .string()
+      .min(1, 'Password is required')
+      .min(6, 'Password must be at least 6 characters')
+      .regex(/\d/, 'Password must contain at least one number'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
+export type ResetPasswordOtpFormData = z.infer<typeof resetPasswordOtpSchema>
 
 /** Reset password form schema — mirrors backend ResetPasswordRequestValidator */
 export const resetPasswordSchema = z

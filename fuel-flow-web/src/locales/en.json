@@ -17,5 +17,63 @@
     "finance": "Finance",
     "reports": "Reports",
     "settings": "Settings"
+  },
+  "auth": {
+    "common": {
+      "back": "Back",
+      "signIn": "Sign in",
+      "alreadyVerified": "Already verified?",
+      "wrongNumber": "Wrong number?",
+      "startOver": "Start over",
+      "sending": "Sending...",
+      "verifying": "Verifying...",
+      "confirming": "Confirming...",
+      "updating": "Updating..."
+    },
+    "verifyPhone": {
+      "title": "Verify your phone",
+      "subtitle": "We sent a 6-digit code to {{phone}}. Enter it below to activate your account.",
+      "codeLabel": "Verification code",
+      "codeHelper": "6 digits from the SMS we just sent.",
+      "verifyButton": "Verify phone",
+      "resendButton": "Resend code",
+      "resendCountdown": "Resend code in {{seconds}}s",
+      "resentToast": "A new code has been sent.",
+      "missingPhoneTitle": "Missing phone number",
+      "missingPhoneBody": "We couldn't tell which phone to verify. Please start over from the registration page.",
+      "backToRegister": "Back to registration",
+      "haveAccount": "I already have an account",
+      "verificationFailedTitle": "Verification failed",
+      "verifiedToast": "Phone verified — you can sign in now."
+    },
+    "resetPasswordOtp": {
+      "title": "Set a new password",
+      "subtitle": "Enter the code we sent to {{phone}} and your new password.",
+      "codeLabel": "Verification code",
+      "newPasswordLabel": "New password",
+      "newPasswordHelper": "Min 6 chars, at least one number.",
+      "confirmPasswordLabel": "Confirm new password",
+      "submitButton": "Set new password",
+      "missingPhoneTitle": "Missing phone number",
+      "missingPhoneBody": "We couldn't tell which phone to reset. Start over from forgot-password.",
+      "backToForgot": "Back to forgot password",
+      "resetFailedTitle": "Reset failed",
+      "updatedToast": "Password updated. You can sign in now."
+    },
+    "changePhone": {
+      "title": "Change phone number",
+      "requestSubtitle": "Enter your new phone number. We'll send a 6-digit verification code to the new number. Your current login will keep working until you confirm.",
+      "newPhoneLabel": "New phone",
+      "currentlyLoggedInAs": "Currently logged in as {{name}}.",
+      "sendCodeButton": "Send code",
+      "sendFailedTitle": "Couldn't send code",
+      "confirmSubtitle": "We sent a 6-digit code to {{phone}}. Enter it below to complete the change.",
+      "codeLabel": "Verification code",
+      "confirmButton": "Confirm change",
+      "useDifferentNumber": "Use a different number",
+      "verificationFailedTitle": "Verification failed",
+      "doneSubtitle": "Your phone number has been updated to {{phone}}. Future sign-ins should use the new number.",
+      "backToDashboard": "Back to dashboard"
+    }
   }
 }

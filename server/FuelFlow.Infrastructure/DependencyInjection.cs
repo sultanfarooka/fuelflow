@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Application.Interfaces.Services;
 using FuelFlow.Infrastructure.Data;
@@ -11,6 +12,8 @@ using FuelFlow.Infrastructure.Features.Auth.Commands;
 using FuelFlow.Infrastructure.Identity;
 using FuelFlow.Infrastructure.Repositories;
 using FuelFlow.Infrastructure.Services;
+using FuelFlow.Infrastructure.Services.Options;
+using FuelFlow.Infrastructure.Services.Otp;
 
 namespace FuelFlow.Infrastructure;
 
@@ -29,7 +32,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         // 1. Register PostgreSQL + EF Core
         services.AddDbContext<AppDbContext>(options =>
@@ -51,7 +55,10 @@ public static class DependencyInjection
             options.Lockout.MaxFailedAccessAttempts = 5;
 
             // User settings
-            options.User.RequireUniqueEmail = true;
+            // RequireUniqueEmail flipped to false for [M01-F09]: phone is the primary identifier,
+            // email is optional. Email uniqueness is enforced in RegisterCommandHandler when an
+            // email is actually provided.
+            options.User.RequireUniqueEmail = false;
         })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();
@@ -78,12 +85,53 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
         services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // 4. Register services
         services.AddScoped<IEmailSender, SmtpEmailSender>();
+
+        // 4a. SMS sender — Sms:Provider picks between the self-hosted capcom6/sms-gateway
+        // (production / staging) and a dev-only log-to-console sender. Defaults to
+        // "console" in Development when unset; "capcom" otherwise. See server/sms-gateway/README.md
+        // for the gateway docker-compose stack + FCM setup, and docs/ENV-MAP.md for the keys.
+        services.Configure<SmsGatewayOptions>(configuration.GetSection(SmsGatewayOptions.SectionName));
+
+        var configuredProvider = configuration["Sms:Provider"];
+        var effectiveProvider = !string.IsNullOrWhiteSpace(configuredProvider)
+            ? configuredProvider.Trim().ToLowerInvariant()
+            : (environment.IsDevelopment() ? "console" : "capcom");
+
+        if (effectiveProvider == "console")
+        {
+            // Singleton — stateless logger; the constructor emits a one-time Warning
+            // if console is selected outside Development.
+            services.AddSingleton<ISmsSender, LogOnlySmsSender>();
+        }
+        else
+        {
+            services.AddHttpClient<ISmsSender, CapcomSmsSender>((sp, client) =>
+            {
+                var opts = sp.GetRequiredService<IOptions<SmsGatewayOptions>>().Value;
+                if (!string.IsNullOrWhiteSpace(opts.BaseUrl))
+                {
+                    // HttpClient relative-URI resolution requires a trailing slash on BaseAddress.
+                    var baseUrl = opts.BaseUrl.EndsWith('/') ? opts.BaseUrl : opts.BaseUrl + "/";
+                    client.BaseAddress = new Uri(baseUrl);
+                    client.DefaultRequestHeaders.Authorization =
+                        CapcomSmsSender.BuildBasicAuthHeader(opts.Username, opts.Password);
+                }
+                client.Timeout = TimeSpan.FromSeconds(10);
+            });
+        }
+
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<JwtTokenService>();
+
+        // 4b. OTP subsystem ([M01-F09]) — options + HMAC-SHA256 hasher.
+        services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
+        services.AddSingleton<IOtpHasher, OtpHasher>();
+
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IRequestContextService, RequestContextService>();

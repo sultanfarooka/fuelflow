@@ -29,6 +29,10 @@ When this list drifts from MODULES.md "Current Priorities", **MODULES.md wins** 
 
 | Idea | Why deferred | Reconsider when |
 |---|---|---|
-| _none captured_ | — | — |
+| [M01-F09-R06](MODULES.md#m01-f09--phone-first-authentication) — forced "add phone" flow for existing email-only users | Pre-launch — no production email-only users to migrate; AC5 also Out of Scope | A cohort of email-only users actually exists in production |
+| [M01-F09-R07](MODULES.md#m01-f09--phone-first-authentication) — Manager-toggled "require OTP on first login" for sub-users | Sub-user creation surface doesn't exist yet | When [M01-F05-R02/R03](MODULES.md#m01-f05--roles--hierarchy) ships (priority #3) |
+| [M01-F09-R09](MODULES.md#m01-f09--phone-first-authentication) — audit-trail rows for phone-auth events | Audit table doesn't exist yet; F09 handlers leave `TODO M01-F08` markers and emit Serilog events to prime the backfill | When [M01-F08](MODULES.md#m01-f08--audit-trail) ships (tracked by [M01-F08-R07](MODULES.md#m01-f08--audit-trail)) |
+| FCM credential automation / Android relay device provisioning | Manual one-off per environment; documented in `server/sms-gateway/README.md` | Multi-environment rollout makes the manual step painful |
+| [M10-F03-R04](MODULES.md#m10-f03--notification-channels) — USB GSM modem + Gammu/Kannel as the production SMS sender | Play Protect blocks the [`capcom6/sms-gateway`](../server/sms-gateway/README.md) Android relay APK on target devices, making the M01-F09 happy path unreachable. Dev unblocked via [`LogOnlySmsSender`](../server/FuelFlow.Infrastructure/Services/LogOnlySmsSender.cs); production needs a different path | A real PK SIM bundle + a USB GSM dongle (Huawei E303 / similar) is on hand, or SMS-cost ceiling pressure forces a commercial provider |
 
 > Use this row when an idea surfaces mid-session that is genuinely worth doing but not part of the current scope. Better than losing the idea or implementing it out-of-scope. For requirements that belong to a future feature, prefer adding them to [`MODULES.md`](MODULES.md) directly with `Status: Planned` per root [`CLAUDE.md`](../CLAUDE.md) Rule 1.

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using FuelFlow.Application.Common;
 using FuelFlow.Application.DTOs.Auth;
 using FuelFlow.Application.Features.Auth.Commands;
@@ -61,11 +62,25 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         CancellationToken cancellationToken)
     {
         var req = request.Request;
+        var identifier = req.Identifier?.Trim() ?? string.Empty;
+        var isEmailIdentifier = identifier.Contains('@');
 
-        // --- Step 1: Resolve user and validate credentials ---
-        var user = await _userManager.FindByEmailAsync(req.Email);
+        // --- Step 1: Resolve user by phone (primary) or verified email (fallback per [M01-F09-R05]) ---
+        AppUser? user;
+        if (isEmailIdentifier)
+        {
+            var byEmail = await _userManager.FindByEmailAsync(identifier);
+            // Email-based resolution requires EmailConfirmed per R05; otherwise pretend the user doesn't exist.
+            user = (byEmail != null && byEmail.EmailConfirmed) ? byEmail : null;
+        }
+        else
+        {
+            user = await _userManager.Users
+                .FirstOrDefaultAsync(u => u.PhoneNumber == identifier, cancellationToken);
+        }
+
         if (user == null || !user.IsActive)
-            return Result<AuthResponse>.Failure("Invalid email or password.");
+            return Result<AuthResponse>.Failure("Invalid credentials.");
 
         var userRole = await _userManager.GetRolesAsync(user);
         if (userRole.Count == 0)
@@ -73,10 +88,12 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
 
         var passwordValid = await _userManager.CheckPasswordAsync(user, req.Password);
         if (!passwordValid)
-            return Result<AuthResponse>.Failure("Invalid email or password.");
+            return Result<AuthResponse>.Failure("Invalid credentials.");
 
-        if (!user.EmailConfirmed)
-            return Result<AuthResponse>.Failure("Please verify your email before logging in. Click the link in the email to verify your email.");
+        // Universal phone-verification gate per [M01-F09-R03] — applies regardless of which identifier was used.
+        // Prefix is a stable machine-readable marker the frontend uses to offer a "Resend OTP" affordance.
+        if (!user.PhoneNumberConfirmed)
+            return Result<AuthResponse>.Failure("phone_verification_required: Please verify your phone number before signing in. Tap the resend link to receive a new code.");
 
         // --- Step 2: Issue and persist new refresh token (rotation: one-time use per token) ---
         var plainRefreshToken = _jwtTokenService.GenerateRefreshToken();
@@ -144,7 +161,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
             User = new UserInfo
             {
                 Id = user.Id,
-                Email = user.Email!,
+                Email = user.Email,
+                Phone = user.PhoneNumber,
                 FullName = user.FullName,
                 Roles = userRoles.Select(r => r.ToLower()).ToList(),
             },

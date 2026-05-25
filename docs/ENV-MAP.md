@@ -22,6 +22,17 @@ In development these are stored as **.NET user-secrets** (`dotnet user-secrets s
 | `Email:Password` | `SmtpEmailSender.cs` | Conditional | Server only | User-secret in dev. **Never commit** |
 | `Email:FromAddress` | `SmtpEmailSender.cs` | No | Server only | Default `noreply@fuelflow.pk` |
 | `Email:FromName` | `SmtpEmailSender.cs` | No | Server only | Default `Fuel Flow` |
+| `Sms:Provider` | [`DependencyInjection.cs`](../server/FuelFlow.Infrastructure/DependencyInjection.cs) | No | Server only | `capcom` (real gateway) or `console` (log-only, dev). Defaults to `console` in `Development` when unset, else `capcom`. [`LogOnlySmsSender`](../server/FuelFlow.Infrastructure/Services/LogOnlySmsSender.cs) emits a startup `Warning` if `console` is selected outside `Development` (OTPs in plaintext logs). See [M10-F03-R04](MODULES.md#m10-f03--notification-channels) for the production replacement roadmap |
+| `Sms:Gateway:BaseUrl` | [`CapcomSmsSender.cs`](../server/FuelFlow.Infrastructure/Services/CapcomSmsSender.cs), [`DependencyInjection.cs`](../server/FuelFlow.Infrastructure/DependencyInjection.cs) | Conditional | Server only | e.g. `http://localhost:3000`. Required when `Sms:Provider=capcom`. Setup in [`server/sms-gateway/README.md`](../server/sms-gateway/README.md) |
+| `Sms:Gateway:Username` | `CapcomSmsSender.cs` | Conditional | Server only | HTTP Basic username (per-device gateway credential). User-secret in dev |
+| `Sms:Gateway:Password` | `CapcomSmsSender.cs` | Conditional | Server only | HTTP Basic password. User-secret in dev. **Never commit** |
+| `Sms:Gateway:SenderId` | `CapcomSmsSender.cs` | No | Server only | Optional sender ID if the gateway supports it |
+| `Otp:CodeLength` | (Phase 3 handlers) | No (default `6`) | Server only | OTP digit count |
+| `Otp:TtlMinutes` | (Phase 3 handlers) | No (default `5`) | Server only | OTP lifetime per [M01-F09-R04](MODULES.md#m01-f09--phone-first-authentication) |
+| `Otp:MaxAttempts` | (Phase 3 handlers) | No (default `3`) | Server only | Max verify attempts per code |
+| `Otp:ResendCooldownSeconds` | (Phase 3 handlers) | No (default `60`) | Server only | Min seconds between successive resends per user |
+| `Otp:DailyCapPerPhone` | (Phase 3+7 handlers) | No (default `10`) | Server only | [M01-F09-R12](MODULES.md#m01-f09--phone-first-authentication) — per-phone OTP issuance cap per 24h |
+| `Otp:HashPepper` | (Phase 3 handlers) | **Yes** when phone-OTP is enabled | Server only | 32+ char server-side secret. HMAC-SHA256 key for hashing OTP codes at rest. User-secret in dev. **Never commit** |
 | `FrontendUrl` | `AuthService.cs`, `appsettings.json` | No | Server only | Default `http://localhost:5173`. Embedded into email-verification + password-reset links |
 | `AllowedHosts` | `appsettings.json` | No | Server only | Currently `*`. Tighten before public deploy |
 | `Logging:LogLevel:Default` | `appsettings.json` | No | Server only | Serilog default (`Information`) |
