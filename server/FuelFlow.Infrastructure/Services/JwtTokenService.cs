@@ -47,13 +47,20 @@ public class JwtTokenService
         // Claims = pieces of information embedded in the token
         // The frontend can read these (JWT is base64, not encrypted)
         // But it CANNOT modify them (the signature would break)
+        // Email + MobilePhone are conditional: phone-first auth ([M01-F09-R01]) allows
+        // accounts without an email. Claim.ctor rejects nulls, so guard before adding.
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.Email!),
             new(ClaimTypes.Name, user.FullName),
             new(ClaimTypes.Role, string.Join(",", userRoles)),
         };
+
+        if (!string.IsNullOrEmpty(user.Email))
+            claims.Add(new Claim(ClaimTypes.Email, user.Email));
+
+        if (!string.IsNullOrEmpty(user.PhoneNumber))
+            claims.Add(new Claim(ClaimTypes.MobilePhone, user.PhoneNumber));
 
         if (user.OrganizationId.HasValue)
         {

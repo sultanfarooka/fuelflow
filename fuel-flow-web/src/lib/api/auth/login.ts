@@ -13,7 +13,10 @@ export interface LoginRequest {
 
 export interface UserInfo {
   id: string
-  email: string
+  /** Optional per [M01-F09-R01] — phone-first auth allows email-less accounts. */
+  email?: string
+  /** Primary identifier for phone-first auth ([M01-F09-R01]). */
+  phone?: string
   fullName: string
   roles: string[]
 }
