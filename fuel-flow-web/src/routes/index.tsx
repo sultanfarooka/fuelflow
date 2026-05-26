@@ -612,7 +612,7 @@ function PricingSection() {
             Yearly
           </span>
           {yearly && (
-            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            <Badge className="bg-success/10 text-success">
               Save ~17%
             </Badge>
           )}

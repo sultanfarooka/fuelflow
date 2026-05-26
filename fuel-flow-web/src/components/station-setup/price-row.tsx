@@ -105,7 +105,7 @@ export function PriceRow({
         <span className="font-medium">{fuelType.name}</span>
         {isSaved && (
           <div className="flex shrink-0 items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-500">
+            <span className="inline-flex items-center gap-1 text-xs text-success">
               <Check className="h-3.5 w-3.5" />
               Saved
             </span>

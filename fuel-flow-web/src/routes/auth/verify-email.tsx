@@ -50,7 +50,7 @@ function VerifyEmailPage() {
       {/* When the email is verified */}
       {isSuccess && (
         <>
-          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-success/10 text-success">
             <CheckCircle2 className="h-8 w-8" />
           </div>
           <h1 className="text-2xl font-bold">Email verified</h1>
