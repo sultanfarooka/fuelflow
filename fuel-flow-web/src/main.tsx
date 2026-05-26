@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { setupAuthFailureHandler } from "@/lib/api/client";
 import { useAuthStore } from "@/stores/auth-store";
 import "./index.css";
@@ -46,9 +47,11 @@ if (!rootElement.innerHTML) {
     <StrictMode>
       <ThemeProvider defaultTheme="system" storageKey="fuel-flow-ui-theme">
         <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          <Toaster />
-          <ReactQueryDevtools initialIsOpen={false} />
+          <TooltipProvider delayDuration={300}>
+            <RouterProvider router={router} />
+            <Toaster />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </StrictMode>,
