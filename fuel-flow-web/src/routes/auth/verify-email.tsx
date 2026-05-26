@@ -25,6 +25,8 @@ function VerifyEmailPage() {
     if (token && userId) {
       verifyMutation.mutate();
     }
+    // verifyMutation is stable for the lifetime of the route; firing once per token+userId is intentional
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, userId]);
 
   const hasParams = Boolean(token && userId);
@@ -50,7 +52,7 @@ function VerifyEmailPage() {
       {/* When the email is verified */}
       {isSuccess && (
         <>
-          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-success/10 text-success">
             <CheckCircle2 className="h-8 w-8" />
           </div>
           <h1 className="text-2xl font-bold">Email verified</h1>

@@ -8,6 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getOMCs, type OMC } from "@/lib/api/omcs";
@@ -156,22 +163,26 @@ function OrganizationDashboardPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="station-omc">OMC</Label>
-                    <select
-                      id="station-omc"
+                    <Select
                       value={omcId}
-                      onChange={(e) => setOmcId(e.target.value)}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none ring-offset-background focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                      onValueChange={(v) => setOmcId(v)}
                       disabled={isLoadingOmcs || createStationMutation.isPending}
                     >
-                      <option value="">
-                        {isLoadingOmcs ? "Loading OMCs..." : "Select OMC"}
-                      </option>
-                      {omcs.map((omc) => (
-                        <option key={omc.id} value={omc.id}>
-                          {omc.name}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="station-omc" className="w-full">
+                        <SelectValue
+                          placeholder={
+                            isLoadingOmcs ? "Loading OMCs..." : "Select OMC"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {omcs.map((omc) => (
+                          <SelectItem key={omc.id} value={omc.id}>
+                            {omc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">

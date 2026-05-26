@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitch } from "@/components/language-switch";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import {
   DropdownMenu,
@@ -117,7 +118,7 @@ function Navbar() {
     : (user?.email?.[0]?.toUpperCase() ?? "?");
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Fuel className="h-6 w-6 text-primary" />
@@ -150,6 +151,7 @@ function Navbar() {
           </a>
         </nav>
         <div className="flex items-center gap-2">
+          <LanguageSwitch />
           <ModeToggle />
           {isAuthenticated && user ? (
             <DropdownMenu>
@@ -185,7 +187,7 @@ function Navbar() {
                   onClick={handleLogout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="me-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -213,10 +215,10 @@ function Navbar() {
 /* ================================================================== */
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/5 via-background to-background">
+    <section className="relative overflow-hidden border-b bg-linear-to-b from-primary/5 via-background to-background">
       {/* Decorative background circles */}
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 right-0 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 start-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 end-0 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
 
       <div className="container relative mx-auto px-4 py-20 text-center md:py-32">
         <Badge variant="secondary" className="mb-4">
@@ -599,7 +601,7 @@ function PricingSection() {
             aria-label="Toggle yearly billing"
           >
             <span
-              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              className={`absolute top-0.5 start-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
                 yearly ? "translate-x-5" : "translate-x-0"
               }`}
             />
@@ -610,7 +612,7 @@ function PricingSection() {
             Yearly
           </span>
           {yearly && (
-            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            <Badge className="bg-success/10 text-success">
               Save ~17%
             </Badge>
           )}
@@ -628,8 +630,8 @@ function PricingSection() {
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="shadow-sm">Most Popular</Badge>
+                <div className="absolute -top-3 start-1/2 -translate-x-1/2">
+                  <Badge className="shadow-xs">Most Popular</Badge>
                 </div>
               )}
 
@@ -882,7 +884,7 @@ function CTASection() {
   return (
     <section className="relative overflow-hidden py-16 md:py-24">
       {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 to-background" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-primary/5 to-background" />
 
       <div className="container relative mx-auto px-4 text-center">
         <h2 className="text-3xl font-bold tracking-tight md:text-4xl">

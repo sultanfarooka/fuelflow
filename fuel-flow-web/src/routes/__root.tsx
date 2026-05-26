@@ -23,7 +23,7 @@ function RootLayout() {
   return (
     <>
       <div className="min-h-screen bg-background text-foreground">
-        <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"></header>
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60"></header>
         <main className="flex-1">
           <Outlet />
         </main>

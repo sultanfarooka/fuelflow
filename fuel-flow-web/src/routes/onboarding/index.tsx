@@ -15,6 +15,13 @@ import {
 } from "@/components/ui/field";
 import { FormTextField } from "@/components/forms/form-text-field";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   completeOnboarding,
   type OnboardingRequest,
 } from "@/lib/api/auth";
@@ -88,7 +95,7 @@ function RouteComponent() {
     form.state.isSubmitting || onboardingMutation.isPending;
 
   return (
-    <div className="bg-gradient-to-b from-primary/5 via-background to-background px-4 py-10">
+    <div className="bg-linear-to-b from-primary/5 via-background to-background px-4 py-10">
       <div className="mx-auto grid w-full max-w-6xl gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <section className="flex flex-col justify-between gap-8">
           <div className="space-y-4">
@@ -159,7 +166,7 @@ function RouteComponent() {
             className="space-y-6"
           >
             <FieldGroup>
-              <div className="space-y-1 text-center sm:text-left">
+              <div className="space-y-1 text-center sm:text-start">
                 <h2 className="text-lg font-semibold">Organization &amp; station</h2>
                 <p className="text-xs text-muted-foreground">
                   You can invite staff and add more stations after onboarding.
@@ -205,34 +212,36 @@ function RouteComponent() {
                         <FieldLabel htmlFor={field.name}>
                           OMC (Oil Marketing Company)
                         </FieldLabel>
-                        <div className="relative">
-                          <select
+                        <Select
+                          value={field.state.value}
+                          onValueChange={(v) => field.handleChange(v)}
+                          disabled={isLoadingOmcs || isSubmitting}
+                        >
+                          <SelectTrigger
                             id={field.name}
-                            name={field.name}
-                            className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none ring-offset-background focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
-                            value={field.state.value}
                             onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
                             aria-invalid={isInvalid}
                             aria-describedby={
-                              isInvalid
-                                ? errorId
-                                : descriptionId
+                              isInvalid ? errorId : descriptionId
                             }
-                            disabled={isLoadingOmcs || isSubmitting}
+                            className="w-full"
                           >
-                            <option value="">
-                              {isLoadingOmcs
-                                ? "Loading OMCs..."
-                                : "Select OMC"}
-                            </option>
+                            <SelectValue
+                              placeholder={
+                                isLoadingOmcs
+                                  ? "Loading OMCs..."
+                                  : "Select OMC"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
                             {omcs.map((omc) => (
-                              <option key={omc.id} value={omc.id}>
+                              <SelectItem key={omc.id} value={omc.id}>
                                 {omc.name}
-                              </option>
+                              </SelectItem>
                             ))}
-                          </select>
-                        </div>
+                          </SelectContent>
+                        </Select>
                         <FieldDescription id={descriptionId}>
                           Choose the OMC your station is registered with.
                         </FieldDescription>

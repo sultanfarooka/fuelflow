@@ -13,7 +13,7 @@ export const Route = createFileRoute('/auth/reset-password-success')({
 function ResetPasswordSuccessPage() {
   return (
     <div className="container mx-auto flex max-w-md flex-col items-center px-4 py-16 text-center">
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-success/10 text-success">
         <CheckCircle2 className="h-8 w-8" />
       </div>
       <h1 className="text-2xl font-bold">Password reset successful</h1>

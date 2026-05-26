@@ -46,6 +46,7 @@ export { getCurrentUser, type MeApiResponse } from './me'
 export {
   forgotPassword,
   type ForgotPasswordRequest,
+  type ForgotPasswordResponse,
   type ForgotPasswordApiResponse,
 } from './forgotPassword'
 export {

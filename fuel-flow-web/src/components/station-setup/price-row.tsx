@@ -105,7 +105,7 @@ export function PriceRow({
         <span className="font-medium">{fuelType.name}</span>
         {isSaved && (
           <div className="flex shrink-0 items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-500">
+            <span className="inline-flex items-center gap-1 text-xs text-success">
               <Check className="h-3.5 w-3.5" />
               Saved
             </span>
@@ -116,7 +116,7 @@ export function PriceRow({
       {/* Row 2: saved price or input (right-aligned) */}
       {isSaved ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <p className="text-right text-sm sm:text-left">
+          <p className="text-end text-sm sm:text-start">
             <span className="font-semibold">Rs. {effectivePrice}</span>
             <span className="text-muted-foreground">{unitSuffix}</span>
           </p>
@@ -127,7 +127,7 @@ export function PriceRow({
             onClick={startEditing}
             className="w-full sm:w-auto"
           >
-            <Pencil className="mr-1 h-3 w-3" />
+            <Pencil className="me-1 h-3 w-3" />
             Edit
           </Button>
         </div>
@@ -163,7 +163,7 @@ export function PriceRow({
       )}
 
       {/* Row 3: effective date (right-aligned) */}
-      <p className="text-right text-xs text-muted-foreground">
+      <p className="text-end text-xs text-muted-foreground">
         Effective from {effectiveFrom}
       </p>
 

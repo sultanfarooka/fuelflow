@@ -117,7 +117,6 @@ export function LoginForm() {
               field={field}
               label="Phone or email"
               type="text"
-              inputMode="text"
               placeholder="+92XXXXXXXXXX or m@example.com"
               autoComplete="username"
               description="Use your +92 phone number, or a verified email address."
@@ -184,7 +183,7 @@ export function LoginForm() {
             disabled
             className="w-full justify-center"
           >
-            <GoogleIcon className="mr-2 size-4 shrink-0" />
+            <GoogleIcon className="me-2 size-4 shrink-0" />
             Sign in with Google (coming soon)
           </Button>
           <Button
@@ -193,7 +192,7 @@ export function LoginForm() {
             disabled
             className="mt-2 w-full justify-center"
           >
-            <Smartphone className="mr-2 size-4 shrink-0" />
+            <Smartphone className="me-2 size-4 shrink-0" />
             Phone login (coming soon)
           </Button>
           <FieldDescription className="px-6 text-center">

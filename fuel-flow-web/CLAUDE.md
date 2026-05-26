@@ -8,21 +8,23 @@
 - **Tables:** TanStack Table 8.21 (headless)
 - **Forms:** TanStack Form 1.28 + Zod 3.25 (validation)
 - **Client State:** Zustand 4.5 (persisted to localStorage)
-- **UI:** shadcn/ui (New York style) + Tailwind CSS 3.4 + Radix UI
-- **Icons:** Lucide React
+- **UI:** shadcn/ui 2.x (radix-luma style, `b3lo6Vpia` preset) + Tailwind CSS 4.3 + Radix UI (umbrella `radix-ui` package)
+- **Icons:** Tabler Icons (preset default) — Lucide React kept for pre-existing imports
 - **Charts:** Recharts 2.15
 - **HTTP:** Axios 1.13 (cookie-based auth)
-- **i18n:** i18next 25.8 + react-i18next 16.5
+- **i18n:** i18next 25.8 + react-i18next 16.5 (initialised in `src/lib/i18n.ts`; en + ur; `<html dir>` flips automatically on language change)
 - **Toasts:** Sonner 2.0
-- **Theme:** next-themes 0.4 (light/dark/system)
+- **Theme:** next-themes 0.4 (light/dark/system; storage key `fuel-flow-ui-theme`)
+- **Fonts:** Inter Variable (`@fontsource-variable/inter`) — preset-provided
 
 ### Why these choices?
 
 - **TanStack Router** over React Router — type-safe params, file-based routing, better DevTools
 - **TanStack Query** over Redux Toolkit Query — purpose-built for server state, automatic caching/refetching
-- **TanStack Form** over React Hook Form — same ecosystem as Router/Query, framework-agnostic, first-class Zod adapter
+- **TanStack Form** over React Hook Form — same ecosystem as Router/Query, framework-agnostic, first-class Zod adapter (shadcn's `Form` primitive intentionally **not** installed — see [`src/components/CLAUDE.md`](src/components/CLAUDE.md))
 - **Zustand** over Redux — small API, no boilerplate, persistence middleware; suits client-only UI state
 - **shadcn/ui** over MUI / Ant — unstyled components we own (no upstream lock-in), customisable for Pakistani-aesthetic and dark-mode tokens
+- **Tailwind 4** with CSS-first config (`@theme` in `index.css`, no `tailwind.config.js`) for the preset compatibility, oklch colour pipeline, and faster compile via `@tailwindcss/vite` plugin
 - **Zod** over Joi / Yup — schemas inferable to TS types, shareable with backend FluentValidation semantics
 - **Vite** over CRA — faster cold starts, native ESM, simpler PWA plugin
 - **i18next** — RTL-friendly, Urdu pluralisation rules, namespacing for large translation sets
@@ -51,6 +53,7 @@ src/
 │   │   └── index.ts     # Barrel exports
 │   ├── validators/
 │   │   └── auth.ts      # Zod schemas (register, login, reset, onboarding)
+│   ├── i18n.ts          # i18next init (en+ur, dir flip wired here)
 │   ├── utils.ts         # cn() helper (clsx + tailwind-merge)
 │   └── theme-context.ts # Theme state type
 ├── stores/
@@ -59,7 +62,7 @@ src/
 │   ├── en.json          # English translations
 │   └── ur.json          # Urdu translations
 ├── main.tsx             # App entry point (providers, router, query client)
-├── index.css            # Tailwind imports + CSS variables (light/dark themes)
+├── index.css            # Tailwind 4 @import + @theme + design tokens (oklch, light/dark)
 └── routeTree.gen.ts     # AUTO-GENERATED — never edit manually
 ```
 
@@ -192,10 +195,13 @@ export const Route = createFileRoute("/dashboard")({
 
 ## Localization
 
-- **Languages:** English (`en.json`) + Urdu (`ur.json`) via react-i18next
+- **Languages:** English (`en.json`) + Urdu (`ur.json`) via react-i18next, initialised in [`src/lib/i18n.ts`](src/lib/i18n.ts)
 - **Date format:** DD/MM/YYYY
 - **Currency format:** Rs. 1,25,000 (Pakistani notation with comma grouping)
 - **Usage:** `const { t } = useTranslation(); t("common.welcome")`
+- **Language switcher:** `<LanguageSwitch />` component mounted in every layout header
+- **RTL:** Urdu sets `<html dir="rtl" lang="ur">` automatically on `languageChanged` (handled in `i18n.ts`). All layout utilities must be logical (see Theme & Styling)
+- **Content sweep status:** the i18n runtime is wired (this is M07-F09-R04); the call-site sweep that retro-wires `useTranslation` across shipped screens is tracked separately under [M08-F05-R05](../docs/MODULES.md#m08-f05--system-preferences). Today's shipped screens render English text and rely on layout RTL only.
 
 ## Responsive Breakpoints
 
@@ -246,10 +252,12 @@ When making any change touching the service worker or manifest, bump the build t
 
 ## Theme & Styling
 
-- **Dark mode:** Class-based (`darkMode: 'class'`), managed by next-themes
-- **CSS variables:** HSL-based theme tokens in `index.css` (primary, secondary, destructive, muted, accent, chart colors)
-- **Storage key:** `fuel-flow-ui-theme`
+- **Dark mode:** Class-based via Tailwind 4's `@custom-variant dark (&:is(.dark *))` in `index.css`; managed by next-themes
+- **Design tokens:** oklch values in `:root` / `.dark` (preset b3lo6Vpia radix-luma palette). Mapped to Tailwind colours via `@theme inline { --color-* : var(--*); }`
+- **Semantic tokens:** `--primary`, `--secondary`, `--destructive`, `--success`, `--muted`, `--accent`, `--popover`, `--card`, `--border`, `--input`, `--ring`, `--chart-1..5`, `--sidebar*`
+- **Storage key:** `fuel-flow-ui-theme` (theme); `fuel-flow-language` (locale)
 - **Class merging:** Always use `cn()` from `lib/utils.ts` (clsx + tailwind-merge)
+- **RTL:** `components.json` has `"rtl": true`. Use Tailwind logical utilities (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`, `text-end`, `border-s`, `border-e`, `rounded-s-*`, `rounded-e-*`) — **never** physical (`ml-`, `mr-`, etc.). `<html dir>` flips automatically when language changes via `src/lib/i18n.ts`.
 
 ## Testing
 

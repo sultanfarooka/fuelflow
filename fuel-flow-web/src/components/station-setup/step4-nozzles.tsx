@@ -254,13 +254,13 @@ export function Step4Nozzles({ stationId, onFinish, onBack }: Step4NozzlesProps)
               </div>
             </div>
           </div>
-          <div className="flex-grow-1 w-full">
+          <div className="grow w-full">
             <Button
               type="submit"
               disabled={createMutation.isPending}
               className="w-full sm:w-auto float-right"
             >
-              <Plus className="mr-1 h-4 w-4" />
+              <Plus className="me-1 h-4 w-4" />
               Add nozzle
             </Button>
           </div>

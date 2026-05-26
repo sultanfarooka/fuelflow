@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LanguageSwitch } from "@/components/language-switch";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { logout } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth-store";
@@ -53,7 +54,7 @@ function DashboardLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <Link to="/dashboard" className="flex items-center gap-2">
@@ -77,6 +78,7 @@ function DashboardLayout() {
             </nav>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageSwitch />
             <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -111,7 +113,7 @@ function DashboardLayout() {
                   onClick={handleLogout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="me-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
