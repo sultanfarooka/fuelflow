@@ -25,6 +25,8 @@ function VerifyEmailPage() {
     if (token && userId) {
       verifyMutation.mutate();
     }
+    // verifyMutation is stable for the lifetime of the route; firing once per token+userId is intentional
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, userId]);
 
   const hasParams = Boolean(token && userId);
