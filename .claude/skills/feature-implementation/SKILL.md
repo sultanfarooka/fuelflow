@@ -67,19 +67,53 @@ typical layer order for a backend feature is:
 6. **Frontend** — route + role guard, components, TanStack Query hook, Zod
    schema, i18n keys (`fuel-flow-web` scoped `CLAUDE.md` files).
 
-For each task: implement it, verify against its **Acceptance** criterion, write
-the matching `[Fact]` test named `MXX_FXX_RXX_...` (Rule 7), and only then
-check its box in the document. Record deviations under **Implementation
-notes**. Do not start the next phase until the current one is fully verified.
+For each task:
+
+1. Implement it.
+2. Verify against its **Acceptance** criterion.
+3. Write the matching `[Fact]` test named `MXX_FXX_RXX_...` (Rule 7).
+4. **Flip its `- [ ]` to `- [x]` in `docs/implementation/<id>.md`.** This is
+   non-negotiable — the doc is a live tracker, not a frozen plan. Do this in
+   the **same commit** as the task itself so the diff shows the work and the
+   check-off together. A trailing "Implementation notes" summary at the end
+   of the doc does **not** substitute for flipping the per-phase boxes — a
+   reviewer scrolling the Phases section must see each completed task as
+   `[x]`, not `[ ]`.
+5. Record any deviation from the plan under **Implementation notes**.
+
+Do not start the next phase until the current one is fully verified and its
+boxes are checked.
+
+**Surgical scope when flipping boxes.** Not every `- [ ]` in the doc is a
+"task to do":
+
+- Boxes under `### Phase N` (and sub-phases like `### Phase 1a`) and under
+  `## MODULES.md edits required` → flip to `- [x]` as each lands.
+- Boxes under `## Layers touched` denote *which Clean Architecture layers
+  this feature touched* (Domain / Infrastructure / Application / Api /
+  Frontend / Docs). For a layer the feature deliberately does **not** touch
+  (e.g. a frontend-only feature leaves Domain/Infra/Application/Api
+  unchecked), the `- [ ]` correctly conveys "not touched" — **do not flip
+  it**. Bulk-replacing every `- [ ]` would lie about the scope.
 
 Commit within the branch using conventional commits scoped by ID (Rule 7):
 `feat(m04-f03): implement open-shift endpoint`.
 
 ### 4. Pre-PR checks
 
-Before opening the PR (Rule 8): backend `dotnet format` produces no diff;
-frontend ESLint + Prettier pass. Confirm the `MODULES.md` status flip to `Done`
-and any new rows are included in the diff (Rule 2).
+Before opening the PR (Rule 8):
+
+- Backend `dotnet format` produces no diff; frontend ESLint + Prettier pass.
+- Confirm the `MODULES.md` status flip to `Done` and any new rows are
+  included in the diff (Rule 2).
+- **Confirm the implementation doc is fully ticked.** Run
+  `grep -c '^- \[ \]' docs/implementation/<id>.md` — the only remaining
+  `- [ ]` boxes should be `## Layers touched` rows for layers the feature
+  did not touch. If any task box under a `### Phase` heading or under
+  `## MODULES.md edits required` is still `- [ ]`, either flip it (if the
+  work was done and the flip was missed) or do not open the PR (if the
+  work isn't actually done). A "tick the boxes" cleanup commit before
+  push is acceptable; an unflipped doc at merge time is not.
 
 ### 5. Open the PR
 
@@ -104,6 +138,9 @@ own dependencies. When unsure, serialize.
 - One PR per `MXX-FXX[-RXX]` item, targeting `main`, never auto-merged.
 - The `MODULES.md` status flip ships in the same PR as the code (Rule 2) —
   never a follow-up.
-- The implementation document's checkboxes and status stay accurate as you go.
+- **The implementation document's checkboxes and status stay accurate as you
+  go** — flip each `- [ ]` to `- [x]` in the same commit as the task it
+  tracks. See Step 3 for the surgical-scope rules; see Step 4 for the
+  pre-PR verification grep.
 - If reality diverges from the plan, stop and raise it with the user rather
   than improvising.
