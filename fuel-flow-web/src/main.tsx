@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { setupAuthFailureHandler } from "@/lib/api/client";
+import "@/lib/i18n";
 import { useAuthStore } from "@/stores/auth-store";
 import "./index.css";
 

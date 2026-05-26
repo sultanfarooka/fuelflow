@@ -217,11 +217,11 @@ export function Step1FuelTypes({ stationId, onNext }: Step1FuelTypesProps) {
                 <Badge
                   key={ft.id}
                   variant="secondary"
-                  className="gap-1 py-1.5 pl-3 pr-1.5 text-sm"
+                  className="gap-1 py-1.5 ps-3 pe-1.5 text-sm"
                 >
                   <span>
                     {ft.name}
-                    <span className="ml-1 font-normal text-muted-foreground">
+                    <span className="ms-1 font-normal text-muted-foreground">
                       ({ft.unit})
                     </span>
                   </span>
@@ -229,7 +229,7 @@ export function Step1FuelTypes({ stationId, onNext }: Step1FuelTypesProps) {
                     type="button"
                     disabled={isMutating}
                     onClick={() => deleteMutation.mutate(ft.id)}
-                    className="ml-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                    className="ms-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
                   >
                     <X className="h-3 w-3" />
                     <span className="sr-only">Remove {ft.name}</span>
@@ -292,12 +292,12 @@ export function Step1FuelTypes({ stationId, onNext }: Step1FuelTypesProps) {
                     >
                       {alreadyAdded ? (
                         <>
-                          <Check className="mr-1 h-4 w-4" />
+                          <Check className="me-1 h-4 w-4" />
                           <span className="hidden sm:inline">Added</span>
                         </>
                       ) : (
                         <>
-                          <Plus className="mr-1 h-4 w-4" />
+                          <Plus className="me-1 h-4 w-4" />
                           <span className="hidden sm:inline">Add</span>
                         </>
                       )}
@@ -364,7 +364,7 @@ export function Step1FuelTypes({ stationId, onNext }: Step1FuelTypesProps) {
               disabled={isMutating}
               className="w-full sm:w-auto"
             >
-              <Plus className="mr-1 h-4 w-4" />
+              <Plus className="me-1 h-4 w-4" />
               Add custom product
             </Button>
           </form>

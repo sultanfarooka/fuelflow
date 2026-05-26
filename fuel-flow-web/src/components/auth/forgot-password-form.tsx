@@ -113,7 +113,7 @@ export function ForgotPasswordForm() {
             onClick={() => handlePickChannel("sms")}
             disabled={submitMutation.isPending}
           >
-            Send code to <strong className="ml-1">{channels.maskedPhone}</strong>
+            Send code to <strong className="ms-1">{channels.maskedPhone}</strong>
           </Button>
         )}
         {channels.maskedEmail && (
@@ -123,7 +123,7 @@ export function ForgotPasswordForm() {
             onClick={() => handlePickChannel("email")}
             disabled={submitMutation.isPending}
           >
-            Email link to <strong className="ml-1">{channels.maskedEmail}</strong>
+            Email link to <strong className="ms-1">{channels.maskedEmail}</strong>
           </Button>
         )}
         {submitError && (

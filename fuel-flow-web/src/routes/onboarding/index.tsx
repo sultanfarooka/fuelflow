@@ -159,7 +159,7 @@ function RouteComponent() {
             className="space-y-6"
           >
             <FieldGroup>
-              <div className="space-y-1 text-center sm:text-left">
+              <div className="space-y-1 text-center sm:text-start">
                 <h2 className="text-lg font-semibold">Organization &amp; station</h2>
                 <p className="text-xs text-muted-foreground">
                   You can invite staff and add more stations after onboarding.

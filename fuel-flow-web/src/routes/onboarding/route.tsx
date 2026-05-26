@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { Fuel } from "lucide-react";
 
+import { LanguageSwitch } from "@/components/language-switch";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -29,7 +30,7 @@ function OnboardingLayout() {
             <span className="text-sm font-semibold tracking-tight">
               Fuel Flow
             </span>
-            <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="ms-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               Onboarding
             </span>
           </div>
@@ -49,6 +50,7 @@ function OnboardingLayout() {
                 </div>
               </div>
             )}
+            <LanguageSwitch />
             <ModeToggle />
           </div>
         </div>

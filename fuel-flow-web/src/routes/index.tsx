@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitch } from "@/components/language-switch";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import {
   DropdownMenu,
@@ -150,6 +151,7 @@ function Navbar() {
           </a>
         </nav>
         <div className="flex items-center gap-2">
+          <LanguageSwitch />
           <ModeToggle />
           {isAuthenticated && user ? (
             <DropdownMenu>
@@ -185,7 +187,7 @@ function Navbar() {
                   onClick={handleLogout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="me-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -215,8 +217,8 @@ function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b bg-linear-to-b from-primary/5 via-background to-background">
       {/* Decorative background circles */}
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 right-0 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 start-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 end-0 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
 
       <div className="container relative mx-auto px-4 py-20 text-center md:py-32">
         <Badge variant="secondary" className="mb-4">
@@ -599,7 +601,7 @@ function PricingSection() {
             aria-label="Toggle yearly billing"
           >
             <span
-              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              className={`absolute top-0.5 start-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
                 yearly ? "translate-x-5" : "translate-x-0"
               }`}
             />
@@ -628,7 +630,7 @@ function PricingSection() {
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <div className="absolute -top-3 start-1/2 -translate-x-1/2">
                   <Badge className="shadow-xs">Most Popular</Badge>
                 </div>
               )}

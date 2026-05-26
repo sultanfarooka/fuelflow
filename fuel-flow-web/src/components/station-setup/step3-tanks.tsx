@@ -337,10 +337,10 @@ export function Step3Tanks({ stationId, onNext, onBack }: Step3TanksProps) {
                       <table className="w-full border-collapse text-xs">
                         <thead className="bg-muted">
                           <tr>
-                            <th className="border-b px-2 py-1 text-left">
+                            <th className="border-b px-2 py-1 text-start">
                               Depth (cm)
                             </th>
-                            <th className="border-b px-2 py-1 text-left">
+                            <th className="border-b px-2 py-1 text-start">
                               Volume (L)
                             </th>
                           </tr>

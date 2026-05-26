@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LanguageSwitch } from "@/components/language-switch";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { logout } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth-store";
@@ -77,6 +78,7 @@ function DashboardLayout() {
             </nav>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageSwitch />
             <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -111,7 +113,7 @@ function DashboardLayout() {
                   onClick={handleLogout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="me-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

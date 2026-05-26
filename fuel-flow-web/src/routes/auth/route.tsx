@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { Fuel } from "lucide-react";
 
+import { LanguageSwitch } from "@/components/language-switch";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 
 export const Route = createFileRoute("/auth")({
@@ -19,6 +20,7 @@ function AuthLayout() {
             </span>
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageSwitch />
             <ModeToggle />
           </div>
         </div>
