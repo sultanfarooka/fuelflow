@@ -406,8 +406,8 @@ A consistent shadcn-based design system underpins every screen in the applicatio
 | Aspect              | Specification                                                       |
 | :------------------ | :------------------------------------------------------------------ |
 | Component Library   | shadcn/ui primitives under `fuel-flow-web/src/components/ui/`       |
-| Theme Preset        | `b3lo6Vpia` from shadcn's theme creator                             |
-| Install Command     | `npx shadcn@latest apply --preset b3lo6Vpia`                        |
+| Theme Preset        | `b3lVLqquH` from shadcn's theme creator                             |
+| Install Command     | `npx shadcn@latest apply --preset b3lVLqquH`                        |
 | Tokens              | Colours, radii, spacing, typography sourced from the preset         |
 | Dark Mode           | Toggle in top bar; tokens swap consistently across all surfaces     |
 | RTL                 | Layout flips when locale switches to Urdu (per §8.5)                |
