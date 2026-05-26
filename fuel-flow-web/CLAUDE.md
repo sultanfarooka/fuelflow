@@ -8,7 +8,7 @@
 - **Tables:** TanStack Table 8.21 (headless)
 - **Forms:** TanStack Form 1.28 + Zod 3.25 (validation)
 - **Client State:** Zustand 4.5 (persisted to localStorage)
-- **UI:** shadcn/ui 2.x (radix-luma style, `b3lo6Vpia` preset) + Tailwind CSS 4.3 + Radix UI (umbrella `radix-ui` package)
+- **UI:** shadcn/ui 2.x (radix-mira style, `b3lVLqquH` preset) + Tailwind CSS 4.3 + Radix UI (umbrella `radix-ui` package)
 - **Icons:** Tabler Icons (preset default) — Lucide React kept for pre-existing imports
 - **Charts:** Recharts 2.15
 - **HTTP:** Axios 1.13 (cookie-based auth)
@@ -253,7 +253,7 @@ When making any change touching the service worker or manifest, bump the build t
 ## Theme & Styling
 
 - **Dark mode:** Class-based via Tailwind 4's `@custom-variant dark (&:is(.dark *))` in `index.css`; managed by next-themes
-- **Design tokens:** oklch values in `:root` / `.dark` (preset b3lo6Vpia radix-luma palette). Mapped to Tailwind colours via `@theme inline { --color-* : var(--*); }`
+- **Design tokens:** oklch values in `:root` / `.dark` (preset b3lVLqquH radix-mira palette). Mapped to Tailwind colours via `@theme inline { --color-* : var(--*); }`
 - **Semantic tokens:** `--primary`, `--secondary`, `--destructive`, `--success`, `--muted`, `--accent`, `--popover`, `--card`, `--border`, `--input`, `--ring`, `--chart-1..5`, `--sidebar*`
 - **Storage key:** `fuel-flow-ui-theme` (theme); `fuel-flow-language` (locale)
 - **Class merging:** Always use `cn()` from `lib/utils.ts` (clsx + tailwind-merge)
