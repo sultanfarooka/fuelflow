@@ -4,7 +4,7 @@
 
 ```
 components/
-├── ui/                    # shadcn 2.x primitives (radix-luma, owned code — customise freely)
+├── ui/                    # shadcn 2.x primitives (radix-mira, owned code — customise freely)
 │   ├── alert.tsx          # Alert / AlertTitle / AlertDescription / AlertAction
 │   ├── badge.tsx          # Badge with CVA variants (default, secondary, destructive, outline) and data-icon-aware padding
 │   ├── button.tsx         # Button with CVA variants (default, outline, secondary, ghost, destructive, link) and sizes (xs/sm/default/lg + icon-{xs,sm,lg})
@@ -64,7 +64,7 @@ components/
    - Form / focus: `border`, `input`, `ring`
    - Sidebar (M07-F07 ready): `sidebar`, `sidebar-foreground`, `sidebar-primary` (+ `-foreground`), `sidebar-accent` (+ `-foreground`), `sidebar-border`, `sidebar-ring`
    - Charts: `chart-1` … `chart-5`
-3. **Usage syntax (Tailwind 4 + radix-luma preset):**
+3. **Usage syntax (Tailwind 4 + radix-mira preset):**
    - Background: `bg-success`, `bg-destructive`, `bg-primary/10`, `bg-card`
    - Text: `text-foreground`, `text-success`, `text-muted-foreground`
    - Border: `border-border`, `border-destructive/40`
@@ -115,7 +115,7 @@ If the screen looks subtly wrong in dark mode, **don't ship**. Either fix the to
 
 ## Going-forward additions
 
-**Adding a new shadcn primitive:** `npx shadcn@latest add [name]` lands in `ui/` in radix-luma style. The CLI will ask before overwriting existing primitives — **decline** unless deliberately refreshing.
+**Adding a new shadcn primitive:** `npx shadcn@latest add [name]` lands in `ui/` in radix-mira style. The CLI will ask before overwriting existing primitives — **decline** unless deliberately refreshing.
 
 **Adding a feature component:** create in the appropriate subfolder (`auth/`, `station-setup/`, or a new folder for a new feature). One component per file, named export, TypeScript, Tailwind utilities only (no CSS modules, no styled-components).
 
