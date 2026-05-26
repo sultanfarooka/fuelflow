@@ -160,7 +160,7 @@ function OrganizationDashboardPage() {
                       id="station-omc"
                       value={omcId}
                       onChange={(e) => setOmcId(e.target.value)}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none ring-offset-background focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-hidden ring-offset-background focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={isLoadingOmcs || createStationMutation.isPending}
                     >
                       <option value="">

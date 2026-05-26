@@ -254,7 +254,7 @@ export function Step4Nozzles({ stationId, onFinish, onBack }: Step4NozzlesProps)
               </div>
             </div>
           </div>
-          <div className="flex-grow-1 w-full">
+          <div className="grow w-full">
             <Button
               type="submit"
               disabled={createMutation.isPending}

@@ -117,7 +117,7 @@ function Navbar() {
     : (user?.email?.[0]?.toUpperCase() ?? "?");
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Fuel className="h-6 w-6 text-primary" />
@@ -213,7 +213,7 @@ function Navbar() {
 /* ================================================================== */
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/5 via-background to-background">
+    <section className="relative overflow-hidden border-b bg-linear-to-b from-primary/5 via-background to-background">
       {/* Decorative background circles */}
       <div className="pointer-events-none absolute -top-24 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 right-0 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
@@ -629,7 +629,7 @@ function PricingSection() {
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="shadow-sm">Most Popular</Badge>
+                  <Badge className="shadow-xs">Most Popular</Badge>
                 </div>
               )}
 
@@ -882,7 +882,7 @@ function CTASection() {
   return (
     <section className="relative overflow-hidden py-16 md:py-24">
       {/* Decorative background */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/5 to-background" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-primary/5 to-background" />
 
       <div className="container relative mx-auto px-4 text-center">
         <h2 className="text-3xl font-bold tracking-tight md:text-4xl">

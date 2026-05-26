@@ -153,7 +153,7 @@ export function Step4DipCharts({
                     key={t.id}
                     type="button"
                     onClick={() => handleSelectTank(t)}
-                    className="flex flex-col items-start gap-2 rounded-lg border bg-card p-3 text-left transition hover:border-primary/60 hover:shadow-sm"
+                    className="flex flex-col items-start gap-2 rounded-lg border bg-card p-3 text-left transition hover:border-primary/60 hover:shadow-xs"
                   >
                     <div className="space-y-1">
                       <p className="text-sm font-medium leading-none">

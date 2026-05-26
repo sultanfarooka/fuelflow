@@ -172,7 +172,6 @@ export function ForgotPasswordForm() {
               field={field}
               label="Phone or email"
               type="text"
-              inputMode="text"
               placeholder="+92XXXXXXXXXX or m@example.com"
               autoComplete="username"
             />

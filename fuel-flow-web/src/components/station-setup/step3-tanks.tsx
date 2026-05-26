@@ -465,7 +465,7 @@ export function Step3Tanks({ stationId, onNext, onBack }: Step3TanksProps) {
               <AlertDescription>{addError}</AlertDescription>
             </Alert>
           )}
-          <div className="flex-grow-1 w-full">
+          <div className="grow w-full">
             <Button
               type="submit"
               disabled={isBusy}

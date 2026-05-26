@@ -88,7 +88,7 @@ function RouteComponent() {
     form.state.isSubmitting || onboardingMutation.isPending;
 
   return (
-    <div className="bg-gradient-to-b from-primary/5 via-background to-background px-4 py-10">
+    <div className="bg-linear-to-b from-primary/5 via-background to-background px-4 py-10">
       <div className="mx-auto grid w-full max-w-6xl gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <section className="flex flex-col justify-between gap-8">
           <div className="space-y-4">
@@ -209,7 +209,7 @@ function RouteComponent() {
                           <select
                             id={field.name}
                             name={field.name}
-                            className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none ring-offset-background focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                            className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-hidden ring-offset-background focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
                             value={field.state.value}
                             onBlur={field.handleBlur}
                             onChange={(e) => field.handleChange(e.target.value)}

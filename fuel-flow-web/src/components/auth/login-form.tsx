@@ -117,7 +117,6 @@ export function LoginForm() {
               field={field}
               label="Phone or email"
               type="text"
-              inputMode="text"
               placeholder="+92XXXXXXXXXX or m@example.com"
               autoComplete="username"
               description="Use your +92 phone number, or a verified email address."

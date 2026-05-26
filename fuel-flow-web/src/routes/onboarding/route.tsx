@@ -22,7 +22,7 @@ function OnboardingLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="border-b bg-background/80 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Fuel className="h-5 w-5 text-primary" />
@@ -40,10 +40,10 @@ function OnboardingLayout() {
                   {initials}
                 </div>
                 <div className="flex flex-col">
-                  <span className="max-w-[10rem] truncate font-medium text-foreground">
+                  <span className="max-w-40 truncate font-medium text-foreground">
                     {user.fullName}
                   </span>
-                  <span className="max-w-[10rem] truncate text-[10px] text-muted-foreground">
+                  <span className="max-w-40 truncate text-[10px] text-muted-foreground">
                     {user.email}
                   </span>
                 </div>
