@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-24
+**Last Updated:** 2026-05-26
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -817,7 +817,7 @@ Make the app installable and offline-capable for shift operations on shared stat
 
 ---
 
-### M07-F09 — Design System & Theme Foundation   [Status: Planned]
+### M07-F09 — Design System & Theme Foundation   [Status: In Progress]
 
 > _Discovery (2026-05-24): self-identified gap — own observation that the existing frontend doesn't yet use shadcn primitives or consistent theme tokens · outcome = every authenticated and public page renders through shadcn primitives styled by the `b3lo6Vpia` preset, dark mode works everywhere, Urdu / RTL behaves consistently · maps to ProjectOverView (no single motivation — underpins every M07 / M05 / M06 / M11 UI feature; closest narrative anchor is "Bilingual support" under §Localization) · cost-of-not-building: M07-F07, M07-F01..F06 reports, M05 / M06 admin screens, M01-F09 auth screens, and M11-F08 pricing page all get rebuilt twice if shipped without this foundation · install command: `npx shadcn@latest apply --preset b3lo6Vpia` (applied to the existing Vite + React 19 project)._
 
@@ -829,13 +829,13 @@ Provides the shadcn-based design tokens, theme preset, component primitives, dar
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F09-R01 | Apply the `b3lo6Vpia` shadcn theme preset to the Vite + React 19 frontend via `npx shadcn@latest apply --preset b3lo6Vpia`; design tokens for colours, radii, spacing, and typography come from this preset | — | Planned |
-| M07-F09-R02 | All shadcn baseline primitives needed by the shipped surface (Button, Input, Select, Dialog, Sheet, Sonner, Form, Card, Table, Tabs, Tooltip, Badge, etc.) are installed under `fuel-flow-web/src/components/ui/` using the canonical shadcn structure | — | Planned |
-| M07-F09-R03 | Dark-mode toggle works on every page; switching modes flips theme tokens with no rogue colours, hard-coded hex values, or one-off styles remaining | — | Planned |
-| M07-F09-R04 | Urdu locale switches layout direction to RTL; all primitives, layouts, icons, and inputs mirror correctly (triggered by [M08-F05-R02](#m08-f05--system-preferences)) | — | Planned |
-| M07-F09-R05 | Every authenticated screen shipped before this feature (registration, email verification, login, password recovery, station profile, dashboard summary) is migrated to use shadcn primitives and theme tokens — zero rogue inline styles or one-off colours | — | Planned |
-| M07-F09-R06 | Every public-facing screen shipped before this feature (registration landing, any marketing route) is migrated to the new system | — | Planned |
-| M07-F09-R07 | Going-forward standards documented in [`fuel-flow-web/src/components/CLAUDE.md`](../fuel-flow-web/src/components/CLAUDE.md): when to use a shadcn primitive vs build a custom component, naming conventions, theming hooks, RTL guidance, dark-mode test checklist | — | Planned |
+| M07-F09-R01 | Apply the `b3lo6Vpia` shadcn theme preset to the Vite + React 19 frontend via `npx shadcn@latest apply --preset b3lo6Vpia`; design tokens for colours, radii, spacing, and typography come from this preset | — | In Progress |
+| M07-F09-R02 | All shadcn baseline primitives needed by the shipped surface (Button, Input, Select, Dialog, Sheet, Sonner, Form, Card, Table, Tabs, Tooltip, Badge, etc.) are installed under `fuel-flow-web/src/components/ui/` using the canonical shadcn structure (the `Form` primitive is intentionally omitted — project uses TanStack Form via `Field` + `FormTextField`) | — | In Progress |
+| M07-F09-R03 | Dark-mode toggle works on every page; switching modes flips theme tokens with no rogue colours, hard-coded hex values, or one-off styles remaining | — | In Progress |
+| M07-F09-R04 | Urdu locale switches layout direction to RTL; all primitives, layouts, icons, and inputs mirror correctly (triggered by [M08-F05-R02](#m08-f05--system-preferences)) | — | In Progress |
+| M07-F09-R05 | Every authenticated screen shipped before this feature (registration, email verification, login, password recovery, station profile, dashboard summary) is migrated to use shadcn primitives and theme tokens — zero rogue inline styles or one-off colours | — | In Progress |
+| M07-F09-R06 | Every public-facing screen shipped before this feature (registration landing, any marketing route) is migrated to the new system | — | In Progress |
+| M07-F09-R07 | Going-forward standards documented in [`fuel-flow-web/src/components/CLAUDE.md`](../fuel-flow-web/src/components/CLAUDE.md): when to use a shadcn primitive vs build a custom component, naming conventions, theming hooks, RTL guidance, dark-mode test checklist | — | In Progress |
 
 **Acceptance Criteria:**
 - **AC1** Given any authenticated page after migration, When inspected, Then every interactive element resolves to a shadcn primitive (Button, Input, Select, Dialog, …) and no `style={...}` color / radius / spacing overrides exist outside the design-token system.
