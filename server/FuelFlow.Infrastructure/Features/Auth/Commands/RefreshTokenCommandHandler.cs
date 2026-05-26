@@ -157,7 +157,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
                 Roles = userRoles.Select(r => r.ToLower()).ToList(),
             },
             Organization = org != null ? new OrganizationInfo { Id = org.Id, Name = org.Name } : null,
-            Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
+            Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name, IsSetupComplete = s.IsSetupComplete, AcceptedPaymentMethods = s.AcceptedPaymentMethods }).ToList(),
             Subscription = subscription,
         };
     }

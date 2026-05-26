@@ -233,7 +233,7 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
                 Roles = userRoles.Select(r => r.ToLower()).ToList(),
             },
             Organization = new OrganizationInfo { Id = org.Id, Name = org.Name },
-            Stations = stations.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
+            Stations = stations.Select(s => new StationInfo { Id = s.Id, Name = s.Name, IsSetupComplete = s.IsSetupComplete, AcceptedPaymentMethods = s.AcceptedPaymentMethods }).ToList(),
             Subscription = subscription,
         };
     }

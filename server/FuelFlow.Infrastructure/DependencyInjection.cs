@@ -86,6 +86,8 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
+        services.AddScoped<IStationShiftConfigRepository, StationShiftConfigRepository>();
+        services.AddScoped<IBankAccountRepository, BankAccountRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // 4. Register services

@@ -12,4 +12,6 @@ public class StationDto
     public string? LogoUrl { get; set; }
     public bool IsActive { get; set; }
     public Guid OMCId { get; set; }
+    public bool IsSetupComplete { get; set; }
+    public List<string> AcceptedPaymentMethods { get; set; } = new();
 }

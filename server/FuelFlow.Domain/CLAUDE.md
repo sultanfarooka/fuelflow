@@ -56,7 +56,12 @@ The columns shown are the meaningful business fields — every entity also has `
 | `OMC` | name | Reference data: PSO, Shell, Total Parco, Attock, … |
 | `OMC-FuelTypes` | omcId, fuelTypeId | Which fuels each OMC supplies. |
 
-Entities still to be added per the roadmap: `Customer`, `CreditTransaction`, `Supplier`, `SupplierPayment`, `Expense`, `ExpenseCategory`, `BankAccount`, `Product` (lubricants), `Notification`, `AuditLog`, `SubscriptionPayment`. See [M05](../../docs/MODULES.md#m05--finance--accounts), [M09](../../docs/MODULES.md#m09--lubricants--oil-shop), [M10](../../docs/MODULES.md#m10--sms--notifications), [M11-F03](../../docs/MODULES.md#m11-f03--payment--verification), [M01-F08](../../docs/MODULES.md#m01-f08--audit-trail).
+**Added in M12-F01 (Onboarding Wizard):**
+- `StationShiftConfig` (in `StationEntities/`): `ShiftCount`, `Shift1Name`, `Shift1StartTime` (TimeSpan), `Shift2Name`, `Shift2StartTime`, `Shift3Name?`, `Shift3StartTime?`, `StationId`. One-to-one with `Station`.
+- `BankAccount` (root `Entities/`): `OrganizationId`, `BankName`, `AccountNumber`, `AccountTitle`, `IsPrimary`. FK to `Organization`; global query filter by `OrganizationId`.
+- `Station` entity gains `IsSetupComplete: bool` (default `false`) and `AcceptedPaymentMethods: List<string>` (JSONB, default `["Cash"]`).
+
+Entities still to be added per the roadmap: `Customer`, `CreditTransaction`, `Supplier`, `SupplierPayment`, `Expense`, `ExpenseCategory`, `Product` (lubricants), `Notification`, `AuditLog`, `SubscriptionPayment`. See [M05](../../docs/MODULES.md#m05--finance--accounts), [M09](../../docs/MODULES.md#m09--lubricants--oil-shop), [M10](../../docs/MODULES.md#m10--sms--notifications), [M11-F03](../../docs/MODULES.md#m11-f03--payment--verification), [M01-F08](../../docs/MODULES.md#m01-f08--audit-trail).
 
 ## Directory Structure
 
@@ -69,7 +74,8 @@ FuelFlow.Domain/
 │   │   ├── User.cs                  # Domain user (FullName, Email, Phone, Role, IsActive)
 │   │   └── RefreshToken.cs          # Token storage (TokenHash, ExpiresAt, DeviceId)
 │   ├── StationEntities/
-│   │   ├── Station.cs               # Filling station (Name, Address, OrganizationId, OMCId)
+│   │   ├── Station.cs               # Filling station (Name, Address, OrganizationId, OMCId, IsSetupComplete, AcceptedPaymentMethods JSONB)
+│   │   ├── StationShiftConfig.cs    # Per-station shift schedule (ShiftCount, Shift1-3 names + start times) [M12-F01]
 │   │   ├── FuelTank.cs              # Tank (CapacityLiters, FuelTypeId, StationId)
 │   │   ├── FuelType.cs              # Fuel variant (Name, Unit, IsCustom)
 │   │   ├── FuelNozzle.cs            # Pump nozzle (NozzleNumber, TankId, IsActive)
@@ -84,6 +90,7 @@ FuelFlow.Domain/
 │   │   ├── OMC.cs                   # Oil Marketing Company (PSO, Shell, Total, etc.)
 │   │   └── OMC-FuelTypes.cs         # Fuel types offered by OMC
 │   ├── Organization.cs              # Root tenant (Name, OwnerId)
+│   ├── BankAccount.cs               # Org bank account (BankName, AccountNumber, AccountTitle, IsPrimary) [M12-F01]
 │   ├── Subscription.cs              # Org subscription (PlanId, Status, StartedAt, EndsAt)
 │   └── SubscriptionPlans.cs         # Plan tier (MaxStations, Price, Features JSONB)
 └── Enums/

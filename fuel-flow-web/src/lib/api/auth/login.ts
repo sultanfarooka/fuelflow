@@ -29,7 +29,8 @@ export interface OrganizationInfo {
 export interface StationInfo {
   id: string
   name: string
-  setupComplete?: boolean
+  isSetupComplete: boolean
+  acceptedPaymentMethods: string[]
 }
 
 export interface SubscriptionInfo {

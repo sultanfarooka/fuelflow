@@ -50,6 +50,8 @@ public class GetStationsByOrganizationQueryHandler : IRequestHandler<GetStations
             LogoUrl = s.LogoUrl,
             IsActive = s.IsActive,
             OMCId = s.OMCId,
+            IsSetupComplete = s.IsSetupComplete,
+            AcceptedPaymentMethods = s.AcceptedPaymentMethods,
         }).ToList();
 
         return Result<IReadOnlyList<StationDto>>.Success(dtos);

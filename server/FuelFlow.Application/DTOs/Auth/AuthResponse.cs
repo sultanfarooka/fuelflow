@@ -58,6 +58,8 @@ public class StationInfo
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public bool IsSetupComplete { get; set; }
+    public List<string> AcceptedPaymentMethods { get; set; } = new();
 }
 
 public class SubscriptionInfo

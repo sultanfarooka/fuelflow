@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { Fuel } from "lucide-react";
 
 import { LanguageSwitch } from "@/components/language-switch";
@@ -6,6 +6,13 @@ import { ModeToggle } from "@/components/dark-mode-toggle";
 import { useAuthStore } from "@/stores/auth-store";
 
 export const Route = createFileRoute("/onboarding")({
+  beforeLoad: () => {
+    const { isAuthenticated, stations } = useAuthStore.getState();
+    // Completed users skip back to dashboard
+    if (isAuthenticated && stations?.[0]?.isSetupComplete) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: OnboardingLayout,
 });
 

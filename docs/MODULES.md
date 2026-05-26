@@ -55,6 +55,7 @@
 | [M09](#m09--lubricants--oil-shop) | Lubricants / Oil Shop | Planned | — |
 | [M10](#m10--sms--notifications) | SMS / Notifications | Planned | — |
 | [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
+| [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | Done | — |
 
 ---
 
@@ -1205,6 +1206,64 @@ Public-facing pricing page where prospects and existing Owners compare Starter /
 **Acceptance Criteria:**
 - **AC1** Given a logged-out visitor, When they open `/pricing`, Then they see 3 plans, a monthly/yearly toggle, and a "Start free trial" CTA per plan.
 - **AC2** Given an Owner on Starter plan, When they open `/pricing`, Then the Starter row shows "Current Plan" and Professional/Enterprise show "Upgrade".
+
+---
+
+## M12 — Onboarding & First-Run Experience
+
+**Purpose:** Guide a newly registered Owner through the complete first-run setup in a single unified wizard before granting access to the operational dashboard. Covers organization, station, fuel types, opening prices, tanks (with dip charts), nozzles, shift configuration, payment methods, and optional extras (bank account, first manager invite). All step UI is built from scratch; the existing prototype step components in `components/station-setup/` are not reused. Replaces the current single-step `/onboarding` form; the `/dashboard/station/:stationId/setup` route is retained for additional-station setup by multi-station Owners.
+
+### M12-F01 — Onboarding Wizard   [Status: Done]
+
+9-step wizard at `/onboarding`. Steps 1–7 are required and sequential. Steps 8–9 are optional (skippable). Step 9 is the Summary. Data is saved progressively (one API call per completed step). Dashboard access is blocked via a route guard until `Station.IsSetupComplete = true`.
+
+**Wizard step map:**
+
+| Step | Name | Required |
+|---|---|---|
+| 1 | Org + Station | Yes |
+| 2 | Fuel types | Yes |
+| 3 | Opening prices | Yes |
+| 4 | Tanks + dip charts | Yes |
+| 5 | Nozzles | Yes |
+| 6 | Shift configuration + Payment methods | Yes |
+| 7 | Bank account | No — skippable |
+| 8 | Invite first manager | No — skippable |
+| 9 | Summary + Finish | Yes |
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M12-F01-R01 | Wizard is a 9-step flow at `/onboarding`; Steps 1–7 and 9 cannot be skipped; Steps 8–9 show a "Skip for now" action; dashboard is inaccessible until `isSetupComplete = true` | — | Done |
+| M12-F01-R02 | Data is saved progressively — one API call per completed step; on re-visit the wizard auto-advances to the first incomplete step by querying live station data | — | Done |
+| M12-F01-R03 | Step 1 — Org + Station: org name (required), station name (required), OMC (required), address + phone (optional); calls existing `POST /onboarding` | — | Done |
+| M12-F01-R04 | Step 2 — Fuel types: select from OMC catalog or add custom type (name + unit); at least one required before Next | — | Done |
+| M12-F01-R05 | Step 3 — Opening prices: every active fuel type must have a price (PKR/L) set before Next | — | Done |
+| M12-F01-R06 | Step 4 — Tanks: every fuel type must have ≥1 tank; each tank requires name, capacity (L), and a dip chart CSV before it can be saved | — | Done |
+| M12-F01-R07 | Step 5 — Nozzles: at least one nozzle (linked to a tank, with a nozzle number) must be added before Next | — | Done |
+| M12-F01-R08 | Step 6 — Shift configuration + Payment methods: Owner sets shift count per day (2 or 3), each shift's name and start time (required); ticks accepted payment methods (Cash pre-checked; JazzCash, Easypaisa, Card/POS, Bank Transfer optional); calls `POST /stations/{stationId}/shift-config` and `PUT /stations/{stationId}/payment-methods` | — | Done |
+| M12-F01-R09 | Step 7 (skippable) — Bank account: bank name (required if not skipped), account number, account title; calls `POST /organizations/{orgId}/bank-accounts`; "Skip for now" bypasses the API call | — | Done |
+| M12-F01-R10 | Step 8 (skippable) — Invite first manager: capture phone number (+92 format) and full name; calls `POST /organizations/{orgId}/users` to create a Manager user and dispatch an SMS invite; "Skip for now" bypasses the invite; step shows a clear dependency note if M01-F05-R02 is not yet shipped | — | Done |
+| M12-F01-R11 | Step 9 — Summary: read-only view of all configured data grouped by step; "Finish setup" calls `POST /stations/{stationId}/complete-setup`; on success `isSetupComplete = true` and user is redirected to `/dashboard` | — | Done |
+| M12-F01-R12 | `Station` entity gains `IsSetupComplete: bool` (default `false`) and `AcceptedPaymentMethods: string[]` (stored as JSONB, default `["Cash"]`); `StationShiftConfig` is a new entity linked to Station with `ShiftCount`, `Shift1Name`, `Shift1StartTime`, `Shift2Name`, `Shift2StartTime`, `Shift3Name?`, `Shift3StartTime?` | — | Done |
+| M12-F01-R13 | `BankAccount` is a new entity (`BankName`, `AccountNumber`, `AccountTitle`, `IsPrimary`, `OrganizationId`) scoped to the organization; supports multiple accounts (M05-F04 first implementation) | — | Done |
+| M12-F01-R14 | `StationDto` exposes `isSetupComplete` and `acceptedPaymentMethods`; included in auth/login/refresh response so the frontend store has the flag without an extra fetch | — | Done |
+| M12-F01-R15 | `POST /stations/{stationId}/complete-setup` validates: shift config exists, ≥1 fuel type, every fuel type has a price, every fuel type has ≥1 tank with a dip chart, ≥1 nozzle; returns `400 { unmetConditions: string[] }` if any check fails | — | Done |
+| M12-F01-R16 | Dashboard route guard checks `stations?.[0]?.isSetupComplete`; if false, redirects to `/onboarding` regardless of whether the user has an organization | — | Done |
+| M12-F01-R17 | All wizard step UI is built from scratch in `components/onboarding/`; the existing `components/station-setup/` prototype components are not reused in the wizard | — | Done |
+
+**Acceptance Criteria:**
+- **AC1** Given a newly registered user with no organization, When they log in, Then they are redirected to `/onboarding` Step 1 (Org + Station).
+- **AC2** Given a user who completed Steps 1–3 and dropped off, When they log in again, Then the wizard opens at Step 4 (Tanks).
+- **AC3** Given the user clicks Next on the fuel-types step with zero types added, When validated, Then an inline error blocks advancement.
+- **AC4** Given the user navigates directly to `/dashboard` while `isSetupComplete = false`, When the route guard evaluates, Then they are redirected to `/onboarding`.
+- **AC5** Given all required steps complete, When the user clicks "Finish setup" on the Summary step, Then `POST /stations/{stationId}/complete-setup` succeeds, `isSetupComplete` flips to `true`, and the user lands on `/dashboard`.
+- **AC6** Given `POST /stations/{stationId}/complete-setup` is called with a missing fuel price, When the handler validates, Then it returns `400` with the unmet condition named.
+- **AC7** Given the wizard on a viewport < 640px, When any step is shown, Then the step card and progress indicator are usable without horizontal scrolling.
+- **AC8** Given Step 6 (shift config) with no shift names entered, When Next is clicked, Then an inline error blocks advancement.
+- **AC9** Given Step 7 (bank account), When the user clicks "Skip for now", Then the wizard advances to Step 8 without making an API call.
+- **AC10** Given Step 8 (invite manager), When the user clicks "Skip for now", Then the wizard advances to Step 9 (Summary) without making an API call.
 
 ---
 

@@ -17,11 +17,12 @@ import { useAuthStore } from "@/stores/auth-store";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: () => {
-    const { isAuthenticated, organization } = useAuthStore.getState();
+    const { isAuthenticated, organization, stations } = useAuthStore.getState();
     if (!isAuthenticated) {
       throw redirect({ to: "/auth/login", search: { redirect: "/dashboard" } });
     }
-    if (!organization) {
+    // No org or setup not yet complete → back to onboarding wizard
+    if (!organization || !stations?.[0]?.isSetupComplete) {
       throw redirect({ to: "/onboarding" });
     }
   },
