@@ -15,7 +15,7 @@ type FieldApi = {
     meta: {
       isTouched: boolean
       isValid: boolean
-      errors: unknown[]
+      errors: ({ message?: string } | undefined)[]
     }
   }
   handleBlur: () => void
