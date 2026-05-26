@@ -320,6 +320,10 @@ rg '\b(bg|text|border|ring|fill|stroke|from|to|via)-(red|blue|green|orange|amber
 
 # Should always be empty (physical-direction utilities):
 rg '\b(ml|mr|pl|pr)-\d|\bleft-\d|\bright-\d|\btext-(left|right)\b|\bborder-(l|r)-|\brounded-(l|r)-'
+
+# Should always be empty outside src/components/ui/ (the primitives wrap
+# these internally; everywhere else must go through the shadcn primitive):
+rg '<select\b|<textarea\b' -g '!src/components/ui/**'
 ```
 
 A new PR that introduces any of these without a documented sanctioned-exception entry should be sent back.

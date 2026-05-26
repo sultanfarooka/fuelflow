@@ -15,6 +15,13 @@ import {
 } from "@/components/ui/field";
 import { FormTextField } from "@/components/forms/form-text-field";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   completeOnboarding,
   type OnboardingRequest,
 } from "@/lib/api/auth";
@@ -205,34 +212,36 @@ function RouteComponent() {
                         <FieldLabel htmlFor={field.name}>
                           OMC (Oil Marketing Company)
                         </FieldLabel>
-                        <div className="relative">
-                          <select
+                        <Select
+                          value={field.state.value}
+                          onValueChange={(v) => field.handleChange(v)}
+                          disabled={isLoadingOmcs || isSubmitting}
+                        >
+                          <SelectTrigger
                             id={field.name}
-                            name={field.name}
-                            className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-hidden ring-offset-background focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
-                            value={field.state.value}
                             onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
                             aria-invalid={isInvalid}
                             aria-describedby={
-                              isInvalid
-                                ? errorId
-                                : descriptionId
+                              isInvalid ? errorId : descriptionId
                             }
-                            disabled={isLoadingOmcs || isSubmitting}
+                            className="w-full"
                           >
-                            <option value="">
-                              {isLoadingOmcs
-                                ? "Loading OMCs..."
-                                : "Select OMC"}
-                            </option>
+                            <SelectValue
+                              placeholder={
+                                isLoadingOmcs
+                                  ? "Loading OMCs..."
+                                  : "Select OMC"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
                             {omcs.map((omc) => (
-                              <option key={omc.id} value={omc.id}>
+                              <SelectItem key={omc.id} value={omc.id}>
                                 {omc.name}
-                              </option>
+                              </SelectItem>
                             ))}
-                          </select>
-                        </div>
+                          </SelectContent>
+                        </Select>
                         <FieldDescription id={descriptionId}>
                           Choose the OMC your station is registered with.
                         </FieldDescription>
