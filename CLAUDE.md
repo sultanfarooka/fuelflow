@@ -179,8 +179,14 @@ Every PR description must contain:
 - [ ] Updated `Last Updated` date in `docs/MODULES.md` header
 
 ## Test Plan
-- [ ] <how to verify the golden path>
-- [ ] <edge case(s) covered>
+- [ ] <how to verify the golden path — unit / integration coverage>
+- [ ] <edge case(s) covered — unit / integration>
+- [ ] **E2E (Playwright MCP):** <journeys walked>; bugs found + fixed: <list / "none">; bugs deferred: <list / "none">
+- [ ] **E2E spec:** `fuel-flow-web/e2e-tests/<id>.spec.ts` — `npm run test:e2e -- <id>` green
+
+> The two **E2E** lines are mandatory whenever the item touches `Api` or
+> `Frontend` (Step 4.5 of the `feature-implementation` skill). For docs-only
+> items, replace both with **`E2E: N/A — docs-only`**.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
