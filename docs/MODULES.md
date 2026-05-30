@@ -1273,6 +1273,34 @@ Public-facing pricing page where prospects and existing Owners compare Starter /
 
 ---
 
+### M12-F02 — Onboarding Dev Bypass   [Status: In Progress]
+
+> _Discovery (2026-05-30): self-identified gap — the dashboard route guard ([M12-F01-R16](#m12-f01--onboarding-wizard)) blocks all paths to `/dashboard` until `isSetupComplete=true`; every new wizard requirement (e.g. the just-registered R18/R19) adds friction to that path during active development · outcome = team members and stakeholders can reach the dashboard during active development without completing every step end-to-end · production safety: flag is hard-gated to `IHostEnvironment.IsDevelopment()` in C# code, so it cannot be honored on production binaries even if misconfigured._
+
+**Tags:** tenant-scope=platform-global; tier=All; capacity-impact=none; locale=Urdu-needed; sensitive-action=no; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+A development-environment-only flag that relaxes the [M12-F01-R16](#m12-f01--onboarding-wizard) dashboard route guard, allowing the dashboard to render even when `Station.IsSetupComplete = false`. Wizard intra-step validation and all backend endpoint preconditions remain strict — this is purely about the entry-gate, not data integrity.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M12-F02-R01 | Backend exposes `devBypassActive: boolean` on the auth response (login, refresh, `GET /auth/me`), computed as `IHostEnvironment.IsDevelopment() && configuration["Features:OnboardingDevBypass"] == "true"`. The `IsDevelopment()` check lives in C# (not config), so a misconfigured production deploy with the env var set still reports `false`. | — | In Progress |
+| M12-F02-R02 | When `devBypassActive` is true, the dashboard `beforeLoad` route guard at `fuel-flow-web/src/routes/dashboard/route.tsx` allows navigation to `/dashboard` even when `stations?.[0]?.isSetupComplete = false`. The onboarding-side guard at `fuel-flow-web/src/routes/onboarding/route.tsx` is unchanged — already-complete users still get redirected from `/onboarding` to `/dashboard`. | — | In Progress |
+| M12-F02-R03 | When `devBypassActive` is true, the wizard shell shows a "Skip to Dashboard (dev only)" affordance between the progress indicator and the step header, visible on every step. Clicking it navigates directly to `/dashboard`. Intra-step validation is not relaxed. | — | In Progress |
+| M12-F02-R04 | When `devBypassActive` is true AND `stations?.[0]?.isSetupComplete = false`, the dashboard renders a persistent banner at the top: "Dev bypass active — onboarding incomplete." When either condition is false the banner is hidden. | — | In Progress |
+
+**Acceptance Criteria:**
+
+- **AC1** Given `ASPNETCORE_ENVIRONMENT=Production`, When `Features:OnboardingDevBypass=true` is set in env, Then `GET /auth/me` returns `devBypassActive: false`.
+- **AC2** Given `ASPNETCORE_ENVIRONMENT=Development` AND `Features:OnboardingDevBypass=true`, When an authenticated user calls `GET /auth/me`, Then the response includes `devBypassActive: true`.
+- **AC3** Given `devBypassActive=true` AND `isSetupComplete=false`, When the user navigates to `/dashboard`, Then the dashboard renders without redirect.
+- **AC4** Given `devBypassActive=true`, When the user is on any wizard step, Then a "Skip to Dashboard (dev only)" button is visible between the progress bar and step header; clicking it navigates to `/dashboard`.
+- **AC5** Given `devBypassActive=true` AND `isSetupComplete=false`, When the dashboard renders, Then a banner "Dev bypass active — onboarding incomplete" is visible at the top.
+- **AC6** Given `devBypassActive=true` AND `isSetupComplete=true` (Owner completed onboarding in dev mode), When the dashboard renders, Then no bypass banner is shown.
+
+---
+
 ## Appendix A — Legacy → New ID Map
 
 Quick lookup for every legacy business-rule ID. Use this when reading old commits, PRs, code comments, or PRD §5.
