@@ -1,13 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Enums;
 using FuelFlow.Infrastructure.Identity;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.ControlPlane;
 
 /// <summary>
-/// EF Core config for PhoneVerification. user_id → AspNetUsers (AppUser).
+/// EF Core config for PhoneVerification. user_id â†’ AspNetUsers (AppUser).
 /// Domain User navigation ignored, mirroring RefreshTokenConfiguration.
 /// </summary>
 public class PhoneVerificationConfiguration : IEntityTypeConfiguration<PhoneVerification>
@@ -65,7 +65,7 @@ public class PhoneVerificationConfiguration : IEntityTypeConfiguration<PhoneVeri
 
         // 3. Relationships
 
-        // Relationship: PhoneVerification → AppUser (many-to-one)
+        // Relationship: PhoneVerification â†’ AppUser (many-to-one)
         // On delete cascade: if user is deleted, their OTP rows go too
         builder.Property(pv => pv.UserId)
             .HasColumnName("user_id")

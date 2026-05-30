@@ -1,12 +1,12 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Infrastructure.Identity;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.ControlPlane;
 
 /// <summary>
-/// EF Core config for RefreshToken. user_id → AspNetUsers (AppUser). Domain User navigation ignored.
+/// EF Core config for RefreshToken. user_id â†’ AspNetUsers (AppUser). Domain User navigation ignored.
 /// </summary>
 public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {
@@ -22,7 +22,7 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 
         // 2. Relationships (FK property with its relationship block)
 
-        // Relationship: RefreshToken → AppUser (many-to-one)
+        // Relationship: RefreshToken â†’ AppUser (many-to-one)
         // On delete cascade: if user is deleted, their refresh tokens are removed
         builder.Property(rt => rt.UserId)
             .HasColumnName("user_id")

@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Infrastructure.Identity;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.ControlPlane;
 
 /// <summary>
 /// Additional configuration for AppUser (on top of Identity). Custom columns and relationship to Organization.
@@ -40,7 +40,7 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
 
         // 2. Relationships (FK property with its relationship block)
 
-        // Relationship: AppUser → Organization (many-to-one, optional)
+        // Relationship: AppUser â†’ Organization (many-to-one, optional)
         // OrganizationId can be null (e.g. before onboarding).
         // On delete SetNull: when an organization is deleted, users' OrganizationId is set to null (no FK violation).
         builder.Property(u => u.OrganizationId)

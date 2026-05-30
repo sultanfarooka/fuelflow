@@ -1,12 +1,12 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using FuelFlow.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.ControlPlane;
 
 /// <summary>
-/// EF Core config for Subscription. user_id → AspNetUsers (AppUser); plan_id → subscription_plans.
+/// EF Core config for Subscription. user_id â†’ AspNetUsers (AppUser); plan_id â†’ subscription_plans.
 /// </summary>
 public class SubscriptionConfiguration : IEntityTypeConfiguration<Subscription>
 {
@@ -43,7 +43,7 @@ public class SubscriptionConfiguration : IEntityTypeConfiguration<Subscription>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: Subscription → AppUser (many-to-one)
+        // Relationship: Subscription â†’ AppUser (many-to-one)
         // On delete cascade: if user is deleted, their subscriptions are removed
         builder.Property(s => s.UserId)
             .HasColumnName("user_id")
@@ -53,7 +53,7 @@ public class SubscriptionConfiguration : IEntityTypeConfiguration<Subscription>
             .HasForeignKey(s => s.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: Subscription → SubscriptionPlans (many-to-one)
+        // Relationship: Subscription â†’ SubscriptionPlans (many-to-one)
         // On delete cascade: if plan is deleted, its subscriptions go too
         builder.Property(s => s.PlanId)
             .HasColumnName("plan_id")

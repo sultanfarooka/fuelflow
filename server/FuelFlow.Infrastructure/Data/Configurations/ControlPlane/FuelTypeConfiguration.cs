@@ -1,8 +1,8 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.ControlPlane;
 
 /// <summary>
 /// EF Core config for FuelType. StationId null = predefined (seeded); set = custom per station.
@@ -47,7 +47,7 @@ public class FuelTypeConfiguration : IEntityTypeConfiguration<FuelType>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: FuelType → Station (many-to-one, optional)
+        // Relationship: FuelType â†’ Station (many-to-one, optional)
         // StationId null = predefined (seeded); set = custom type for this station
         // On delete set null: if station is deleted, custom types become predefined
         builder.Property(f => f.StationId)

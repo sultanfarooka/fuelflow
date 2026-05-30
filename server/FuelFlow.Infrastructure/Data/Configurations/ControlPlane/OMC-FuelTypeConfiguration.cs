@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using FuelFlow.Domain.Entities;
+
+namespace FuelFlow.Infrastructure.Data.Configurations.ControlPlane;
+
 public class OMCFuelTypeConfiguration : IEntityTypeConfiguration<OMCFuelTypes>
 {
     public void Configure(EntityTypeBuilder<OMCFuelTypes> builder)

@@ -1,8 +1,8 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.ControlPlane;
 
 /// <summary>
 /// EF Core config for SubscriptionPlans (reference data, seeded). One-to-many with Subscription.
@@ -42,7 +42,7 @@ public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<Subscripti
             .HasDefaultValueSql("NOW()");
 
         // 3. Relationships (one-to-many: configured from the "one" side; FK on Subscription)
-        // Relationship: SubscriptionPlans → Subscription (one-to-many)
+        // Relationship: SubscriptionPlans â†’ Subscription (one-to-many)
         // On delete cascade: if plan is deleted, its subscriptions go too
         builder.HasMany(s => s.Subscriptions)
             .WithOne(s => s.Plan)

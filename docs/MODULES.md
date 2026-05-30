@@ -1417,7 +1417,7 @@ Shift-derived attendance (M04-F02 assignment = Present); leave types with annual
 
 ---
 
-### M14-F01 — Control Plane / Tenant DbContext Split   [Status: Planned]
+### M14-F01 — Control Plane / Tenant DbContext Split   [Status: In Progress]
 
 Establish the conceptual split between control-plane data and tenant data before any infrastructure change. After F01, the application still runs against one PostgreSQL database, but the code knows which tables are platform-wide and which are tenant-scoped. This makes F02–F06 mechanical instead of architectural.
 
