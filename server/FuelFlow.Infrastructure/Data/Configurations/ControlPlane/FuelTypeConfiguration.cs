@@ -45,20 +45,19 @@ public class FuelTypeConfiguration : IEntityTypeConfiguration<FuelType>
             .HasColumnName("updated_at")
             .HasDefaultValueSql("NOW()");
 
-        // 3. Relationships (FK property with its relationship block)
-
-        // Relationship: FuelType â†’ Station (many-to-one, optional)
-        // StationId null = predefined (seeded); set = custom type for this station
-        // On delete set null: if station is deleted, custom types become predefined
+        // 3. Relationships
+        //
+        // M14-F01: station_id is now a plain Guid? column with no FK. The
+        // previous HasOne(f => f.Station).OnDelete(SetNull) relationship would
+        // pull Station (per-tenant) into the control-plane model, which then
+        // cascades through Station's entire navigation tree (FuelTanks,
+        // FuelNozzles, StationShifts, FuelPrices). The navigation property
+        // on the Domain FuelType entity has also been dropped.
         builder.Property(f => f.StationId)
             .HasColumnName("station_id");
-        builder.HasOne(f => f.Station)
-            .WithMany()
-            .HasForeignKey(f => f.StationId)
-            .OnDelete(DeleteBehavior.SetNull);
 
         // 4. Indexes
-        // Index for fast lookups by station
+        // Index for fast lookups by station — still useful even without a FK.
         builder.HasIndex(f => f.StationId);
     }
 }

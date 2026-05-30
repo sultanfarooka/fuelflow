@@ -1,6 +1,5 @@
 ﻿using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Enums;
-using FuelFlow.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -92,24 +91,16 @@ public class StationShiftConfiguration : IEntityTypeConfiguration<StationShift>
             .HasForeignKey(s => s.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: StationShift â†’ AppUser, opened by (many-to-one, FK to AspNetUsers)
-        // On delete restrict: do not delete user who opened shifts
+        // M14-F01: opened_by_user_id / closed_by_user_id are plain Guid columns
+        // with no FK to AspNetUsers. AppUser lives in the control-plane context;
+        // app-layer code enforces existence. The HasOne<AppUser>() blocks that
+        // previously declared the relationships were removed.
         builder.Property(s => s.OpenedByUserId)
             .HasColumnName("opened_by_user_id")
             .IsRequired();
-        builder.HasOne<AppUser>()
-            .WithMany()
-            .HasForeignKey(s => s.OpenedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
 
-        // Relationship: StationShift â†’ AppUser, closed by (many-to-one, optional, FK to AspNetUsers)
-        // On delete restrict: do not delete user who closed shifts
         builder.Property(s => s.ClosedByUserId)
             .HasColumnName("closed_by_user_id");
-        builder.HasOne<AppUser>()
-            .WithMany()
-            .HasForeignKey(s => s.ClosedByUserId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         // 4. Indexes
         // Index for fast lookups by station

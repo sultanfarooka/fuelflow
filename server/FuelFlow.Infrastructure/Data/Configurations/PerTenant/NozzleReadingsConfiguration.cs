@@ -1,6 +1,5 @@
 ﻿using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Enums;
-using FuelFlow.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -59,12 +58,10 @@ public class NozzleReadingsConfiguration : IEntityTypeConfiguration<NozzleReadin
             .HasForeignKey(r => r.StationShiftId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // M14-F01: recorded_by_user_id is a plain Guid? column with no FK to
+        // AspNetUsers. AppUser lives in the control-plane context.
         builder.Property(r => r.RecordedByUserId)
             .HasColumnName("recorded_by_user_id");
-        builder.HasOne<AppUser>()
-            .WithMany()
-            .HasForeignKey(r => r.RecordedByUserId)
-            .OnDelete(DeleteBehavior.SetNull);
         builder.Ignore(r => r.RecordedBy);
 
         builder.HasIndex(r => r.FuelNozzleId);
