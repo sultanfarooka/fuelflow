@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-26
+**Last Updated:** 2026-05-30
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -55,7 +55,7 @@
 | [M09](#m09--lubricants--oil-shop) | Lubricants / Oil Shop | Planned | — |
 | [M10](#m10--sms--notifications) | SMS / Notifications | Planned | — |
 | [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
-| [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | Done | — |
+| [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | In Progress | — |
 
 ---
 
@@ -1213,7 +1213,7 @@ Public-facing pricing page where prospects and existing Owners compare Starter /
 
 **Purpose:** Guide a newly registered Owner through the complete first-run setup in a single unified wizard before granting access to the operational dashboard. Covers organization, station, fuel types, opening prices, tanks (with dip charts), nozzles, shift configuration, payment methods, and optional extras (bank account, first manager invite). All step UI is built from scratch; the existing prototype step components in `components/station-setup/` are not reused. Replaces the current single-step `/onboarding` form; the `/dashboard/station/:stationId/setup` route is retained for additional-station setup by multi-station Owners.
 
-### M12-F01 — Onboarding Wizard   [Status: Done]
+### M12-F01 — Onboarding Wizard   [Status: In Progress]
 
 9-step wizard at `/onboarding`. Steps 1–7 are required and sequential. Steps 8–9 are optional (skippable). Step 9 is the Summary. Data is saved progressively (one API call per completed step). Dashboard access is blocked via a route guard until `Station.IsSetupComplete = true`.
 
@@ -1252,6 +1252,8 @@ Public-facing pricing page where prospects and existing Owners compare Starter /
 | M12-F01-R15 | `POST /stations/{stationId}/complete-setup` validates: shift config exists, ≥1 fuel type, every fuel type has a price, every fuel type has ≥1 tank with a dip chart, ≥1 nozzle; returns `400 { unmetConditions: string[] }` if any check fails | — | Done |
 | M12-F01-R16 | Dashboard route guard checks `stations?.[0]?.isSetupComplete`; if false, redirects to `/onboarding` regardless of whether the user has an organization | — | Done |
 | M12-F01-R17 | All wizard step UI is built from scratch in `components/onboarding/`; the existing `components/station-setup/` prototype components are not reused in the wizard | — | Done |
+| M12-F01-R18 | Step 4 — Tanks: in addition to capacity (L) and dip chart CSV, Owner enters a **current dip reading (mm)** per tank; system converts the mm reading to **current stock in liters** using the just-uploaded dip chart (realizes [M02-F04-R03](#m02-f04--dip-chart-management) in the onboarding context). Both values persisted on the Tank entity as the opening state. Seeds the first opening dip consumed by [M04-F03-R04](#m04-f03--open-shift) ("Opening tank dip readings required for every tank") and the stock calculation in [M02-F05-R01](#m02-f05--dip-readings--stock-variance) ("Stock = Opening Dip + Deliveries − Sales"). | — | Planned |
+| M12-F01-R19 | Step 5 — Nozzles: in addition to the nozzle number and tank linkage, Owner enters the **current totalizer meter reading (liters)** per nozzle. Persisted on the Nozzle entity as the opening meter reading. Realizes [M03-F01-R06](#m03-f01--nozzle-setup) ("Initial meter reading captured at nozzle creation") in the onboarding context; seeds the opening reading consumed by [M04-F03-R02](#m04-f03--open-shift) ("Opening meter reading must be ≥ last closing reading") on the first opened shift. | — | Planned |
 
 **Acceptance Criteria:**
 - **AC1** Given a newly registered user with no organization, When they log in, Then they are redirected to `/onboarding` Step 1 (Org + Station).
@@ -1264,6 +1266,10 @@ Public-facing pricing page where prospects and existing Owners compare Starter /
 - **AC8** Given Step 6 (shift config) with no shift names entered, When Next is clicked, Then an inline error blocks advancement.
 - **AC9** Given Step 7 (bank account), When the user clicks "Skip for now", Then the wizard advances to Step 8 without making an API call.
 - **AC10** Given Step 8 (invite manager), When the user clicks "Skip for now", Then the wizard advances to Step 9 (Summary) without making an API call.
+- **AC11** Given Step 4 with a tank that has an uploaded dip chart, When the Owner enters a current dip in mm within the chart's range, Then the form shows the converted liters value live and Next is enabled. _(R18.)_
+- **AC12** Given Step 4 with a current dip in mm outside the chart's range (or whose converted liters exceed tank capacity), When validated, Then an inline error blocks advancement and names the tank. _(R18.)_
+- **AC13** Given Step 5 with a nozzle, When the Owner enters a negative or non-numeric current meter reading, Then validation blocks Next with a per-nozzle error. _(R19.)_
+- **AC14** Given a completed onboarding, When the Owner views Step 9 Summary, Then the opening dip (mm + liters) per tank and the opening meter reading per nozzle are listed under their respective sections. _(R18, R19.)_
 
 ---
 
