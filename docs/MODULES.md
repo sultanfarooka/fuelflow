@@ -56,6 +56,7 @@
 | [M10](#m10--sms--notifications) | SMS / Notifications | Planned | — |
 | [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
 | [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | In Progress | — |
+| [M13](#m13--staff--payroll) | Staff & Payroll | Planned | — |
 
 ---
 
@@ -69,6 +70,7 @@ The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that
 | 2 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
 | 3 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
 | 4 | [M08-F05-R05](#m08-f05--system-preferences) | i18n content sweep — wire `useTranslation` across all shipped auth / dashboard / onboarding screens (foundation already in place per M07-F09-R04) | Frontend |
+| 5 | [M13](#m13--staff--payroll) | Staff & Payroll — employee records, salary/payroll, advances & loans, attendance with shift-derived attendance (M04) and shortage-deduction integration (M04-F05) | Backend + Frontend |
 
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -220,6 +222,7 @@ All sensitive actions are logged with user, timestamp, and before/after values. 
 | M01-F08-R05 | Audit logs never deleted; retention is Owner-configurable | AUD-005 | Planned |
 | M01-F08-R06 | Audit log viewer UI (Owner-only) — filter by user, entity, action, date range | — | Planned |
 | M01-F08-R07 | Backfill audit events from [M01-F09](#m01-f09--phone-first-authentication) phone-first auth flows: OTP issued/verified/failed, phone added/changed, recovery channel used — deferred from [M01-F09-R09](#m01-f09--phone-first-authentication) until this module ships | — | Planned |
+| M01-F08-R08 | Employee HR sensitive events logged: salary structure changes, advance approvals/rejections, employee status changes (Active → Resigned / Terminated) — deferred from [M13-F01-R06](#m13-f01--employee-records), [M13-F02-R06](#m13-f02--salary-management), [M13-F03-R06](#m13-f03--advances--loans) until this module ships | — | Planned |
 
 **Acceptance Criteria:**
 - **AC1** Given an admin attempts to delete an audit row, When the delete is issued, Then the operation is blocked at the DB/repo level.
@@ -1016,6 +1019,9 @@ Catalog of alert-eligible events.
 | M10-F01-R07 | Shortage-detected alert at shift end | — | Planned |
 | M10-F01-R08 | Daily summary alert | — | Planned |
 | M10-F01-R09 | System-error alert on any failure | — | Planned |
+| M10-F01-R10 | Payroll-processed alert when Owner finalizes a monthly payroll run (see [M13-F02](#m13-f02--salary-management)) | — | Planned |
+| M10-F01-R11 | Advance-approval alert when an employee advance request is approved or rejected (see [M13-F03](#m13-f03--advances--loans)) | — | Planned |
+| M10-F01-R12 | Leave-approval alert when an employee leave request is approved or rejected (see [M13-F04](#m13-f04--attendance--leaves)) | — | Planned |
 
 ---
 
@@ -1169,6 +1175,7 @@ Plan-based limits enforced at the API level, not just UI. Locked features show "
 | M11-F06-R04 | Module access checked via plan's `features` JSONB flags | FG-003 | Planned |
 | M11-F06-R05 | Expired/cancelled subscriptions allow read-only access to existing data | FG-004 | Planned |
 | M11-F06-R06 | Owner always sees upgrade prompts for gated features | FG-005 | Planned |
+| M11-F06-R07 | Employee count per organization checked on creation against plan's `max_employees` JSONB flag; Starter plan limit configurable by Platform Admin via plan seeding | — | Planned |
 
 **Acceptance Criteria:**
 - **AC1** Given a Starter plan (max 1 station), When the Owner tries to create a second station via API directly (bypassing UI), Then API returns `402 Payment Required` (or `403`) with an upgrade prompt.
@@ -1298,6 +1305,101 @@ A development-environment-only flag that relaxes the [M12-F01-R16](#m12-f01--onb
 - **AC4** Given `devBypassActive=true`, When the user is on any wizard step, Then a "Skip to Dashboard (dev only)" button is visible between the progress bar and step header; clicking it navigates to `/dashboard`.
 - **AC5** Given `devBypassActive=true` AND `isSetupComplete=false`, When the dashboard renders, Then a banner "Dev bypass active — onboarding incomplete" is visible at the top.
 - **AC6** Given `devBypassActive=true` AND `isSetupComplete=true` (Owner completed onboarding in dev mode), When the dashboard renders, Then no bypass banner is shown.
+
+---
+
+## M13 — Staff & Payroll
+
+**Purpose:** Manage the full HR lifecycle for station employees: records, salary/payroll, advances & loans, and attendance/leaves — with shift-derived attendance (M04-F02) and shortage-deduction integration (M04-F05-R02). Employee records are independent of M01 system-user accounts; an employee may or may not have an app login.
+
+### M13-F01 — Employee Records   [Status: Planned]
+
+> _Discovery (2026-05-30): self-identified gap — own observation · outcome = connect HR operations to station operations so that shift shortages, advances, and attendance all flow into a single payroll calculation instead of being managed on paper/spreadsheets · maps to ProjectOverView §Module 13 Staff & Payroll · cost-of-not-building: payroll computed manually outside the system, creating a disconnect between operational shortage data (M04-F05) and salary deductions; Owner has no real-time HR liability view · implementation note: designed as a self-contained domain (Application/Features/Employees/) so it can be extracted to a reusable library in a later release if needed_
+
+**Tags:** tenant-scope=per-organization; tier=All; capacity-impact=max_employees; locale=PKR-only; sensitive-action=yes; notification-trigger=yes; money-touch=none; shift-lifecycle-touch=none
+
+Employee profile: CNIC, name, phone, hire date, designation, station, employment status. Optional FK to M01 user account. Capacity-limited on Starter plan via `max_employees`.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M13-F01-R01 | Employee CNIC is unique per organization | — | Planned |
+| M13-F01-R02 | Employee record stores: full name, CNIC, phone, hire date, designation, primary station assignment, employment status (Active / On Leave / Resigned / Terminated) | — | Planned |
+| M13-F01-R03 | Employee record can be optionally linked to an M01 user account (nullable FK); deleting the M01 user does not cascade-delete the employee record | — | Planned |
+| M13-F01-R04 | Employee count per organization checked against `max_employees` plan limit on creation (see [M11-F06-R07](#m11-f06--feature-gating)) | — | Planned |
+| M13-F01-R05 | Only Owner and Manager can create, update, or terminate employee records | — | Planned |
+| M13-F01-R06 | Employee status changes written to audit trail (see [M01-F08-R08](#m01-f08--audit-trail)) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a duplicate CNIC within the same organization, When a new employee is created, Then API returns `409 Conflict`.
+- **AC2** Given the org has reached its `max_employees` plan limit, When Owner attempts to add another employee, Then API returns `402 Payment Required` with an upgrade prompt.
+- **AC3** Given an employee linked to an M01 user account, When that M01 user account is deleted, Then the employee record is retained and the FK is set to null.
+
+---
+
+### M13-F02 — Salary Management   [Status: Planned]
+
+Per-employee salary structure; monthly payroll computation that deducts advance repayments (M13-F03), nozzleman shortage balance (M04-F05-R02 ledger), and leave-without-pay (M13-F04-R05). Payroll records are immutable after Owner approval.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M13-F02-R01 | Salary structure per employee: base salary + configurable allowances (house rent, transport, medical) − configurable fixed deductions | — | Planned |
+| M13-F02-R02 | Monthly payroll computed as: Salary Structure − Advance/Loan Installments ([M13-F03-R02](#m13-f03--advances--loans)) − Shortage Deductions (balance-due from [M04-F05-R02](#m04-f05--sales--shortage-settlement)) − Leave-Without-Pay Deductions ([M13-F04-R05](#m13-f04--attendance--leaves)) | — | Planned |
+| M13-F02-R03 | Salary payment recorded with date, amount paid, payment method, and optional proof image | — | Planned |
+| M13-F02-R04 | Payroll history retained per employee; individual payroll records not editable after Owner approval | — | Planned |
+| M13-F02-R05 | Only Owner can finalize (approve) a payroll run | — | Planned |
+| M13-F02-R06 | Salary structure changes and payroll finalization logged to audit trail (see [M01-F08-R08](#m01-f08--audit-trail)) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given an employee with a Rs. 500 shortage balance and a Rs. 1,000 advance installment due, When payroll is computed for that month, Then net payable = base salary + allowances − fixed deductions − Rs. 500 − Rs. 1,000.
+- **AC2** Given a finalized payroll run, When an Owner attempts to edit the amounts, Then API returns `403 Forbidden`.
+- **AC3** Given Owner finalizes a payroll run, When the event fires, Then a payroll-processed notification is sent per [M10-F01-R10](#m10-f01--notification-events).
+
+---
+
+### M13-F03 — Advances & Loans   [Status: Planned]
+
+Cash advance against salary with automatic payroll deduction; loans with configurable installment schedule.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M13-F03-R01 | Advance amount cannot exceed one month's net salary by default; Owner can raise the cap per employee | — | Planned |
+| M13-F03-R02 | Approved advance deducted automatically from next payroll run (see [M13-F02-R02](#m13-f02--salary-management)) | — | Planned |
+| M13-F03-R03 | Loan repayment schedule configurable: full deduction next month, or split across N monthly installments | — | Planned |
+| M13-F03-R04 | Advance and loan requests require approval from Owner or Manager before disbursement | — | Planned |
+| M13-F03-R05 | Outstanding advance and loan balance visible per employee on their profile | — | Planned |
+| M13-F03-R06 | Advance approvals and disbursements logged to audit trail (see [M01-F08-R08](#m01-f08--audit-trail)) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given an advance request where the amount exceeds one month's net salary, When submitted, Then API returns `400 Bad Request` with the max-allowed amount in the response.
+- **AC2** Given Owner approves an advance request, When approved, Then the outstanding balance is updated, disbursement is recorded, and a notification is sent per [M10-F01-R11](#m10-f01--notification-events).
+
+---
+
+### M13-F04 — Attendance & Leaves   [Status: Planned]
+
+Shift-derived attendance (M04-F02 assignment = Present); leave types with annual allocations; leave-without-pay feeds payroll deduction.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M13-F04-R01 | Leave types: Annual, Sick, Casual; annual allocation per leave type is Owner-configurable (per organization or per station) | — | Planned |
+| M13-F04-R02 | Daily attendance derived from [M04-F02](#m04-f02--nozzleman-assignment) shift assignments: employee has a shift assignment on a given date → marked Present for that date | — | Planned |
+| M13-F04-R03 | Leave request submitted by Manager on behalf of employee (or by the employee's linked M01 user if one exists); approved by Owner or Manager | — | Planned |
+| M13-F04-R04 | Approved leave deducted from employee's available leave balance for the year | — | Planned |
+| M13-F04-R05 | Leave-without-pay applied when leave balance is exhausted; amount deducted in next payroll run per [M13-F02-R02](#m13-f02--salary-management) | — | Planned |
+| M13-F04-R06 | Monthly attendance summary (present days, absent days, leave days taken) computed and fed into payroll calculation | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given an employee with 0 annual leave remaining, When a leave request is submitted, Then the system records it as Leave Without Pay and the Owner is notified via [M10-F01-R12](#m10-f01--notification-events).
+- **AC2** Given an employee has a shift assignment on a given date (M04-F02), When the monthly attendance report is generated, Then that date is counted as Present.
+- **AC3** Given Owner approves a leave request, When approved, Then the leave balance decrements and a notification fires per [M10-F01-R12](#m10-f01--notification-events).
 
 ---
 
