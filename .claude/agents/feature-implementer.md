@@ -1,7 +1,7 @@
 ---
 name: feature-implementer
 description: Use this subagent to implement one planned MXX-FXX[-RXX] item end to end from its document in docs/implementation/. The main agent spawns one feature-implementer per independent item when running work in parallel. It returns a summary and an open PR URL. Do not use it for items that depend on each other's unmerged work.
-tools: [read, write, edit, glob, grep, bash]
+tools: [read, write, edit, glob, grep, bash, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_fill_form, mcp__playwright__browser_select_option, mcp__playwright__browser_press_key, mcp__playwright__browser_hover, mcp__playwright__browser_wait_for, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_navigate_back, mcp__playwright__browser_tabs, mcp__playwright__browser_close]
 model: inherit
 ---
 
@@ -30,9 +30,23 @@ layers and the frontend; you do not touch other items.
 4. For each task, verify against its acceptance criterion and write the
    matching `[Fact]` test (`MXX_FXX_RXX_...`) before checking the box.
 
-5. Run the pre-PR checks (`dotnet format` clean, ESLint + Prettier pass), then
-   follow `pr-workflow` to open one PR against `main`. The PR diff must include
-   the `MODULES.md` status flip to `Done`.
+5. Run the pre-PR checks (`dotnet format` clean, ESLint + Prettier pass, all
+   implementation-doc checkboxes flipped per Step 4 of the skill).
+
+6. Run **e2e verification via the Playwright MCP** per Step 4.5 of the
+   `feature-implementation` skill: probe both dev servers are running (do
+   not launch them yourself), walk each acceptance criterion as a browser
+   journey using `mcp__playwright__*`, detect bugs via the console /
+   network / snapshot signal table, fix every Critical on the same branch
+   (conventional commit `fix(mxx-fxx[-rxx]): <symptom>`), then codify the
+   passing journey as `fuel-flow-web/e2e-tests/<id>.spec.ts` and run
+   `npm run test:e2e -- <id>` to confirm it stays green. Skip Step 4.5
+   only when `## Layers touched` is docs-only (no `Api`, no `Frontend`).
+
+7. Follow `pr-workflow` to open one PR against `main`. The PR diff must
+   include the `MODULES.md` status flip to `Done` and — when Step 4.5 ran —
+   the new `## E2E verification` section in the implementation doc plus the
+   new `fuel-flow-web/e2e-tests/<id>.spec.ts`.
 
 ## Boundaries
 
@@ -44,6 +58,17 @@ layers and the frontend; you do not touch other items.
 - If the plan turns out wrong, impossible, or under-specified, stop and return
   a clear description instead of improvising — the main agent surfaces it to
   the user.
+- **Do not open the PR while a Critical e2e bug remains unfixed.** If you
+  cannot fix a Critical (ambiguous AC, blocked dependency, missing info),
+  stop and return the bug description — same protocol as the existing
+  "plan turns out wrong" rule.
+- **Do not launch the dev servers yourself.** If the Playwright MCP can't
+  reach `http://localhost:5173` or `http://localhost:5035`, stop and tell
+  the main agent to ask the user to run `scripts/dev.ps1` in their own
+  terminals.
+- **Do not modify `playwright.config.ts` or
+  `fuel-flow-web/e2e-tests/example.spec.ts`** as part of any feature item —
+  those are repo-wide tooling concerns and belong in their own item.
 
 ## What you return
 
@@ -52,6 +77,9 @@ A compact summary for the main agent:
 - The PR URL, if one was opened.
 - Any phase that could not be completed and why.
 - Any deviation from the plan worth the user's attention.
+- **E2E verification result:** ACs walked, journeys passing, Critical bugs
+  found + fixed (with commit refs), bugs deferred (with reason), path to the
+  new `e2e-tests/<id>.spec.ts`. `N/A — docs-only` if Step 4.5 was skipped.
 
 Keep intermediate work — file reads, searches, build output — inside your own
 context. Return only the summary.
