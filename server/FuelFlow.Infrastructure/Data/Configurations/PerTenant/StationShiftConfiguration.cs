@@ -1,10 +1,10 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Enums;
 using FuelFlow.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core config for StationShift. OpenedBy/ClosedBy FKs point to AspNetUsers (AppUser).
@@ -82,7 +82,7 @@ public class StationShiftConfiguration : IEntityTypeConfiguration<StationShift>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: StationShift → Station (many-to-one)
+        // Relationship: StationShift â†’ Station (many-to-one)
         // On delete cascade: if station is deleted, its shifts go too
         builder.Property(s => s.StationId)
             .HasColumnName("station_id")
@@ -92,7 +92,7 @@ public class StationShiftConfiguration : IEntityTypeConfiguration<StationShift>
             .HasForeignKey(s => s.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: StationShift → AppUser, opened by (many-to-one, FK to AspNetUsers)
+        // Relationship: StationShift â†’ AppUser, opened by (many-to-one, FK to AspNetUsers)
         // On delete restrict: do not delete user who opened shifts
         builder.Property(s => s.OpenedByUserId)
             .HasColumnName("opened_by_user_id")
@@ -102,7 +102,7 @@ public class StationShiftConfiguration : IEntityTypeConfiguration<StationShift>
             .HasForeignKey(s => s.OpenedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Relationship: StationShift → AppUser, closed by (many-to-one, optional, FK to AspNetUsers)
+        // Relationship: StationShift â†’ AppUser, closed by (many-to-one, optional, FK to AspNetUsers)
         // On delete restrict: do not delete user who closed shifts
         builder.Property(s => s.ClosedByUserId)
             .HasColumnName("closed_by_user_id");

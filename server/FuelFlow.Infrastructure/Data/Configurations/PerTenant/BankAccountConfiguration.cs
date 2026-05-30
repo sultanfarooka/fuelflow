@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Domain.Entities;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core config for BankAccount (M12-F01-R13).
@@ -50,7 +50,7 @@ public class BankAccountConfiguration : IEntityTypeConfiguration<BankAccount>
             .HasDefaultValueSql("NOW()");
 
         // 3. Relationships
-        // Relationship: BankAccount → Organization (many-to-one)
+        // Relationship: BankAccount â†’ Organization (many-to-one)
         // On delete cascade: if org is deleted, its bank accounts go too
         builder.Property(b => b.OrganizationId)
             .HasColumnName("organization_id")
@@ -64,7 +64,7 @@ public class BankAccountConfiguration : IEntityTypeConfiguration<BankAccount>
         // Index for fast lookups by organization
         builder.HasIndex(b => b.OrganizationId);
 
-        // Index for (org, is_primary) — used when demoting the existing primary on create
+        // Index for (org, is_primary) â€” used when demoting the existing primary on create
         builder.HasIndex(b => new { b.OrganizationId, b.IsPrimary });
     }
 }

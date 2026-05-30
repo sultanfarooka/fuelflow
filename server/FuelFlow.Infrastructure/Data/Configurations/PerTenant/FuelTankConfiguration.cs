@@ -1,8 +1,8 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core config for FuelTank. Many-to-one to FuelType and Station; one-to-one with DipChart (FK on DipChart).
@@ -38,7 +38,7 @@ public class FuelTankConfiguration : IEntityTypeConfiguration<FuelTank>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: FuelTank → FuelType (many-to-one)
+        // Relationship: FuelTank â†’ FuelType (many-to-one)
         // On delete cascade: if fuel type is deleted, its fuel tanks go too
         builder.Property(f => f.FuelTypeId)
             .HasColumnName("fuel_type_id")
@@ -48,7 +48,7 @@ public class FuelTankConfiguration : IEntityTypeConfiguration<FuelTank>
             .HasForeignKey(f => f.FuelTypeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: FuelTank → Station (many-to-one)
+        // Relationship: FuelTank â†’ Station (many-to-one)
         // On delete cascade: if station is deleted, its fuel tanks go too
         builder.Property(f => f.StationId)
             .HasColumnName("station_id")
@@ -58,7 +58,7 @@ public class FuelTankConfiguration : IEntityTypeConfiguration<FuelTank>
             .HasForeignKey(f => f.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: FuelTank ↔ DipChart (one-to-one, FK on DipChart)
+        // Relationship: FuelTank â†” DipChart (one-to-one, FK on DipChart)
         builder.HasOne(f => f.DipChart)
             .WithOne(d => d.FuelTank)
             .HasForeignKey<DipChart>(d => d.TankId);

@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Domain.Entities.StationEntities;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core config for StationShiftConfig (M12-F01-R08).
@@ -62,7 +62,7 @@ public class StationShiftConfigConfiguration : IEntityTypeConfiguration<StationS
             .HasDefaultValueSql("NOW()");
 
         // 3. Relationships
-        // Relationship: StationShiftConfig → Station (one-to-one, FK here)
+        // Relationship: StationShiftConfig â†’ Station (one-to-one, FK here)
         // On delete cascade: if station is deleted, its shift config goes too
         builder.Property(c => c.StationId)
             .HasColumnName("station_id")

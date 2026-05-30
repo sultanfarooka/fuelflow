@@ -1,10 +1,10 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Enums;
 using FuelFlow.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core config for NozzleReadings (meter readings). Opening/Closing totalizer per nozzle per shift.

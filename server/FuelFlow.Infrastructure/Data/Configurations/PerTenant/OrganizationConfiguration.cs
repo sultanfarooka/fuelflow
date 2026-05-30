@@ -1,13 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Infrastructure.Identity;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core Fluent API configuration for the Organization entity.
-/// Table: organizations (snake_case). owner_id → AspNetUsers (AppUser).
+/// Table: organizations (snake_case). owner_id â†’ AspNetUsers (AppUser).
 /// </summary>
 public class OrganizationConfiguration : IEntityTypeConfiguration<Organization>
 {
@@ -37,7 +37,7 @@ public class OrganizationConfiguration : IEntityTypeConfiguration<Organization>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: Organization → AppUser / Owner (many-to-one; owner_id → AspNetUsers)
+        // Relationship: Organization â†’ AppUser / Owner (many-to-one; owner_id â†’ AspNetUsers)
         // On delete cascade: if owner is deleted, organization is deleted
         builder.Property(o => o.OwnerId)
             .HasColumnName("owner_id")
@@ -48,7 +48,7 @@ public class OrganizationConfiguration : IEntityTypeConfiguration<Organization>
             .HasForeignKey<Organization>(o => o.OwnerId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: Organization → Stations (one-to-many; FK on Station)
+        // Relationship: Organization â†’ Stations (one-to-many; FK on Station)
         // On delete cascade: if organization is deleted, its stations go too
         builder.HasMany(o => o.Stations)
             .WithOne(s => s.Organization)

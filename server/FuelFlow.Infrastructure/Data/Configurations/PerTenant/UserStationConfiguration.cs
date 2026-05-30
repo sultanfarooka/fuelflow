@@ -1,8 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Infrastructure.Data;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core config for user_stations junction table (Station many-to-many AppUser).
@@ -18,7 +18,7 @@ public class UserStationConfiguration : IEntityTypeConfiguration<UserStation>
 
         // 2. Relationships (FK property with its relationship block)
 
-        // Relationship: UserStation → Station (many-to-one)
+        // Relationship: UserStation â†’ Station (many-to-one)
         // On delete cascade: if station is deleted, its user assignments go too
         builder.Property(us => us.StationId)
             .HasColumnName("station_id");
@@ -27,7 +27,7 @@ public class UserStationConfiguration : IEntityTypeConfiguration<UserStation>
             .HasForeignKey(us => us.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: UserStation → AppUser (many-to-one)
+        // Relationship: UserStation â†’ AppUser (many-to-one)
         // On delete cascade: if user is deleted, their station assignments go too
         builder.Property(us => us.UserId)
             .HasColumnName("user_id");

@@ -1,8 +1,8 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core config for FuelNozzle. Many nozzles per station and per tank.
@@ -39,7 +39,7 @@ public class FuelNozzleConfiguration : IEntityTypeConfiguration<FuelNozzle>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: FuelNozzle → FuelTank (many-to-one)
+        // Relationship: FuelNozzle â†’ FuelTank (many-to-one)
         // On delete cascade: if tank is deleted, its nozzles go too
         builder.Property(n => n.TankId)
             .HasColumnName("tank_id")
@@ -49,7 +49,7 @@ public class FuelNozzleConfiguration : IEntityTypeConfiguration<FuelNozzle>
             .HasForeignKey(n => n.TankId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: FuelNozzle → Station (many-to-one)
+        // Relationship: FuelNozzle â†’ Station (many-to-one)
         // On delete cascade: if station is deleted, its fuel nozzles go too
         builder.Property(n => n.StationId)
             .HasColumnName("station_id")

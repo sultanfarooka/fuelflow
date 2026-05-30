@@ -1,12 +1,12 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Domain.Entities;
 using StationEntities = FuelFlow.Domain.Entities.StationEntities;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
-/// EF Core config for Station. Organization (1) → Stations (many).
+/// EF Core config for Station. Organization (1) â†’ Stations (many).
 /// </summary>
 public class StationConfiguration : IEntityTypeConfiguration<Station>
 {
@@ -51,7 +51,7 @@ public class StationConfiguration : IEntityTypeConfiguration<Station>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: Station → Organization (many-to-one)
+        // Relationship: Station â†’ Organization (many-to-one)
         // On delete cascade: if org is deleted, its stations go too
         builder.Property(s => s.OrganizationId)
             .HasColumnName("organization_id")
@@ -61,7 +61,7 @@ public class StationConfiguration : IEntityTypeConfiguration<Station>
             .HasForeignKey(s => s.OrganizationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: Station → OMC (many-to-one)
+        // Relationship: Station â†’ OMC (many-to-one)
         // On delete cascade: if omc is deleted, its stations go too
         builder.Property(s => s.OMCId)
             .HasColumnName("omc_id")
@@ -71,35 +71,35 @@ public class StationConfiguration : IEntityTypeConfiguration<Station>
             .HasForeignKey(s => s.OMCId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: Station → FuelTanks (one-to-many; FK on FuelTank)
+        // Relationship: Station â†’ FuelTanks (one-to-many; FK on FuelTank)
         // On delete cascade: if station is deleted, its fuel tanks go too
         builder.HasMany(s => s.FuelTanks)
             .WithOne(f => f.Station)
             .HasForeignKey(f => f.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: Station → FuelNozzles (one-to-many; FK on FuelNozzle)
+        // Relationship: Station â†’ FuelNozzles (one-to-many; FK on FuelNozzle)
         // On delete cascade: if station is deleted, its fuel nozzles go too
         builder.HasMany(s => s.FuelNozzles)
             .WithOne(f => f.Station)
             .HasForeignKey(f => f.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: Station → StationShifts (one-to-many; FK on StationShift)
+        // Relationship: Station â†’ StationShifts (one-to-many; FK on StationShift)
         // On delete cascade: if station is deleted, its shifts go too
         builder.HasMany(s => s.StationShifts)
             .WithOne(s => s.Station)
             .HasForeignKey(s => s.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: Station → FuelPrices (one-to-many; FK on FuelPrices)
+        // Relationship: Station â†’ FuelPrices (one-to-many; FK on FuelPrices)
         // On delete cascade: if station is deleted, its fuel prices go too
         builder.HasMany(s => s.FuelPrices)
             .WithOne(f => f.Station)
             .HasForeignKey(f => f.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // M12-F01: setup completion flag (default false — dashboard blocked until wizard done)
+        // M12-F01: setup completion flag (default false â€” dashboard blocked until wizard done)
         builder.Property(s => s.IsSetupComplete)
             .HasColumnName("is_setup_complete")
             .HasDefaultValue(false);
@@ -110,7 +110,7 @@ public class StationConfiguration : IEntityTypeConfiguration<Station>
             .HasColumnType("jsonb")
             .HasDefaultValueSql("'[\"Cash\"]'::jsonb");
 
-        // 3b. Relationship: Station → StationShiftConfig (one-to-one, FK on StationShiftConfig)
+        // 3b. Relationship: Station â†’ StationShiftConfig (one-to-one, FK on StationShiftConfig)
         builder.HasOne(s => s.ShiftConfig)
             .WithOne(c => c.Station)
             .HasForeignKey<StationEntities.StationShiftConfig>(c => c.StationId)

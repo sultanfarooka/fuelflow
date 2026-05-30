@@ -1,8 +1,8 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FuelFlow.Infrastructure.Data.Configurations;
+namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
 /// EF Core config for FuelPrices. Price history per fuel type per station.
@@ -42,7 +42,7 @@ public class FuelPricesConfiguration : IEntityTypeConfiguration<FuelPrices>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: FuelPrices → FuelType (many-to-one)
+        // Relationship: FuelPrices â†’ FuelType (many-to-one)
         // On delete cascade: if fuel type is deleted, its price rows go too
         builder.Property(p => p.FuelTypeId)
             .HasColumnName("fuel_type_id")
@@ -52,7 +52,7 @@ public class FuelPricesConfiguration : IEntityTypeConfiguration<FuelPrices>
             .HasForeignKey(p => p.FuelTypeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: FuelPrices → Station (many-to-one)
+        // Relationship: FuelPrices â†’ Station (many-to-one)
         // On delete cascade: if station is deleted, its fuel prices go too
         builder.Property(p => p.StationId)
             .HasColumnName("station_id")
