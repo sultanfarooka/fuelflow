@@ -18,6 +18,12 @@
     "reports": "Reports",
     "settings": "Settings"
   },
+  "dashboard": {
+    "devBypass": {
+      "bannerTitle": "Dev bypass active",
+      "bannerDescription": "Onboarding setup is incomplete. The dashboard is accessible because the API is running in Development with Features:OnboardingDevBypass enabled. Production builds ignore this flag."
+    }
+  },
   "onboarding": {
     "progress": "Step {{current}} of {{total}}",
     "resuming": "Resuming your setup…",

@@ -18,6 +18,12 @@
     "reports": "رپورٹس",
     "settings": "ترتیبات"
   },
+  "dashboard": {
+    "devBypass": {
+      "bannerTitle": "",
+      "bannerDescription": ""
+    }
+  },
   "onboarding": {
     "progress": "",
     "resuming": "",
