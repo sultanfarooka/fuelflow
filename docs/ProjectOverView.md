@@ -19,6 +19,7 @@
 11. [Module 9: Lubricants / Oil Shop](#module-9-lubricants--oil-shop)
 12. [Module 10: SMS / Notifications](#module-10-sms--notifications)
 13. [Module 11: Subscription & Billing](#module-11-subscription--billing)
+14. [Module 13: Staff & Payroll](#module-13-staff--payroll)
 
 ---
 
@@ -62,6 +63,7 @@
 |  9  | Lubricants / Oil Shop         | Oil inventory, sales, stock management                                 |
 | 10  | SMS / Notifications           | Alerts for stock, prices, shortages, daily summaries                   |
 | 11  | Subscription & Billing        | Trial management, plan tiers, payments, feature gating                 |
+| 13  | Staff & Payroll               | Employee records, salary/payroll, advances & loans, attendance/leaves  |
 
 ---
 
@@ -611,6 +613,51 @@ A consistent shadcn-based design system underpins every screen in the applicatio
 - View all past payments with status (pending, verified, rejected)
 - Download receipts
 - View subscription timeline (trial → active → renewed)
+
+---
+
+## Module 13: Staff & Payroll
+
+### 12.1 Employee Records
+
+| Attribute | Description |
+| :--- | :--- |
+| CNIC | Unique per organization; primary HR identifier |
+| Name, phone, hire date | Standard profile fields |
+| Designation | e.g., Nozzleman, Security Guard, Cleaner, Manager |
+| Station | Primary station assignment |
+| Status | Active / On Leave / Resigned / Terminated |
+| System User Link | Optional — links to M01 login account when the employee uses the app |
+
+- Employee records exist independently of system-user accounts; a security guard or cleaner can be tracked without app access.
+- Employee count per plan tier controlled by `max_employees` platform limit (Starter plan is capacity-limited; Professional and Enterprise are higher).
+
+### 12.2 Salary Management
+
+| Feature | Specification |
+| :--- | :--- |
+| Salary structure | Base salary + configurable allowances (house rent, transport, medical) − fixed deductions |
+| Payroll computation | Structure − advance installments − shortage deductions (from shift ledger) − leave-without-pay |
+| Approval | Owner finalizes (approves) the monthly payroll run; immutable after approval |
+| History | Full payroll history retained per employee |
+
+### 12.3 Advances & Loans
+
+| Feature | Specification |
+| :--- | :--- |
+| Advance cap | Default = one month's net salary; Owner-configurable per employee |
+| Repayment | Auto-deducted from next payroll; loans split across N configurable installments |
+| Approval | Owner or Manager must approve before disbursement |
+| Visibility | Outstanding balance visible on employee profile |
+
+### 12.4 Attendance & Leaves
+
+| Feature | Specification |
+| :--- | :--- |
+| Attendance source | Derived from M04 shift assignments — Present = has a shift assignment that day |
+| Leave types | Annual, Sick, Casual — configurable annual allocation per type |
+| Leave request | Manager submits on behalf of employee; Owner/Manager approves |
+| Leave without pay | Applied when balance exhausted; auto-deducted in next payroll run |
 
 ---
 
