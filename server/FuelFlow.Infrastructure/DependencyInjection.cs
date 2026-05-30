@@ -134,6 +134,12 @@ public static class DependencyInjection
         services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
         services.AddSingleton<IOtpHasher, OtpHasher>();
 
+        // 4c. Top-level feature flags ([M12-F02]). The OnboardingDevBypass flag
+        // here is combined with IHostEnvironment.IsDevelopment() inside
+        // OnboardingBypassFlagProvider — a production deploy with the env var
+        // set still reports the bypass as inactive.
+        services.Configure<FeaturesOptions>(configuration.GetSection(FeaturesOptions.SectionName));
+
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IRequestContextService, RequestContextService>();
