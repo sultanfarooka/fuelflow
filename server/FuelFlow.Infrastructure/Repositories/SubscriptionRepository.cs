@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using FuelFlow.Application.DTOs.Auth;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Domain.Entities;
@@ -9,9 +9,9 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class SubscriptionRepository : ISubscriptionRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly ControlPlaneDbContext _dbContext;
 
-    public SubscriptionRepository(AppDbContext dbContext)
+    public SubscriptionRepository(ControlPlaneDbContext dbContext)
     {
         _dbContext = dbContext;
     }

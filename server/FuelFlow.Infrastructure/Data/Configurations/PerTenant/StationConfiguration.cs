@@ -61,13 +61,22 @@ public class StationConfiguration : IEntityTypeConfiguration<Station>
             .HasForeignKey(s => s.OrganizationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: Station â†’ OMC (many-to-one)
-        // On delete cascade: if omc is deleted, its stations go too
+        // Relationship: Station → OMC (many-to-one — cross-context shim)
+        //
+        // M14-F01: kept as an F01-only shim so existing `.Include(s => s.OMC)`
+        // queries continue to work against the shared physical DB.
+        // `WithMany()` is parameterless because OMC no longer carries a
+        // `Stations` reverse navigation (a control-plane entity must not
+        // depend on a per-tenant collection). AppDbContext is registered with
+        // ExcludeFromMigrations for the omcs table — ControlPlaneDbContext
+        // owns its schema.
+        // TODO M14-F03: drop this navigation entirely once tenant DBs split
+        //               (handlers will do a per-row lookup via IOMCRepository).
         builder.Property(s => s.OMCId)
             .HasColumnName("omc_id")
             .IsRequired();
         builder.HasOne(s => s.OMC)
-            .WithMany(o => o.Stations)
+            .WithMany()
             .HasForeignKey(s => s.OMCId)
             .OnDelete(DeleteBehavior.Cascade);
 

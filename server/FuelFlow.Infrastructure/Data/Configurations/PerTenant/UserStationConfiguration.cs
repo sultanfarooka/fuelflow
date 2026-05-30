@@ -5,7 +5,12 @@ using FuelFlow.Infrastructure.Data;
 namespace FuelFlow.Infrastructure.Data.Configurations.PerTenant;
 
 /// <summary>
-/// EF Core config for user_stations junction table (Station many-to-many AppUser).
+/// EF Core config for user_stations junction table.
+///
+/// M14-F01: <c>user_id</c> is a plain Guid column with no FK constraint —
+/// AppUser lives in the ControlPlaneDbContext while this junction is per-tenant.
+/// Handlers enforce "this AppUser exists" against the control-plane repo before
+/// inserting a row here.
 /// </summary>
 public class UserStationConfiguration : IEntityTypeConfiguration<UserStation>
 {
@@ -18,7 +23,7 @@ public class UserStationConfiguration : IEntityTypeConfiguration<UserStation>
 
         // 2. Relationships (FK property with its relationship block)
 
-        // Relationship: UserStation â†’ Station (many-to-one)
+        // Relationship: UserStation → Station (many-to-one, intra-tenant)
         // On delete cascade: if station is deleted, its user assignments go too
         builder.Property(us => us.StationId)
             .HasColumnName("station_id");
@@ -27,19 +32,16 @@ public class UserStationConfiguration : IEntityTypeConfiguration<UserStation>
             .HasForeignKey(us => us.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship: UserStation â†’ AppUser (many-to-one)
-        // On delete cascade: if user is deleted, their station assignments go too
+        // M14-F01: user_id is a plain Guid column. The previous HasOne(us => us.User)
+        // relationship to AppUser was removed — AppUser lives in the control-plane
+        // DbContext. App-layer enforces referential integrity.
         builder.Property(us => us.UserId)
             .HasColumnName("user_id");
-        builder.HasOne(us => us.User)
-            .WithMany()
-            .HasForeignKey(us => us.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         // 3. Indexes
         // Index for fast lookups by station
         builder.HasIndex(us => us.StationId);
-        // Index for fast lookups by user
+        // Index for fast lookups by user — still useful even without a FK constraint.
         builder.HasIndex(us => us.UserId);
     }
 }

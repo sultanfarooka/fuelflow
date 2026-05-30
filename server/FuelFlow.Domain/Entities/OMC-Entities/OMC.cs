@@ -13,7 +13,13 @@ public class OMC : BaseEntity
     public string ContactPersonEmail { get; set; } = string.Empty;
     public string ContactPersonPhone { get; set; } = string.Empty;
 
+    // Intra-control-plane: OMCFuelTypes lives alongside OMC in ControlPlaneDbContext.
     public ICollection<OMCFuelTypes> FuelTypes { get; set; } = new List<OMCFuelTypes>();
-    public ICollection<Station> Stations { get; set; } = new List<Station>();
 
+    // M14-F01: dropped the `ICollection<Station> Stations` reverse navigation.
+    // Station lives in the per-tenant AppDbContext; including the inverse here
+    // would force EF Core to pull Station into the control-plane model via
+    // OMCConfiguration. Code that needs "all stations of this OMC" must now
+    // query AppDbContext explicitly. The forward navigation (Station.OMC) is
+    // retained as an F01 cross-context shim until M14-F03 removes it.
 }
