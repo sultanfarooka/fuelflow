@@ -1,14 +1,34 @@
 import { useRef, useState } from "react"
-import { Plus, Trash2, Upload } from "lucide-react"
+import { AlertCircle, ChevronDown, Plus, Trash2, Upload } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 import {
   createFuelTank,
   deleteFuelTank,
@@ -17,6 +37,10 @@ import {
 } from "@/lib/api/stations/fuel-tanks"
 import { getFuelTypesByStation } from "@/lib/api/stations/fuel-types"
 import { getDipChart, uploadDipChart, type UploadDipChartEntry } from "@/lib/api/stations/dip-chart"
+
+const formFieldClass = "h-10 text-sm"
+const formLabelClass = "text-sm"
+const formSelectClass = "h-10 w-full text-sm"
 
 interface Props {
   stationId: string
@@ -28,76 +52,105 @@ function parseCsv(text: string): UploadDipChartEntry[] | null {
   const lines = text.trim().split("\n")
   const entries: UploadDipChartEntry[] = []
   for (const line of lines) {
-    const parts = line.split(",").map((s) => s.trim())
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith("#")) continue
+    const parts = trimmed.split(",").map((s) => s.trim())
+    if (parts.length < 2) continue
     const depthCm = parseFloat(parts[0])
     const volumeLiters = parseFloat(parts[1])
-    if (isNaN(depthCm) || isNaN(volumeLiters)) return null
+    if (isNaN(depthCm) || isNaN(volumeLiters)) continue
     entries.push({ depthCm, volumeLiters })
   }
   return entries.length > 0 ? entries : null
 }
 
-function TankCard({
+function TankRow({
   tank,
   stationId,
+  fuelTypeName,
   onDelete,
+  isDeleting,
 }: {
   tank: FuelTankDto
   stationId: string
+  fuelTypeName: string
   onDelete: () => void
+  isDeleting: boolean
 }) {
   const { t } = useTranslation()
   const { data: dipRes } = useQuery({
     queryKey: ["dip-chart", tank.id],
     queryFn: () => getDipChart(stationId, tank.id),
   })
-  const entryCount = dipRes?.data?.entries?.length ?? 0
+  const entryCount = dipRes?.data?.entries?.length ?? tank.dipChartEntryCount ?? 0
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border p-3">
-      <div>
+    <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{tank.name}</p>
         <p className="text-xs text-muted-foreground">
-          {tank.capacityLiters.toLocaleString()} L · {t("onboarding.step4.dipEntries", { count: entryCount })}
+          {fuelTypeName} · {tank.capacityLiters.toLocaleString()} L ·{" "}
+          {t("onboarding.step4.dipEntries", { count: entryCount })}
         </p>
       </div>
-      <Button type="button" variant="ghost" size="icon" onClick={onDelete} aria-label="Delete tank">
-        <Trash2 className="size-4 text-destructive" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            disabled={isDeleting}
+            aria-label={t("onboarding.step4.deleteTank")}
+          >
+            <Trash2 className="size-4 text-destructive" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{t("onboarding.step4.deleteTank")}</TooltipContent>
+      </Tooltip>
     </div>
   )
 }
 
-function FuelTypeSection({
-  fuelTypeId,
-  fuelTypeName,
-  stationId,
-}: {
-  fuelTypeId: string
-  fuelTypeName: string
-  stationId: string
-}) {
+export function StepTanks({ stationId, onNext, onBack }: Props) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [fuelTypeId, setFuelTypeId] = useState("")
   const [tankName, setTankName] = useState("")
   const [capacity, setCapacity] = useState("")
   const [csvError, setCsvError] = useState<string | null>(null)
+  const [addError, setAddError] = useState<string | null>(null)
   const [pendingEntries, setPendingEntries] = useState<UploadDipChartEntry[] | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(true)
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  const { data: typesRes } = useQuery({
+    queryKey: ["fuel-types", stationId],
+    queryFn: () => getFuelTypesByStation(stationId),
+  })
+  const fuelTypes = typesRes?.data ?? []
 
   const { data: tanksRes } = useQuery({
     queryKey: ["fuel-tanks", stationId],
     queryFn: () => getFuelTanksByStation(stationId),
   })
-  const typeTanks = (tanksRes?.data ?? []).filter((t) => t.fuelTypeId === fuelTypeId)
+  const tanks: FuelTankDto[] = tanksRes?.data ?? []
+
+  const selectedFuelTypeId =
+    fuelTypeId && fuelTypes.some((ft) => ft.id === fuelTypeId)
+      ? fuelTypeId
+      : (fuelTypes[0]?.id ?? "")
+
+  const effectiveShowAddForm = showAddForm || (tanks.length === 0 && fuelTypes.length > 0)
 
   const createMutation = useMutation({
     mutationFn: () =>
       createFuelTank(stationId, {
         name: tankName.trim(),
         capacityLiters: parseFloat(capacity),
-        fuelTypeId,
+        fuelTypeId: selectedFuelTypeId,
       }),
     onSuccess: async (res) => {
       const tankId = res.data.id
@@ -106,15 +159,15 @@ function FuelTypeSection({
         queryClient.invalidateQueries({ queryKey: ["dip-chart", tankId] })
       }
       queryClient.invalidateQueries({ queryKey: ["fuel-tanks", stationId] })
-      setTankName("")
-      setCapacity("")
-      setPendingEntries(null)
-      setCsvError(null)
-      if (fileRef.current) fileRef.current.value = ""
-      setIsFormOpen(false)
+      resetAddForm()
+      setShowAddForm(false)
       toast.success(t("onboarding.step4.tankAdded"))
     },
-    onError: () => toast.error(t("onboarding.step4.addError")),
+    onError: (err: Error) => {
+      const msg = err.message || t("onboarding.step4.addError")
+      setAddError(msg)
+      toast.error(msg)
+    },
   })
 
   const deleteMutation = useMutation({
@@ -122,6 +175,15 @@ function FuelTypeSection({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["fuel-tanks", stationId] }),
     onError: () => toast.error(t("onboarding.step4.deleteError")),
   })
+
+  const resetAddForm = () => {
+    setTankName("")
+    setCapacity("")
+    setPendingEntries(null)
+    setCsvError(null)
+    setAddError(null)
+    if (fileRef.current) fileRef.current.value = ""
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -141,131 +203,33 @@ function FuelTypeSection({
     reader.readAsText(file)
   }
 
-  const canAdd = tankName.trim() && capacity && !isNaN(parseFloat(capacity)) && pendingEntries
+  const fuelTypeNameById = (id: string) =>
+    fuelTypes.find((ft) => ft.id === id)?.name ?? tanks.find((t) => t.fuelTypeId === id)?.fuelTypeName ?? ""
 
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>{fuelTypeName}</CardTitle>
-          {typeTanks.length > 0 && !isFormOpen && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsFormOpen(true)}
-            >
-              <Plus className="me-1 size-3.5" />
-              {t("onboarding.step4.addAnother")}
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {typeTanks.map((tank) => (
-          <TankCard
-            key={tank.id}
-            tank={tank}
-            stationId={stationId}
-            onDelete={() => deleteMutation.mutate(tank.id)}
-          />
-        ))}
+  const coveredFuelTypeCount = fuelTypes.filter((ft) =>
+    tanks.some((tank) => tank.fuelTypeId === ft.id)
+  ).length
+  const allFuelTypesCovered =
+    fuelTypes.length > 0 && fuelTypes.every((ft) => tanks.some((t) => t.fuelTypeId === ft.id))
+  const isBusy = createMutation.isPending || deleteMutation.isPending
 
-        {(isFormOpen || typeTanks.length === 0) && (
-          <FieldGroup className="rounded-lg bg-muted/40 p-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor={`tank-name-${fuelTypeId}`}>{t("onboarding.step4.tankName")}</FieldLabel>
-                <Input
-                  id={`tank-name-${fuelTypeId}`}
-                  value={tankName}
-                  onChange={(e) => setTankName(e.target.value)}
-                  placeholder="e.g. Tank 1"
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor={`tank-cap-${fuelTypeId}`}>{t("onboarding.step4.capacity")}</FieldLabel>
-                <Input
-                  id={`tank-cap-${fuelTypeId}`}
-                  type="number"
-                  inputMode="numeric"
-                  value={capacity}
-                  onChange={(e) => setCapacity(e.target.value)}
-                  placeholder="e.g. 10000"
-                  min={1}
-                />
-              </Field>
-            </div>
+  const canAdd =
+    selectedFuelTypeId &&
+    tankName.trim() &&
+    capacity &&
+    !isNaN(parseFloat(capacity)) &&
+    parseFloat(capacity) > 0 &&
+    pendingEntries
 
-            <Field>
-              <FieldLabel htmlFor={`dip-csv-${fuelTypeId}`}>
-                {t("onboarding.step4.dipCsvLabel")}
-              </FieldLabel>
-              <div className="flex items-center gap-2">
-                <input
-                  ref={fileRef}
-                  id={`dip-csv-${fuelTypeId}`}
-                  type="file"
-                  accept=".csv,text/csv"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <Upload className="me-1.5 size-3.5" />
-                  {pendingEntries
-                    ? t("onboarding.step4.rowsLoaded", { count: pendingEntries.length })
-                    : t("onboarding.step4.uploadCsv")}
-                </Button>
-              </div>
-              {csvError && (
-                <Alert variant="destructive" className="mt-1">
-                  <AlertDescription>{csvError}</AlertDescription>
-                </Alert>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {t("onboarding.step4.csvHint")}
-              </p>
-            </Field>
-
-            <Button
-              type="button"
-              onClick={() => createMutation.mutate()}
-              disabled={!canAdd || createMutation.isPending}
-              size="sm"
-            >
-              {createMutation.isPending ? t("onboarding.step4.adding") : t("onboarding.step4.addTank")}
-            </Button>
-          </FieldGroup>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-export function StepTanks({ stationId, onNext, onBack }: Props) {
-  const { t } = useTranslation()
-  const [validationError, setValidationError] = useState<string | null>(null)
-
-  const { data: typesRes } = useQuery({
-    queryKey: ["fuel-types", stationId],
-    queryFn: () => getFuelTypesByStation(stationId),
-  })
-  const fuelTypes = typesRes?.data ?? []
-
-  const { data: tanksRes } = useQuery({
-    queryKey: ["fuel-tanks", stationId],
-    queryFn: () => getFuelTanksByStation(stationId),
-  })
-  const tanks: FuelTankDto[] = tanksRes?.data ?? []
+  const handleOpenAddForm = () => {
+    setAddError(null)
+    setCsvError(null)
+    setValidationError(null)
+    setShowAddForm(true)
+  }
 
   const handleNext = () => {
-    const allCovered = fuelTypes.every((ft) => tanks.some((t) => t.fuelTypeId === ft.id))
-    if (!allCovered) {
+    if (!allFuelTypesCovered) {
       setValidationError(t("onboarding.step4.validationError"))
       return
     }
@@ -275,26 +239,201 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
 
   return (
     <div className="space-y-6">
-      {fuelTypes.map((ft) => (
-        <FuelTypeSection
-          key={ft.id}
-          fuelTypeId={ft.id}
-          fuelTypeName={ft.name}
-          stationId={stationId}
-        />
-      ))}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("onboarding.steps.4.title")}</CardTitle>
+          <CardDescription>{t("onboarding.step4.hint")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {fuelTypes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("onboarding.step4.noFuelTypes")}</p>
+          ) : (
+            <>
+              {tanks.length > 0 && (
+                <div className="space-y-2" role="list" aria-label={t("onboarding.step4.tankList")}>
+                  {tanks.map((tank) => (
+                    <TankRow
+                      key={tank.id}
+                      tank={tank}
+                      stationId={stationId}
+                      fuelTypeName={fuelTypeNameById(tank.fuelTypeId)}
+                      onDelete={() => deleteMutation.mutate(tank.id)}
+                      isDeleting={deleteMutation.isPending}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {tanks.length === 0 && !showAddForm && (
+                <p className="text-sm text-muted-foreground">{t("onboarding.step4.emptyTanks")}</p>
+              )}
+
+              <div className={cn(tanks.length > 0 && "border-t border-border pt-4")}>
+                {!effectiveShowAddForm ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-2 px-0 text-primary hover:bg-transparent hover:text-primary/90"
+                    onClick={handleOpenAddForm}
+                    disabled={fuelTypes.length === 0}
+                  >
+                    <Plus className="size-4" />
+                    {t("onboarding.step4.addTankAction")}
+                    <ChevronDown className="ms-auto size-4 opacity-60" />
+                  </Button>
+                ) : (
+                  <div className="space-y-4 rounded-lg border border-dashed border-border p-4 text-sm">
+                    <p className="font-medium">{t("onboarding.step4.addTankFormTitle")}</p>
+                    <FieldGroup>
+                      <Field>
+                        <FieldLabel htmlFor="tank-fuel-type" className={formLabelClass}>
+                          {t("onboarding.step4.fuelType")}
+                        </FieldLabel>
+                        <Select value={selectedFuelTypeId} onValueChange={setFuelTypeId}>
+                          <SelectTrigger id="tank-fuel-type" className={formSelectClass}>
+                            <SelectValue placeholder={t("onboarding.step4.selectFuelType")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fuelTypes.map((ft) => (
+                              <SelectItem key={ft.id} value={ft.id}>
+                                {ft.name} ({ft.unit})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field>
+                          <FieldLabel htmlFor="tank-name" className={formLabelClass}>
+                            {t("onboarding.step4.tankName")}
+                          </FieldLabel>
+                          <Input
+                            id="tank-name"
+                            className={formFieldClass}
+                            value={tankName}
+                            onChange={(e) => setTankName(e.target.value)}
+                            placeholder="e.g. Tank 1"
+                          />
+                        </Field>
+                        <Field>
+                          <FieldLabel htmlFor="tank-capacity" className={formLabelClass}>
+                            {t("onboarding.step4.capacity")}
+                          </FieldLabel>
+                          <Input
+                            id="tank-capacity"
+                            className={formFieldClass}
+                            type="number"
+                            inputMode="numeric"
+                            value={capacity}
+                            onChange={(e) => setCapacity(e.target.value)}
+                            placeholder="e.g. 10000"
+                            min={1}
+                          />
+                        </Field>
+                      </div>
+
+                      <Field>
+                        <FieldLabel htmlFor="dip-csv" className={formLabelClass}>
+                          {t("onboarding.step4.dipCsvLabel")}
+                        </FieldLabel>
+                        <div className="flex items-center gap-2">
+                          <input
+                            ref={fileRef}
+                            id="dip-csv"
+                            type="file"
+                            accept=".csv,text/csv"
+                            className="hidden"
+                            onChange={handleFileChange}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={formFieldClass}
+                            onClick={() => fileRef.current?.click()}
+                          >
+                            <Upload className="me-1.5 size-4" />
+                            {pendingEntries
+                              ? t("onboarding.step4.rowsLoaded", { count: pendingEntries.length })
+                              : t("onboarding.step4.uploadCsv")}
+                          </Button>
+                        </div>
+                        {csvError && (
+                          <Alert variant="destructive" className="mt-2">
+                            <AlertCircle className="size-4" />
+                            <AlertDescription>{csvError}</AlertDescription>
+                          </Alert>
+                        )}
+                        {addError && (
+                          <Alert variant="destructive" className="mt-2">
+                            <AlertCircle className="size-4" />
+                            <AlertDescription>{addError}</AlertDescription>
+                          </Alert>
+                        )}
+                        <p className="text-xs text-muted-foreground">{t("onboarding.step4.csvHint")}</p>
+                      </Field>
+
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={cn("flex-1", formFieldClass)}
+                          onClick={() => {
+                            setShowAddForm(false)
+                            resetAddForm()
+                          }}
+                        >
+                          {t("onboarding.actions.cancel")}
+                        </Button>
+                        <Button
+                          type="button"
+                          className={cn("flex-1", formFieldClass)}
+                          onClick={() => createMutation.mutate()}
+                          disabled={!canAdd || createMutation.isPending}
+                        >
+                          {createMutation.isPending
+                            ? t("onboarding.step4.adding")
+                            : t("onboarding.step4.addTank")}
+                        </Button>
+                      </div>
+                    </FieldGroup>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </CardContent>
+        {fuelTypes.length > 0 && (
+          <CardFooter className="border-t border-border">
+            <p
+              className={cn(
+                "text-sm",
+                coveredFuelTypeCount === 0 ? "text-muted-foreground" : "text-foreground"
+              )}
+            >
+              {coveredFuelTypeCount === 0
+                ? t("onboarding.step4.emptyCoverage")
+                : t("onboarding.step4.coverageProgress", {
+                    covered: coveredFuelTypeCount,
+                    total: fuelTypes.length,
+                  })}
+            </p>
+          </CardFooter>
+        )}
+      </Card>
 
       {validationError && (
         <Alert variant="destructive">
+          <AlertCircle className="size-4" />
           <AlertDescription>{validationError}</AlertDescription>
         </Alert>
       )}
 
       <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" onClick={onBack}>
+        <Button type="button" variant="outline" onClick={onBack} className="h-10 px-4 text-sm">
           {t("onboarding.actions.back")}
         </Button>
-        <Button type="button" onClick={handleNext}>
+        <Button type="button" onClick={handleNext} disabled={isBusy} className="h-10 px-4 text-sm">
           {t("onboarding.actions.continue")}
         </Button>
       </div>

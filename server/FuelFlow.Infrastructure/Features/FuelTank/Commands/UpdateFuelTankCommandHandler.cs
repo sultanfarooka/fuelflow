@@ -55,6 +55,21 @@ public class UpdateFuelTankCommandHandler : IRequestHandler<UpdateFuelTankComman
         if (fuelType == null)
             return Result<FuelTankDto>.Failure("Fuel type not found.");
 
+        if (fuelType.StationId != request.StationId)
+            return Result<FuelTankDto>.Failure("Fuel type does not belong to this station.");
+
+        if (!string.IsNullOrWhiteSpace(request.Request.Name))
+        {
+            var normalizedName = request.Request.Name.Trim().ToLowerInvariant();
+            var duplicate = (await _fuelTankRepo.GetAllByStationIdAsync(request.StationId, cancellationToken))
+                .FirstOrDefault(t =>
+                    t.Id != request.TankId
+                    && t.Name != null
+                    && t.Name.ToLowerInvariant() == normalizedName);
+            if (duplicate != null)
+                return Result<FuelTankDto>.Failure("A tank with this name already exists at this station.");
+        }
+
         tank.Name = string.IsNullOrWhiteSpace(request.Request.Name) ? null : request.Request.Name.Trim();
         tank.CapacityLiters = request.Request.CapacityLiters;
         tank.FuelTypeId = request.Request.FuelTypeId;

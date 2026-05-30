@@ -94,17 +94,18 @@ export function StepBankAccount({ onNext, onBack, onSkip }: Props) {
       )}
 
       <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" onClick={onBack} disabled={mutation.isPending}>
+        <Button type="button" variant="outline" onClick={onBack} disabled={mutation.isPending} className="h-10 px-4 text-sm">
           {t("onboarding.actions.back")}
         </Button>
         <Button
           type="button"
           onClick={() => mutation.mutate()}
           disabled={!canSubmit || mutation.isPending}
+          className="h-10 px-4 text-sm"
         >
           {mutation.isPending ? t("onboarding.actions.saving") : t("onboarding.actions.saveAndContinue")}
         </Button>
-        <Button type="button" variant="ghost" onClick={onSkip} disabled={mutation.isPending}>
+        <Button type="button" variant="ghost" onClick={onSkip} disabled={mutation.isPending} className="h-10 px-4 text-sm">
           {t("onboarding.actions.skip")}
         </Button>
       </div>

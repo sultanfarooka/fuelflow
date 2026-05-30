@@ -267,7 +267,7 @@ export function StepOrgStation({ onNext }: Props) {
               </Alert>
             )}
 
-            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting || isLoadingOmcs}>
+            <Button type="submit" className="h-10 w-full px-4 text-sm sm:w-auto" disabled={isSubmitting || isLoadingOmcs}>
               {isSubmitting ? t("onboarding.actions.creating") : t("onboarding.actions.continue")}
             </Button>
           </FieldGroup>

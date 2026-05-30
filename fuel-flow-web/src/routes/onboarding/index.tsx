@@ -17,6 +17,7 @@ import { getFuelPricesByStation } from "@/lib/api/stations/fuel-prices"
 import { getFuelTanksByStation } from "@/lib/api/stations/fuel-tanks"
 import { getFuelNozzlesByStation } from "@/lib/api/stations/fuel-nozzles"
 import { getShiftConfig } from "@/lib/api/stations/shift-config"
+import { getCurrentUser } from "@/lib/api/auth"
 import { getStationsByOrganization } from "@/lib/api/station-management"
 import { useAuthStore } from "@/stores/auth-store"
 import { cn } from "@/lib/utils"
@@ -58,7 +59,7 @@ async function computeResumeStep(stationId: string): Promise<number> {
 
 function OnboardingWizard() {
   const { t } = useTranslation()
-  const { organization, stations } = useAuthStore()
+  const { organization, stations, isAuthenticated, setAuthState } = useAuthStore()
   const [currentStep, setCurrentStep] = useState(1)
   const [stationId, setStationId] = useState<string | null>(
     stations?.[0]?.id ?? null
@@ -66,41 +67,62 @@ function OnboardingWizard() {
   const [omcId, setOmcId] = useState<string | null>(null)
   const [isResuming, setIsResuming] = useState(false)
 
-  // Resume detection: if org already exists, find the station and compute step
+  // Refresh auth from server when local store is missing org (e.g. stale localStorage)
   useEffect(() => {
-    if (!organization || stationId) return
-
-    setIsResuming(true)
-    ;(async () => {
-      try {
-        const res = await getStationsByOrganization(organization.id)
-        const station = res.data?.[0]
-        if (!station) {
-          setCurrentStep(1)
-          return
-        }
-        setStationId(station.id)
-        setOmcId(station.omcId)
-        const step = await computeResumeStep(station.id)
-        setCurrentStep(step)
-      } catch {
-        setCurrentStep(1)
-      } finally {
-        setIsResuming(false)
-      }
-    })()
-  }, [organization, stationId])
-
-  // Also resume if we have a stationId from auth store but no omcId
-  useEffect(() => {
-    if (!stationId || omcId || !organization) return
-    getStationsByOrganization(organization.id)
+    if (!isAuthenticated || organization) return
+    getCurrentUser()
       .then((res) => {
-        const station = res.data?.find((s) => s.id === stationId)
-        if (station) setOmcId(station.omcId)
+        if (res.data) setAuthState(res.data)
       })
       .catch(() => {})
-  }, [stationId, omcId, organization])
+  }, [isAuthenticated, organization, setAuthState])
+
+  // Resume: org/station may already exist in auth store after step 1 — still compute step
+  useEffect(() => {
+    if (!organization) return
+
+    let cancelled = false
+    setIsResuming(true)
+
+    ;(async () => {
+      try {
+        let resolvedStationId = stationId
+        let resolvedOmcId = omcId
+
+        const res = await getStationsByOrganization(organization.id)
+        const stationsList = res.data ?? []
+
+        if (!resolvedStationId) {
+          const station = stationsList[0]
+          if (!station) {
+            if (!cancelled) setCurrentStep(1)
+            return
+          }
+          resolvedStationId = station.id
+          resolvedOmcId = station.omcId
+        } else if (!resolvedOmcId) {
+          const station = stationsList.find((s) => s.id === resolvedStationId)
+          if (station) resolvedOmcId = station.omcId
+        }
+
+        if (cancelled) return
+
+        setStationId(resolvedStationId)
+        if (resolvedOmcId) setOmcId(resolvedOmcId)
+
+        const step = await computeResumeStep(resolvedStationId)
+        if (!cancelled) setCurrentStep(step)
+      } catch {
+        if (!cancelled) setCurrentStep(1)
+      } finally {
+        if (!cancelled) setIsResuming(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [organization?.id])
 
   const goTo = (step: number) => setCurrentStep(step)
   const goNext = () => setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS))
@@ -116,7 +138,7 @@ function OnboardingWizard() {
   }
 
   return (
-    <div className="bg-linear-to-b from-primary/5 via-background to-background px-4 py-8">
+    <div className="bg-background px-4 py-8">
       <div className="mx-auto w-full max-w-3xl space-y-8">
         {/* Progress bar */}
         <div className="space-y-3">

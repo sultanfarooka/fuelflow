@@ -57,12 +57,17 @@ public class CreateFuelTankCommandHandler : IRequestHandler<CreateFuelTankComman
         if (fuelType == null)
             return Result<CreateFuelTankResponse>.Failure("Fuel type not found.");
 
+        if (fuelType.StationId != request.StationId)
+            return Result<CreateFuelTankResponse>.Failure("Fuel type does not belong to this station.");
+
         // Ensure no other tank at this station uses the same name (case-insensitive)
         if (!string.IsNullOrWhiteSpace(request.Request.Name))
         {
             var normalizedName = request.Request.Name.Trim().ToLowerInvariant();
             var existingNamedTank = (await _fuelTankRepo.GetAllByStationIdAsync(request.StationId, cancellationToken))
-                .FirstOrDefault(t => t.Name != null && t.Name.ToLowerInvariant() == normalizedName);
+                .FirstOrDefault(t =>
+                    t.Name != null
+                    && t.Name.ToLowerInvariant() == normalizedName);
             if (existingNamedTank != null)
                 return Result<CreateFuelTankResponse>.Failure("A tank with this name already exists at this station.");
         }

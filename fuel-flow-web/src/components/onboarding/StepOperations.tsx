@@ -223,10 +223,10 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
       )}
 
       <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" onClick={onBack} disabled={isPending}>
+        <Button type="button" variant="outline" onClick={onBack} disabled={isPending} className="h-10 px-4 text-sm">
           {t("onboarding.actions.back")}
         </Button>
-        <Button type="button" onClick={handleNext} disabled={isPending}>
+        <Button type="button" onClick={handleNext} disabled={isPending} className="h-10 px-4 text-sm">
           {isPending ? t("onboarding.actions.saving") : t("onboarding.actions.continue")}
         </Button>
       </div>
