@@ -35,26 +35,47 @@ High-level relationships between the main aggregates. Exact column types, indexe
 
 The columns shown are the meaningful business fields — every entity also has `Id`, `CreatedAt`, `UpdatedAt` via `BaseEntity`. EF Core's `AspNetUsers` table backs the domain `User` entity; do not duplicate identity columns.
 
-| Entity | Key Fields | Notes |
-|---|---|---|
-| `Organization` | name, email, ownerId | Root tenant. One per registered Owner. |
-| `Subscription` | organizationId, planId, status, startedAt, endsAt | One **active** subscription per org ([M11-F01-R01](../../docs/MODULES.md#m11-f01--subscription-plans)). |
-| `SubscriptionPlans` | name, maxStations, maxUsers, price, features (JSONB) | Seeded: Starter / Professional / Enterprise. |
-| `Station` | organizationId, name, address, omcId, isActive | Tenant-scoped via `StationId` on every operational table. |
-| `User` (`AspNetUsers`) | email, fullName, phone, role, organizationId | Identity extension; `phone` validated `+92XXXXXXXXXX`. |
-| `RefreshToken` | userId, tokenHash, expiresAt, revokedAt, ip, userAgent, deviceId | Hashed only — plain token sent at creation. Rotation on refresh; reuse ⇒ revoke chain. |
-| `UserStation` (many-to-many) | userId, stationId | Manager → station assignments ([M01-F07](../../docs/MODULES.md#m01-f07--multi-station-access)). |
-| `FuelTank` | stationId, fuelTypeId, capacityLiters, name | Tank name unique per station. |
-| `FuelType` | name, unit, isCustom | Seeded with PMG, HSD, HOBC. |
-| `FuelNozzle` | stationId, tankId, nozzleNumber, isActive | Unique per station; nozzle linked to one tank. |
-| `FuelPrices` | stationId, fuelTypeId, price, effectiveFrom | Only one active per (station, fuel) at a time ([M06-F01-R01](../../docs/MODULES.md#m06-f01--price-configuration)). |
-| `StationShift` | stationId, status (Open/Closed), openedAt, closedAt, cash totals | One open per station ([M04-F03-R01](../../docs/MODULES.md#m04-f03--open-shift)). |
-| `ShiftAssignment` | shiftId, userId, nozzleId | Who worked which nozzle. |
-| `NozzleReadings` | shiftId, nozzleId, readingType (Opening/Closing), totalizerValue, imageUrl | Closing ≥ Opening enforced in handler ([M03-F02-R04](../../docs/MODULES.md#m03-f02--meter-reading-entry)). |
-| `FuelTankReading` (Dip) | shiftId, tankId, mm, computedLiters | Required at shift open + close. |
-| `DipChart` / `DipChartEntry` | tankId, mm, liters | Per-tank mm → litres conversion table. |
-| `OMC` | name | Reference data: PSO, Shell, Total Parco, Attock, … |
-| `OMC-FuelTypes` | omcId, fuelTypeId | Which fuels each OMC supplies. |
+**Two-context split since M14-F01.** The `Ctx` column shows which `DbContext` owns each entity at the EF level:
+- **CP** = `ControlPlaneDbContext` (Identity + platform reference data + Tenants registry)
+- **PT** = `AppDbContext` (per-tenant operational data — what `AppDbContext` will route to a tenant DB once M14-F03 lands)
+
+| Entity | Ctx | Key Fields | Notes |
+|---|---|---|---|
+| `Tenant` | CP | databaseName, status, provisionedAt | M14-F01 registry. `Id == Organization.Id` by app convention (no FK). Status: `Provisioning` / `Active` / `Suspended` / `Deleted`. |
+| `Organization` | PT | name, ownerId | Root per-tenant business record. `ownerId` is a plain `Guid` (cross-context → AppUser; no FK). |
+| `Subscription` | CP | userId, planId, status, startedAt, endsAt | One **active** subscription per org ([M11-F01-R01](../../docs/MODULES.md#m11-f01--subscription-plans)). |
+| `SubscriptionPlans` | CP | name, maxStations, maxUsers, price, features (JSONB) | Seeded: Starter / Professional / Enterprise. |
+| `Station` | PT | organizationId, name, address, omcId, isActive | Per-tenant. `omcId` is an F01-shim cross-context nav to control-plane `OMC` (TODO M14-F03: drop). |
+| `User` (`AspNetUsers`) | CP | email, fullName, phone, role, organizationId | Identity extension; `phone` validated `+92XXXXXXXXXX`. `organizationId` is a plain Guid (cross-context to `Organization`). |
+| `RefreshToken` | CP | userId, tokenHash, expiresAt, revokedAt, ip, userAgent, deviceId | Hashed only — plain token sent at creation. Rotation on refresh; reuse ⇒ revoke chain. |
+| `PhoneVerification` | CP | userId, code, expiresAt, attempts | OTP records; targets pre-org-creation flows so it must live in control plane. |
+| `UserStation` (many-to-many) | PT | userId, stationId | Manager → station assignments ([M01-F07](../../docs/MODULES.md#m01-f07--multi-station-access)). `userId` is a plain Guid (no FK to control-plane AppUser). |
+| `FuelTank` | PT | stationId, fuelTypeId, capacityLiters, name | Tank name unique per station. `fuelTypeId` is an F01-shim cross-context nav (TODO M14-F03). |
+| `FuelType` | CP | name, unit, isCustom, stationId? | Platform reference data (PMG, HSD, HOBC). `stationId` is a Guid? (no nav after M14-F01 — was cross-context). |
+| `FuelNozzle` | PT | stationId, tankId, nozzleNumber, isActive | Unique per station; nozzle linked to one tank. |
+| `FuelPrices` | PT | stationId, fuelTypeId, price, effectiveFrom | Only one active per (station, fuel) at a time ([M06-F01-R01](../../docs/MODULES.md#m06-f01--price-configuration)). `fuelTypeId` is an F01-shim cross-context nav (TODO M14-F03). |
+| `StationShift` | PT | stationId, status (Open/Closed), openedAt, closedAt, cash totals | One open per station ([M04-F03-R01](../../docs/MODULES.md#m04-f03--open-shift)). `openedByUserId`/`closedByUserId` are plain Guids (no FK to AppUser). |
+| `ShiftAssignment` | PT | shiftId, userId, nozzleId | Who worked which nozzle. `userId` is plain Guid (no FK to AppUser). |
+| `NozzleReadings` | PT | shiftId, nozzleId, readingType (Opening/Closing), totalizerValue, imageUrl | Closing ≥ Opening enforced in handler ([M03-F02-R04](../../docs/MODULES.md#m03-f02--meter-reading-entry)). `recordedByUserId` plain Guid. |
+| `FuelTankReading` (Dip) | PT | shiftId, tankId, mm, computedLiters | Required at shift open + close. `recordedByUserId` plain Guid. |
+| `DipChart` / `DipChartEntry` | PT | tankId, mm, liters | Per-tank mm → litres conversion table. |
+| `OMC` | CP | name | Reference data: PSO, Shell, Total Parco, Attock, …  Reverse `Stations` collection dropped in M14-F01 (would pull per-tenant Stations into control-plane model). |
+| `OMC-FuelTypes` | CP | omcId, fuelTypeId | Which fuels each OMC supplies. |
+| `BankAccount` | PT | organizationId, bankName, accountNumber, accountTitle, isPrimary | One primary per org enforced at app layer. |
+| `StationShiftConfig` | PT | stationId, shiftCount, shiftN names + start times | One-to-one with Station ([M12-F01](../../docs/MODULES.md#m12-f01--onboarding-wizard)). |
+
+**Dropped navigation properties in M14-F01** (all cross-context refs — kept as plain `Guid` columns with app-layer enforcement):
+- `Organization.Owner` (was → User), `UserStation.User` (was → AppUser)
+- `OMC.Stations` (reverse collection — was → tenant Stations)
+- `FuelType.Station` (was → tenant Station)
+- The `HasOne<AppUser>()` FK declarations on `StationShift`, `FuelTankReading`, `NozzleReadings`, `ShiftAssignment`
+
+**Kept as M14-F01 shims** (still work via the shared physical DB; drop in M14-F03 when DBs split):
+- `FuelTank.FuelType` → control-plane FuelType
+- `Station.OMC` → control-plane OMC
+- `FuelPrices.FuelType` → control-plane FuelType
+
+These are registered in `AppDbContext.OnModelCreating` with `ToTable(t => t.ExcludeFromMigrations())` so `AppDbContext` does not claim ownership of those tables' schema — `ControlPlaneDbContext` owns the migrations.
 
 **Added in M12-F01 (Onboarding Wizard):**
 - `StationShiftConfig` (in `StationEntities/`): `ShiftCount`, `Shift1Name`, `Shift1StartTime` (TimeSpan), `Shift2Name`, `Shift2StartTime`, `Shift3Name?`, `Shift3StartTime?`, `StationId`. One-to-one with `Station`.
