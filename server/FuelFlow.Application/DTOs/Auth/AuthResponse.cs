@@ -26,7 +26,16 @@ public class AuthResponse
     public SubscriptionInfo? Subscription { get; set; } = null!;
     public List<StationInfo>? Stations { get; set; } = null!;
 
-
+    /// <summary>
+    /// [M12-F02-R01] Effective dev-bypass flag — true only when the API is
+    /// running in the <c>Development</c> environment AND
+    /// <c>Features:OnboardingDevBypass=true</c>. The
+    /// <c>IsDevelopment()</c> check lives in C# code, so a misconfigured
+    /// production deploy with the env var set still reports <c>false</c>.
+    /// Frontend uses this to relax the dashboard route guard and show the
+    /// wizard "Skip to Dashboard" affordance.
+    /// </summary>
+    public bool DevBypassActive { get; set; }
 }
 
 

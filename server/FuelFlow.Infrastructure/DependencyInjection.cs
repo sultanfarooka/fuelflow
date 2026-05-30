@@ -139,6 +139,7 @@ public static class DependencyInjection
         // OnboardingBypassFlagProvider — a production deploy with the env var
         // set still reports the bypass as inactive.
         services.Configure<FeaturesOptions>(configuration.GetSection(FeaturesOptions.SectionName));
+        services.AddScoped<IOnboardingBypassFlagProvider, OnboardingBypassFlagProvider>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

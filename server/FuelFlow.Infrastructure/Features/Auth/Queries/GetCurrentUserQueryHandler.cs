@@ -4,6 +4,7 @@ using FuelFlow.Application.Common;
 using FuelFlow.Application.DTOs.Auth;
 using FuelFlow.Application.Features.Auth.Queries;
 using FuelFlow.Application.Interfaces.Repositories;
+using FuelFlow.Application.Interfaces.Services;
 using FuelFlow.Domain.Entities;
 using StationEntity = FuelFlow.Domain.Entities.Station;
 using FuelFlow.Infrastructure.Identity;
@@ -25,6 +26,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
     private readonly IUserStationRepository _userStationRepo;
     private readonly ISubscriptionRepository _subscriptionRepo;
     private readonly JwtTokenService _jwtTokenService;
+    private readonly IOnboardingBypassFlagProvider _bypassFlagProvider;
 
     public GetCurrentUserQueryHandler(
         UserManager<AppUser> userManager,
@@ -32,7 +34,8 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         IStationRepository stationRepo,
         IUserStationRepository userStationRepo,
         ISubscriptionRepository subscriptionRepo,
-        JwtTokenService jwtTokenService)
+        JwtTokenService jwtTokenService,
+        IOnboardingBypassFlagProvider bypassFlagProvider)
     {
         _userManager = userManager;
         _organizationRepo = organizationRepo;
@@ -40,6 +43,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
         _userStationRepo = userStationRepo;
         _subscriptionRepo = subscriptionRepo;
         _jwtTokenService = jwtTokenService;
+        _bypassFlagProvider = bypassFlagProvider;
     }
 
     /// <summary>
@@ -116,6 +120,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, R
             Organization = org != null ? new OrganizationInfo { Id = org.Id, Name = org.Name } : null,
             Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name, IsSetupComplete = s.IsSetupComplete, AcceptedPaymentMethods = s.AcceptedPaymentMethods }).ToList(),
             Subscription = subscription,
+            DevBypassActive = _bypassFlagProvider.IsActive,
         };
     }
 }

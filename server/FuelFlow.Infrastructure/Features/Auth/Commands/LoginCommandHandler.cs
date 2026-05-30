@@ -30,6 +30,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
     private readonly IUnitOfWork _unitOfWork;
     private readonly JwtTokenService _jwtTokenService;
     private readonly IRequestContextService _requestContext;
+    private readonly IOnboardingBypassFlagProvider _bypassFlagProvider;
 
     public LoginCommandHandler(
         UserManager<AppUser> userManager,
@@ -40,7 +41,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         IRefreshTokenRepository refreshTokenRepo,
         IUnitOfWork unitOfWork,
         JwtTokenService jwtTokenService,
-        IRequestContextService requestContext)
+        IRequestContextService requestContext,
+        IOnboardingBypassFlagProvider bypassFlagProvider)
     {
         _userManager = userManager;
         _organizationRepo = organizationRepo;
@@ -51,6 +53,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         _unitOfWork = unitOfWork;
         _jwtTokenService = jwtTokenService;
         _requestContext = requestContext;
+        _bypassFlagProvider = bypassFlagProvider;
     }
 
     /// <summary>
@@ -169,6 +172,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
             Organization = org != null ? new OrganizationInfo { Id = org.Id, Name = org.Name } : null,
             Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name, IsSetupComplete = s.IsSetupComplete, AcceptedPaymentMethods = s.AcceptedPaymentMethods }).ToList(),
             Subscription = subscription,
+            DevBypassActive = _bypassFlagProvider.IsActive,
         };
     }
 }
