@@ -26,6 +26,10 @@
   },
   "onboarding": {
     "progress": "",
+    "devBypass": {
+      "bannerTitle": "",
+      "skipButton": ""
+    },
     "resuming": "",
     "stationNotFound": "",
     "backToStart": "",

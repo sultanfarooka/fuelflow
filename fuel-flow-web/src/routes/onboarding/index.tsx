@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Loader2 } from "lucide-react"
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { Alert, AlertAction, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 import { StepOrgStation } from "@/components/onboarding/StepOrgStation"
 import { StepFuelTypes } from "@/components/onboarding/StepFuelTypes"
 import { StepPrices } from "@/components/onboarding/StepPrices"
@@ -59,7 +61,7 @@ async function computeResumeStep(stationId: string): Promise<number> {
 
 function OnboardingWizard() {
   const { t } = useTranslation()
-  const { organization, stations, isAuthenticated, setAuthState } = useAuthStore()
+  const { organization, stations, isAuthenticated, devBypassActive, setAuthState } = useAuthStore()
   const [currentStep, setCurrentStep] = useState(1)
   const [stationId, setStationId] = useState<string | null>(
     stations?.[0]?.id ?? null
@@ -173,6 +175,24 @@ function OnboardingWizard() {
             </div>
           </div>
         </div>
+
+        {/* [M12-F02-R03] Dev-bypass skip affordance — visible on every step
+            when the backend reports devBypassActive=true. Production builds
+            never show this because the backend's IsDevelopment() short-circuit
+            hard-gates the flag in C# code. */}
+        {devBypassActive && (
+          <Alert className="border-accent bg-accent/40">
+            <AlertCircle className="text-accent-foreground" />
+            <AlertTitle className="text-accent-foreground">
+              {t("onboarding.devBypass.bannerTitle")}
+            </AlertTitle>
+            <AlertAction>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/dashboard">{t("onboarding.devBypass.skipButton")}</Link>
+              </Button>
+            </AlertAction>
+          </Alert>
+        )}
 
         {/* Step header */}
         <div className="space-y-1">

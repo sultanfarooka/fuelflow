@@ -29,6 +29,10 @@
     "resuming": "Resuming your setup…",
     "stationNotFound": "Station not found. Please go back to Step 1.",
     "backToStart": "Back to start",
+    "devBypass": {
+      "bannerTitle": "Dev bypass active — finish later",
+      "skipButton": "Skip to Dashboard"
+    },
     "steps": {
       "1": { "title": "Organization & Station", "description": "Create your organization and primary fuel station." },
       "2": { "title": "Fuel Types", "description": "Choose only the fuels this station sells. You can change these later in Settings." },
