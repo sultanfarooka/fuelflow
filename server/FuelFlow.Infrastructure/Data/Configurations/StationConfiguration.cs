@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using FuelFlow.Domain.Entities;
+using StationEntities = FuelFlow.Domain.Entities.StationEntities;
 
 namespace FuelFlow.Infrastructure.Data.Configurations;
 
@@ -96,6 +97,23 @@ public class StationConfiguration : IEntityTypeConfiguration<Station>
         builder.HasMany(s => s.FuelPrices)
             .WithOne(f => f.Station)
             .HasForeignKey(f => f.StationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // M12-F01: setup completion flag (default false — dashboard blocked until wizard done)
+        builder.Property(s => s.IsSetupComplete)
+            .HasColumnName("is_setup_complete")
+            .HasDefaultValue(false);
+
+        // M12-F01: payment methods as JSONB array; Cash always pre-seeded
+        builder.Property(s => s.AcceptedPaymentMethods)
+            .HasColumnName("accepted_payment_methods")
+            .HasColumnType("jsonb")
+            .HasDefaultValueSql("'[\"Cash\"]'::jsonb");
+
+        // 3b. Relationship: Station → StationShiftConfig (one-to-one, FK on StationShiftConfig)
+        builder.HasOne(s => s.ShiftConfig)
+            .WithOne(c => c.Station)
+            .HasForeignKey<StationEntities.StationShiftConfig>(c => c.StationId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // 4. Indexes

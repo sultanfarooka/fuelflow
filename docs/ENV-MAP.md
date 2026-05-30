@@ -33,6 +33,7 @@ In development these are stored as **.NET user-secrets** (`dotnet user-secrets s
 | `Otp:ResendCooldownSeconds` | (Phase 3 handlers) | No (default `60`) | Server only | Min seconds between successive resends per user |
 | `Otp:DailyCapPerPhone` | (Phase 3+7 handlers) | No (default `10`) | Server only | [M01-F09-R12](MODULES.md#m01-f09--phone-first-authentication) — per-phone OTP issuance cap per 24h |
 | `Otp:HashPepper` | (Phase 3 handlers) | **Yes** when phone-OTP is enabled | Server only | 32+ char server-side secret. HMAC-SHA256 key for hashing OTP codes at rest. User-secret in dev. **Never commit** |
+| `Features:OnboardingDevBypass` | [`DependencyInjection.cs`](../server/FuelFlow.Infrastructure/DependencyInjection.cs), `OnboardingBypassFlagProvider.cs` (Phase 2) | No (default `false`) | Server only | [M12-F02-R01] — when `true` AND `IHostEnvironment.IsDevelopment()`, the frontend is told the dashboard route guard may be relaxed. **Production binaries ignore this value** because `IsDevelopment()` short-circuits in C# code. User-secret in dev: `dotnet user-secrets set "Features:OnboardingDevBypass" "true"` |
 | `FrontendUrl` | `AuthService.cs`, `appsettings.json` | No | Server only | Default `http://localhost:5173`. Embedded into email-verification + password-reset links |
 | `AllowedHosts` | `appsettings.json` | No | Server only | Currently `*`. Tighten before public deploy |
 | `Logging:LogLevel:Default` | `appsettings.json` | No | Server only | Serilog default (`Information`) |

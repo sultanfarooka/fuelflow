@@ -46,7 +46,13 @@ Organization and first station are NOT collected at registration — they're add
 
 ## Onboarding Flow
 
-After first verified login, users without an organization are redirected to `/onboarding` (enforced by `dashboard/route.tsx`'s `beforeLoad`). The single page hosts a wizard that creates Organization + first Station + Trial Subscription in one transaction. Subsequent logins skip onboarding entirely.
+After first verified login, users without an organization are redirected to `/onboarding` (enforced by `dashboard/route.tsx`'s `beforeLoad`). The `/onboarding` route hosts a 9-step wizard (M12-F01) that takes a new Owner from organization creation through station configuration to a fully operational station. Each step saves data progressively; on re-entry the wizard auto-advances to the first incomplete step via `computeResumeStep`.
+
+**Route guard logic (as of M12-F01):**
+- `dashboard/route.tsx` `beforeLoad`: redirects to `/onboarding` if `!isAuthenticated`, if `!organization`, or if `!stations?.[0]?.isSetupComplete`.
+- `onboarding/route.tsx` `beforeLoad`: redirects to `/dashboard` if `stations?.[0]?.isSetupComplete === true` (prevents already-setup users from re-entering the wizard).
+
+`isSetupComplete` is set to `true` by `POST /stations/{stationId}/complete-setup` on Step 9 completion. The flag is persisted in the Zustand auth store (localStorage) and refreshed via `/auth/me` after the complete-setup call succeeds.
 
 ## Route Structure
 

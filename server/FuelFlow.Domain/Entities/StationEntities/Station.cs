@@ -1,4 +1,5 @@
 using FuelFlow.Domain.Common;
+using FuelFlow.Domain.Entities.StationEntities;
 
 namespace FuelFlow.Domain.Entities;
 
@@ -37,4 +38,13 @@ public class Station : BaseEntity
     /// Users assigned to this station (many-to-many via user_stations). Populated in application layer from junction + AppUser.
     /// </summary>
     public ICollection<User> Employees { get; set; } = new List<User>();
+
+    // M12-F01: onboarding completion flag; blocks dashboard access until the full wizard is done
+    public bool IsSetupComplete { get; set; } = false;
+
+    // M12-F01: JSONB list of accepted payment methods; Cash is always included
+    public List<string> AcceptedPaymentMethods { get; set; } = new List<string> { "Cash" };
+
+    // M12-F01: one-to-one shift schedule configured during onboarding
+    public StationShiftConfig? ShiftConfig { get; set; }
 }

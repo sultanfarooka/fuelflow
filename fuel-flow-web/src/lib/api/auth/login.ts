@@ -29,7 +29,8 @@ export interface OrganizationInfo {
 export interface StationInfo {
   id: string
   name: string
-  setupComplete?: boolean
+  isSetupComplete: boolean
+  acceptedPaymentMethods: string[]
 }
 
 export interface SubscriptionInfo {
@@ -46,6 +47,16 @@ export interface LoginResponse {
   organization?: OrganizationInfo | null
   subscription?: SubscriptionInfo | null
   stations?: StationInfo[] | null
+  /**
+   * [M12-F02-R01] Effective dev-bypass flag — true only when the API is
+   * running in Development AND `Features:OnboardingDevBypass=true`. The
+   * `IsDevelopment()` check lives on the backend in C# code, so a
+   * misconfigured production deploy with the env var set still reports
+   * `false`. Frontend consumes this to relax the dashboard route guard
+   * ([M12-F02-R02]) and show the wizard "Skip to Dashboard" affordance
+   * ([M12-F02-R03]).
+   */
+  devBypassActive?: boolean
 }
 
 export interface LoginApiResponse {

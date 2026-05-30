@@ -16,6 +16,13 @@ interface AuthState {
   organization: OrganizationInfo | null
   stations: StationInfo[] | null
   subscription: SubscriptionInfo | null
+  /**
+   * [M12-F02-R01] Effective onboarding dev-bypass flag from the auth
+   * response. Mirrors the backend's `IHostEnvironment.IsDevelopment() &&
+   * Features:OnboardingDevBypass`. Consumed by the dashboard route guard
+   * and the wizard "Skip to Dashboard" affordance.
+   */
+  devBypassActive: boolean
   setAuthState: (loginResponse: LoginResponse) => void
   logout: () => void
 }
@@ -29,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
       organization: null,
       stations: null,
       subscription: null,
+      devBypassActive: false,
       setAuthState: (loginResponse: LoginResponse) => {
         set({
           expiresIn: loginResponse.expiresIn,
@@ -37,6 +45,7 @@ export const useAuthStore = create<AuthState>()(
           organization: loginResponse.organization ?? null,
           stations: loginResponse.stations ?? null,
           subscription: loginResponse.subscription ?? null,
+          devBypassActive: loginResponse.devBypassActive ?? false,
         })
       },
       logout: () => {
@@ -47,6 +56,7 @@ export const useAuthStore = create<AuthState>()(
           organization: null,
           stations: null,
           subscription: null,
+          devBypassActive: false,
         })
       },
     }),
@@ -59,6 +69,7 @@ export const useAuthStore = create<AuthState>()(
         subscription: s.subscription,
         isAuthenticated: s.isAuthenticated,
         expiresIn: s.expiresIn,
+        devBypassActive: s.devBypassActive,
       }),
     }
   )

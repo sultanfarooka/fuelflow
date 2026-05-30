@@ -76,7 +76,7 @@ public class AuthController : ControllerBase
         var data = result.Data!;
         SetAuthCookiesInResponse(data.AccessToken, data.RefreshToken);
 
-        return Ok(new { success = true, data = new { data.User, data.Organization, data.Stations, data.Subscription } });
+        return Ok(new { success = true, data = new { data.User, data.Organization, data.Stations, data.Subscription, data.DevBypassActive } });
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public class AuthController : ControllerBase
             return NotFound(new { success = false, error = result.Error });
 
         var data = result.Data!;
-        return Ok(new { success = true, data = new { data.User, data.Organization, data.Stations, data.Subscription } });
+        return Ok(new { success = true, data = new { data.User, data.Organization, data.Stations, data.Subscription, data.DevBypassActive } });
     }
 
 
@@ -134,7 +134,7 @@ public class AuthController : ControllerBase
         //set new auth cookies in response
         SetAuthCookiesInResponse(data.AccessToken, data.RefreshToken);
 
-        return Ok(new { success = true, data = new { data.ExpiresIn, data.User, data.Subscription } });
+        return Ok(new { success = true, data = new { data.ExpiresIn, data.User, data.Subscription, data.DevBypassActive } });
     }
 
     /// <summary>

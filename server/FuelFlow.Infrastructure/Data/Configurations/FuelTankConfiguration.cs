@@ -69,7 +69,7 @@ public class FuelTankConfiguration : IEntityTypeConfiguration<FuelTank>
         // Index for fast lookups by station
         builder.HasIndex(f => f.StationId);
 
-        // Unique index: tank name per station (ignoring nulls handled at app level)
+        // Unique index: tank name per station (null names allowed multiple times)
         builder.HasIndex(f => new { f.StationId, f.Name })
             .IsUnique();
     }

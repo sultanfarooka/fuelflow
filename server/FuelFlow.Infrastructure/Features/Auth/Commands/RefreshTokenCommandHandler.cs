@@ -28,6 +28,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
     private readonly IUnitOfWork _unitOfWork;
     private readonly JwtTokenService _jwtTokenService;
     private readonly IRequestContextService _requestContext;
+    private readonly IOnboardingBypassFlagProvider _bypassFlagProvider;
 
     public RefreshTokenCommandHandler(
         UserManager<AppUser> userManager,
@@ -38,7 +39,8 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         IRefreshTokenRepository refreshTokenRepo,
         IUnitOfWork unitOfWork,
         JwtTokenService jwtTokenService,
-        IRequestContextService requestContext)
+        IRequestContextService requestContext,
+        IOnboardingBypassFlagProvider bypassFlagProvider)
     {
         _userManager = userManager;
         _organizationRepo = organizationRepo;
@@ -49,6 +51,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         _unitOfWork = unitOfWork;
         _jwtTokenService = jwtTokenService;
         _requestContext = requestContext;
+        _bypassFlagProvider = bypassFlagProvider;
     }
 
     /// <summary>
@@ -157,8 +160,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
                 Roles = userRoles.Select(r => r.ToLower()).ToList(),
             },
             Organization = org != null ? new OrganizationInfo { Id = org.Id, Name = org.Name } : null,
-            Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
+            Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name, IsSetupComplete = s.IsSetupComplete, AcceptedPaymentMethods = s.AcceptedPaymentMethods }).ToList(),
             Subscription = subscription,
+            DevBypassActive = _bypassFlagProvider.IsActive,
         };
     }
 }

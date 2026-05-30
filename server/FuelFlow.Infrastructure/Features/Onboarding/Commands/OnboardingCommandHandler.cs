@@ -6,7 +6,6 @@ using FuelFlow.Application.Interfaces.Services;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Enums;
 using StationEntity = FuelFlow.Domain.Entities.Station;
-using FuelTypeEntity = FuelFlow.Domain.Entities.FuelType;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -35,8 +34,6 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
     private readonly JwtTokenService _jwtTokenService;
     private readonly IRequestContextService _requestContext;
     private readonly IOMCRepository _omcRepo;
-    private readonly IOMCFuelTypeRepository _omcFuelTypeRepo;
-    private readonly IFuelTypeRepository _fuelTypeRepo;
     private readonly ILogger<OnboardingCommandHandler> _logger;
 
     /// <summary>Plan used for the 14-day trial (Professional features).</summary>
@@ -54,8 +51,6 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
         JwtTokenService jwtTokenService,
         IRequestContextService requestContext,
         IOMCRepository omcRepo,
-        IOMCFuelTypeRepository omcFuelTypeRepo,
-        IFuelTypeRepository fuelTypeRepo,
         ILogger<OnboardingCommandHandler> logger)
     {
         _currentUser = currentUser;
@@ -69,8 +64,6 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
         _jwtTokenService = jwtTokenService;
         _requestContext = requestContext;
         _omcRepo = omcRepo;
-        _omcFuelTypeRepo = omcFuelTypeRepo;
-        _fuelTypeRepo = fuelTypeRepo;
         _logger = logger;
     }
 
@@ -168,25 +161,6 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
 
             await _unitOfWork.SaveChangesAsync();
             await _unitOfWork.CommitAsync();
-
-            // Add OMC fuel types to the station
-            var omcFuelTypes = await _omcFuelTypeRepo.GetByOMCIdAsync(omc.Id, cancellationToken);
-            foreach (var fuelType in omcFuelTypes)
-            {
-                var fuelTypeEntity = new FuelTypeEntity
-                {
-                    Name = fuelType.Name,
-                    Unit = fuelType.Unit,
-                    IsCustom = false,
-                    OMCId = omc.Id,
-                    StationId = station.Id,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                };
-                await _fuelTypeRepo.AddAsync(fuelTypeEntity);
-            }
-            await _unitOfWork.SaveChangesAsync();
-
         }
         catch (Exception ex)
         {
@@ -233,7 +207,7 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
                 Roles = userRoles.Select(r => r.ToLower()).ToList(),
             },
             Organization = new OrganizationInfo { Id = org.Id, Name = org.Name },
-            Stations = stations.Select(s => new StationInfo { Id = s.Id, Name = s.Name }).ToList(),
+            Stations = stations.Select(s => new StationInfo { Id = s.Id, Name = s.Name, IsSetupComplete = s.IsSetupComplete, AcceptedPaymentMethods = s.AcceptedPaymentMethods }).ToList(),
             Subscription = subscription,
         };
     }

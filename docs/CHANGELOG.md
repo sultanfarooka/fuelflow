@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-05-26
+
+[M12-F01](MODULES.md#m12-f01--onboarding-wizard) — 9-step onboarding wizard. Replaces the single-step `/onboarding` form with a production-grade first-run wizard that takes a newly registered Owner from org creation to a fully operational station. Dashboard access is blocked via route guard until `Station.IsSetupComplete = true`.
+
+### Added
+- **Domain** — `Station.IsSetupComplete` (bool, default false), `Station.AcceptedPaymentMethods` (JSONB, default `["Cash"]`), new `StationShiftConfig` entity (shift count + up to 3 named shifts with start times), new `BankAccount` entity (org-scoped, supports multiple accounts, `IsPrimary` auto-demoted on create).
+- **Migration** — `AddOnboardingEntities` adds the two new tables + two new columns on `Stations`.
+- **Application** — `ShiftConfigDto`, `BankAccountDto`; `StationDto` gains `isSetupComplete` + `acceptedPaymentMethods`; 6 new commands/queries: `CreateShiftConfig`, `GetShiftConfig`, `UpdatePaymentMethods`, `CreateBankAccount`, `GetBankAccounts`, `CompleteStationSetup`; matching FluentValidation validators; `IStationShiftConfigRepository`, `IBankAccountRepository` interfaces.
+- **Infrastructure** — 6 new handlers, `StationShiftConfigRepository`, `BankAccountRepository`, EF Core configs for both new entities, DI registrations.
+- **API** — 6 new endpoints: `POST/GET /stations/{id}/shift-config`, `PUT /stations/{id}/payment-methods`, `POST/GET /organizations/{id}/bank-accounts`, `POST /stations/{id}/complete-setup` (returns `400 { unmetConditions[] }` when incomplete).
+- **Frontend** — Wizard shell (`routes/onboarding/index.tsx`) with resume detection (`computeResumeStep` queries 5 APIs in parallel), segmented progress bar, loading state. 9 step components in `components/onboarding/`: `StepOrgStation`, `StepFuelTypes`, `StepPrices`, `StepTanks`, `StepNozzles`, `StepOperations`, `StepBankAccount`, `StepInviteManager`, `StepSummary`. New API client files: `shift-config.ts`, `payment-methods.ts`, `complete-setup.ts`, `organizations/bank-accounts.ts`. Zod schemas in `lib/validators/onboarding.ts`.
+- **Route guards** — `dashboard/route.tsx` blocks access when `!isSetupComplete`; `onboarding/route.tsx` redirects already-complete users to dashboard.
+- **i18n** — `onboarding.*` namespace (100+ keys) added to `en.json`; empty stubs in `ur.json` (translations deferred to M08-F05-R05). All step components wired to `useTranslation`.
+
+### Technical Decisions
+- **`AcceptedPaymentMethods` as JSONB** over a join table — list is small (≤5 items), read-only from the wizard, no relational queries needed. JSONB is simpler and performs identically.
+- **Resume detection via parallel API calls** — `computeResumeStep` calls 5 endpoints in parallel with `.catch()` fallbacks, then sequentially checks conditions. Returns the first incomplete step (2–7), defaulting to 7 (bank account) if all required steps are done.
+- **Auth store refresh after complete-setup** — re-fetches `/auth/me` to flip `isSetupComplete` in the Zustand store, then navigates. Avoids an extra field in the complete-setup response.
+- **`BankAccountEntity` type alias** in `GetBankAccountsQueryHandler` — resolves namespace conflict between `FuelFlow.Domain.Entities.BankAccount` and the `FuelFlow.Infrastructure.Features.BankAccount.*` feature namespaces.
+
+### Status (MODULES.md)
+- `M12-F01`: header → `Done`; all rows `R01–R17` → `Done`.
+- `M12`: module index row → `Done`.
+
+---
+
 ## [2.1.0] - 2026-05-23
 
 [M01-F09](MODULES.md#m01-f09--phone-first-authentication) — Phone-first authentication for the Pakistani market. Phone (+92) becomes the primary identifier across registration, login, verification, and recovery; email is optional and acts as a verified fallback. Ships in eight phased commits on `feat-m01-f09-phone-first-authentication`.

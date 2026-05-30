@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using FuelFlow.Domain.Entities;
+using FuelFlow.Domain.Entities.StationEntities;
 using FuelFlow.Infrastructure.Identity;
 
 namespace FuelFlow.Infrastructure.Data;
@@ -45,6 +46,8 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     public DbSet<FuelTankReading> FuelTankReadings => Set<FuelTankReading>();
     public DbSet<DipChart> DipCharts => Set<DipChart>();
     public DbSet<DipChartEntry> DipChartEntries => Set<DipChartEntry>();
+    public DbSet<StationShiftConfig> StationShiftConfigs => Set<StationShiftConfig>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
 
     // Note: We do NOT add DbSet<User> (Domain entity) here.
     // Identity's AppUser IS our user table. The Domain User entity

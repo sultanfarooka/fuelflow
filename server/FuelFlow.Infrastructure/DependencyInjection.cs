@@ -86,6 +86,8 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
+        services.AddScoped<IStationShiftConfigRepository, StationShiftConfigRepository>();
+        services.AddScoped<IBankAccountRepository, BankAccountRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // 4. Register services
@@ -131,6 +133,13 @@ public static class DependencyInjection
         // 4b. OTP subsystem ([M01-F09]) — options + HMAC-SHA256 hasher.
         services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
         services.AddSingleton<IOtpHasher, OtpHasher>();
+
+        // 4c. Top-level feature flags ([M12-F02]). The OnboardingDevBypass flag
+        // here is combined with IHostEnvironment.IsDevelopment() inside
+        // OnboardingBypassFlagProvider — a production deploy with the env var
+        // set still reports the bypass as inactive.
+        services.Configure<FeaturesOptions>(configuration.GetSection(FeaturesOptions.SectionName));
+        services.AddScoped<IOnboardingBypassFlagProvider, OnboardingBypassFlagProvider>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

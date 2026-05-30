@@ -40,7 +40,7 @@ export const Route = createFileRoute("/dashboard/station/$stationId")({
     }
     if (
       station &&
-      station.setupComplete === false &&
+      station.isSetupComplete === false &&
       !location.pathname.endsWith("/setup")
     ) {
       throw redirect({

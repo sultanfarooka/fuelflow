@@ -1,345 +1,275 @@
-import { useState } from "react";
-import { Building2, Fuel, MapPin, Phone, UploadCloud } from "lucide-react";
-import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
+import { useEffect, useState } from "react"
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { AlertCircle, Loader2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
-import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { FormTextField } from "@/components/forms/form-text-field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  completeOnboarding,
-  type OnboardingRequest,
-} from "@/lib/api/auth";
-import { getOMCs, type OMC } from "@/lib/api/omcs";
-import {
-  onboardingSchema,
-  type OnboardingFormData,
-} from "@/lib/validators/auth";
-import { useAuthStore } from "@/stores/auth-store";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertAction, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { StepOrgStation } from "@/components/onboarding/StepOrgStation"
+import { StepFuelTypes } from "@/components/onboarding/StepFuelTypes"
+import { StepPrices } from "@/components/onboarding/StepPrices"
+import { StepTanks } from "@/components/onboarding/StepTanks"
+import { StepNozzles } from "@/components/onboarding/StepNozzles"
+import { StepOperations } from "@/components/onboarding/StepOperations"
+import { StepBankAccount } from "@/components/onboarding/StepBankAccount"
+import { StepInviteManager } from "@/components/onboarding/StepInviteManager"
+import { StepSummary } from "@/components/onboarding/StepSummary"
+import { getFuelTypesByStation } from "@/lib/api/stations/fuel-types"
+import { getFuelPricesByStation } from "@/lib/api/stations/fuel-prices"
+import { getFuelTanksByStation } from "@/lib/api/stations/fuel-tanks"
+import { getFuelNozzlesByStation } from "@/lib/api/stations/fuel-nozzles"
+import { getShiftConfig } from "@/lib/api/stations/shift-config"
+import { getCurrentUser } from "@/lib/api/auth"
+import { getStationsByOrganization } from "@/lib/api/station-management"
+import { useAuthStore } from "@/stores/auth-store"
+import { cn } from "@/lib/utils"
+
+const TOTAL_STEPS = 9
 
 export const Route = createFileRoute("/onboarding/")({
-  component: RouteComponent,
-});
+  component: OnboardingWizard,
+})
 
-function RouteComponent() {
-  const setAuthState = useAuthStore((s) => s.setAuthState);
-  const navigate = useNavigate();
-  const [submitError, setSubmitError] = useState<string | null>(null);
+async function computeResumeStep(stationId: string): Promise<number> {
+  const [typesRes, pricesRes, tanksRes, nozzlesRes, shiftRes] = await Promise.all([
+    getFuelTypesByStation(stationId).catch(() => ({ data: [] })),
+    getFuelPricesByStation(stationId).catch(() => ({ data: [] })),
+    getFuelTanksByStation(stationId).catch(() => ({ data: [] })),
+    getFuelNozzlesByStation(stationId).catch(() => ({ data: [] })),
+    getShiftConfig(stationId).catch(() => null),
+  ])
 
-  const { data: omcResponse, isLoading: isLoadingOmcs } = useQuery({
-    queryKey: ["omcs"],
-    queryFn: getOMCs,
-  });
+  const types = typesRes.data ?? []
+  if (types.length === 0) return 2
 
-  const omcs: OMC[] = omcResponse?.data ?? [];
+  const prices = pricesRes.data ?? []
+  const allPriced = types.every((ft) => prices.some((p) => p.fuelTypeId === ft.id))
+  if (!allPriced) return 3
 
-  const onboardingMutation = useMutation({
-    mutationFn: completeOnboarding,
-    onSuccess: (response) => {
-      const auth = response.data;
-      setAuthState(auth);
-      toast.success("You're all set up! Redirecting to dashboard...");
-      navigate({ to: "/dashboard" });
-    },
-    onError: (error: Error) => {
-      const message =
-        error.message ?? "Onboarding failed. Please review your details.";
-      setSubmitError(message);
-      toast.error(message);
-    },
-  });
+  const tanks = tanksRes.data ?? []
+  const allTanked = types.every((ft) => tanks.some((t) => t.fuelTypeId === ft.id))
+  if (!allTanked) return 4
 
-  const form = useForm({
-    defaultValues: {
-      organizationName: "",
-      stationName: "",
-      omcId: "",
-      address: "",
-      phone: "",
-      logoUrl: "",
-    } satisfies OnboardingFormData,
-    validators: {
-      onSubmit: onboardingSchema,
-    },
-    onSubmit: async ({ value }) => {
-      setSubmitError(null);
-      const payload: OnboardingRequest = {
-        organizationName: value.organizationName,
-        stationName: value.stationName,
-        omcId: value.omcId,
-        address: value.address || undefined,
-        phone: value.phone || undefined,
-        logoUrl: value.logoUrl || undefined,
-      };
-      await onboardingMutation.mutateAsync(payload);
-    },
-  });
+  const nozzles = nozzlesRes.data ?? []
+  if (nozzles.length === 0) return 5
 
-  const isSubmitting =
-    form.state.isSubmitting || onboardingMutation.isPending;
+  if (!shiftRes?.data) return 6
+
+  // All required steps done → land on first optional step
+  return 7
+}
+
+function OnboardingWizard() {
+  const { t } = useTranslation()
+  const { organization, stations, isAuthenticated, devBypassActive, setAuthState } = useAuthStore()
+  const [currentStep, setCurrentStep] = useState(1)
+  const [stationId, setStationId] = useState<string | null>(
+    stations?.[0]?.id ?? null
+  )
+  const [omcId, setOmcId] = useState<string | null>(null)
+  const [isResuming, setIsResuming] = useState(false)
+
+  // Refresh auth from server when local store is missing org (e.g. stale localStorage)
+  useEffect(() => {
+    if (!isAuthenticated || organization) return
+    getCurrentUser()
+      .then((res) => {
+        if (res.data) setAuthState(res.data)
+      })
+      .catch(() => {})
+  }, [isAuthenticated, organization, setAuthState])
+
+  // Resume: org/station may already exist in auth store after step 1 — still compute step
+  useEffect(() => {
+    if (!organization) return
+
+    let cancelled = false
+    setIsResuming(true)
+
+    ;(async () => {
+      try {
+        let resolvedStationId = stationId
+        let resolvedOmcId = omcId
+
+        const res = await getStationsByOrganization(organization.id)
+        const stationsList = res.data ?? []
+
+        if (!resolvedStationId) {
+          const station = stationsList[0]
+          if (!station) {
+            if (!cancelled) setCurrentStep(1)
+            return
+          }
+          resolvedStationId = station.id
+          resolvedOmcId = station.omcId
+        } else if (!resolvedOmcId) {
+          const station = stationsList.find((s) => s.id === resolvedStationId)
+          if (station) resolvedOmcId = station.omcId
+        }
+
+        if (cancelled) return
+
+        setStationId(resolvedStationId)
+        if (resolvedOmcId) setOmcId(resolvedOmcId)
+
+        const step = await computeResumeStep(resolvedStationId)
+        if (!cancelled) setCurrentStep(step)
+      } catch {
+        if (!cancelled) setCurrentStep(1)
+      } finally {
+        if (!cancelled) setIsResuming(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [organization?.id])
+
+  const goTo = (step: number) => setCurrentStep(step)
+  const goNext = () => setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS))
+  const goBack = () => setCurrentStep((s) => Math.max(s - 1, 1))
+
+  if (isResuming) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="size-6 animate-spin" />
+        <p className="text-sm">{t("onboarding.resuming")}</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="bg-linear-to-b from-primary/5 via-background to-background px-4 py-10">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        <section className="flex flex-col justify-between gap-8">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
-              <Fuel className="size-3.5" />
-              <span>Step 1 of 1 · Station setup</span>
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-                Set up your first station
-              </h1>
-              <p className="max-w-xl text-sm text-muted-foreground">
-                We&apos;ll create your organization and primary fuel station.
-                This helps Fuel Flow personalize reports, pricing, and
-                permissions for your team.
-              </p>
-            </div>
-            <div className="grid gap-4 text-sm text-muted-foreground sm:grid-cols-2">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-full bg-primary/10 p-1.5 text-primary">
-                  <Building2 className="size-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">
-                    Organization profile
-                  </p>
-                  <p className="text-xs">
-                    Name and branding for invoices, dashboards, and staff
-                    access.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-full bg-primary/10 p-1.5 text-primary">
-                  <MapPin className="size-4" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">
-                    Station details
-                  </p>
-                  <p className="text-xs">
-                    Location, OMC, and contact so you can start tracking
-                    inventory.
-                  </p>
-                </div>
-              </div>
+    <div className="bg-background px-4 py-8">
+      <div className="mx-auto w-full max-w-3xl space-y-8">
+        {/* Progress bar */}
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {t("onboarding.progress", { current: currentStep, total: TOTAL_STEPS })}
+          </p>
+          <div className="hidden gap-1 sm:flex">
+            {Array.from({ length: TOTAL_STEPS }, (_, i) => {
+              const step = i + 1
+              const isComplete = step < currentStep
+              const isActive = step === currentStep
+              return (
+                <div
+                  key={step}
+                  className={cn(
+                    "h-1.5 flex-1 rounded-full transition-colors",
+                    isComplete && "bg-primary",
+                    isActive && "animate-pulse bg-primary/70",
+                    !isComplete && !isActive && "bg-muted"
+                  )}
+                />
+              )
+            })}
+          </div>
+          {/* Mobile: simple progress bar */}
+          <div className="sm:hidden">
+            <div className="h-1.5 w-full rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
+              />
             </div>
           </div>
-          <div className="hidden flex-col gap-2 text-xs text-muted-foreground sm:flex">
-            <p className="font-medium text-foreground">
-              Why we need this information
-            </p>
-            <p>
-              Your data is encrypted in transit and never shared with third
-              parties. You can edit organization and station details later from
-              your dashboard.
-            </p>
-          </div>
-        </section>
+        </div>
 
-        <section>
-          <form
-            noValidate
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-            className="space-y-6"
-          >
-            <FieldGroup>
-              <div className="space-y-1 text-center sm:text-start">
-                <h2 className="text-lg font-semibold">Organization &amp; station</h2>
-                <p className="text-xs text-muted-foreground">
-                  You can invite staff and add more stations after onboarding.
-                </p>
-              </div>
+        {/* [M12-F02-R03] Dev-bypass skip affordance — visible on every step
+            when the backend reports devBypassActive=true. Production builds
+            never show this because the backend's IsDevelopment() short-circuit
+            hard-gates the flag in C# code. */}
+        {devBypassActive && (
+          <Alert className="border-accent bg-accent/40">
+            <AlertCircle className="text-accent-foreground" />
+            <AlertTitle className="text-accent-foreground">
+              {t("onboarding.devBypass.bannerTitle")}
+            </AlertTitle>
+            <AlertAction>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/dashboard">{t("onboarding.devBypass.skipButton")}</Link>
+              </Button>
+            </AlertAction>
+          </Alert>
+        )}
 
-              <form.Field
-                name="organizationName"
-                children={(field) => (
-                  <FormTextField
-                    field={field}
-                    label="Organization name"
-                    placeholder="e.g. Fuel Flow Petroleum (Pvt) Ltd"
-                    autoComplete="organization"
-                  />
-                )}
-              />
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <form.Field
-                  name="stationName"
-                  children={(field) => (
-                    <FormTextField
-                      field={field}
-                      label="Primary station name"
-                      placeholder="e.g. FF Johar Town"
-                      autoComplete="off"
-                    />
-                  )}
-                />
-
-                <form.Field
-                  name="omcId"
-                  children={(field) => {
-                    const isInvalid =
-                      field.state.meta.isTouched &&
-                      !field.state.meta.isValid;
-                    const errorId = `${field.name}-error`;
-                    const descriptionId = `${field.name}-description`;
-
-                    return (
-                      <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>
-                          OMC (Oil Marketing Company)
-                        </FieldLabel>
-                        <Select
-                          value={field.state.value}
-                          onValueChange={(v) => field.handleChange(v)}
-                          disabled={isLoadingOmcs || isSubmitting}
-                        >
-                          <SelectTrigger
-                            id={field.name}
-                            onBlur={field.handleBlur}
-                            aria-invalid={isInvalid}
-                            aria-describedby={
-                              isInvalid ? errorId : descriptionId
-                            }
-                            className="w-full"
-                          >
-                            <SelectValue
-                              placeholder={
-                                isLoadingOmcs
-                                  ? "Loading OMCs..."
-                                  : "Select OMC"
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {omcs.map((omc) => (
-                              <SelectItem key={omc.id} value={omc.id}>
-                                {omc.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FieldDescription id={descriptionId}>
-                          Choose the OMC your station is registered with.
-                        </FieldDescription>
-                        {isInvalid && (
-                          <FieldError id={errorId} errors={field.state.meta.errors} />
-                        )}
-                      </Field>
-                    );
-                  }}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <form.Field
-                  name="address"
-                  children={(field) => (
-                    <FormTextField
-                      field={field}
-                      label="Station address (optional)"
-                      placeholder="Street, area, city"
-                      autoComplete="street-address"
-                    />
-                  )}
-                />
-                <form.Field
-                  name="phone"
-                  children={(field) => (
-                    <FormTextField
-                      field={field}
-                      label="Contact phone (optional)"
-                      type="tel"
-                      inputMode="tel"
-                      placeholder="+92XXXXXXXXXX"
-                      autoComplete="tel"
-                      description="Pakistani format: +92XXXXXXXXXX"
-                    />
-                  )}
-                />
-              </div>
-
-              <form.Field
-                name="logoUrl"
-                children={(field) => (
-                  <Field>
-                    <FieldLabel htmlFor={field.name}>
-                      Logo URL (optional)
-                    </FieldLabel>
-                    <div className="flex items-center gap-2">
-                      <FormTextField
-                        field={field}
-                        label=""
-                        placeholder="https://your-cdn.com/logo.png"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        disabled
-                        aria-label="Upload logo (coming soon)"
-                      >
-                        <UploadCloud className="size-4" />
-                      </Button>
-                    </div>
-                    <FieldDescription>
-                      Paste a public image URL for your organization logo.
-                    </FieldDescription>
-                  </Field>
-                )}
-              />
-
-              {submitError && (
-                <Alert variant="destructive" className="max-w-md">
-                  <AlertTitle>Couldn&apos;t complete onboarding</AlertTitle>
-                  <AlertDescription>{submitError}</AlertDescription>
-                </Alert>
-              )}
-
-              <Field>
-                <Button
-                  type="submit"
-                  className="w-full sm:w-auto"
-                  disabled={isSubmitting || isLoadingOmcs}
-                >
-                  {isSubmitting ? "Saving setup..." : "Finish setup"}
-                </Button>
-              </Field>
-            </FieldGroup>
-          </form>
-
-          <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-            <Phone className="size-3.5" />
-            <span>
-              Need help? Contact support and we&apos;ll onboard your stations
-              for you.
+        {/* Step header */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+              {currentStep}
             </span>
+            <h1 className="text-lg font-semibold">{t(`onboarding.steps.${currentStep}.title`)}</h1>
           </div>
-        </section>
+          <p className="text-sm text-muted-foreground">{t(`onboarding.steps.${currentStep}.description`)}</p>
+        </div>
+
+        {/* Step content */}
+        <div>
+          {currentStep === 1 && (
+            <StepOrgStation
+              onNext={(sid, oid) => {
+                setStationId(sid)
+                setOmcId(oid)
+                goTo(2)
+              }}
+            />
+          )}
+
+          {currentStep === 2 && stationId && (
+            <StepFuelTypes
+              stationId={stationId}
+              omcId={omcId ?? ""}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
+
+          {currentStep === 3 && stationId && (
+            <StepPrices stationId={stationId} onNext={goNext} onBack={goBack} />
+          )}
+
+          {currentStep === 4 && stationId && (
+            <StepTanks stationId={stationId} onNext={goNext} onBack={goBack} />
+          )}
+
+          {currentStep === 5 && stationId && (
+            <StepNozzles stationId={stationId} onNext={goNext} onBack={goBack} />
+          )}
+
+          {currentStep === 6 && stationId && (
+            <StepOperations stationId={stationId} onNext={goNext} onBack={goBack} />
+          )}
+
+          {currentStep === 7 && (
+            <StepBankAccount onNext={goNext} onBack={goBack} onSkip={goNext} />
+          )}
+
+          {currentStep === 8 && (
+            <StepInviteManager onNext={goNext} onBack={goBack} onSkip={goNext} />
+          )}
+
+          {currentStep === 9 && stationId && (
+            <StepSummary stationId={stationId} onBack={goBack} />
+          )}
+
+          {/* Fallback for missing stationId on steps 2-6, 9 */}
+          {(currentStep >= 2 && currentStep <= 6 && !stationId) ||
+          (currentStep === 9 && !stationId) ? (
+            <div className="rounded-xl border border-border p-6 text-center text-sm text-muted-foreground">
+              {t("onboarding.stationNotFound")}
+              <button
+                type="button"
+                onClick={() => goTo(1)}
+                className="ms-2 text-primary underline"
+              >
+                {t("onboarding.backToStart")}
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,6 +1,8 @@
 import { createFileRoute, Link, Outlet, redirect, useRouterState } from "@tanstack/react-router";
-import { Fuel, LayoutDashboard, LogOut } from "lucide-react";
+import { AlertCircle, Fuel, LayoutDashboard, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,11 +19,14 @@ import { useAuthStore } from "@/stores/auth-store";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: () => {
-    const { isAuthenticated, organization } = useAuthStore.getState();
+    const { isAuthenticated, organization, stations, devBypassActive } = useAuthStore.getState();
     if (!isAuthenticated) {
       throw redirect({ to: "/auth/login", search: { redirect: "/dashboard" } });
     }
-    if (!organization) {
+    // No org or setup not yet complete → back to onboarding wizard,
+    // unless [M12-F02-R02] dev bypass is active (Development-only flag,
+    // hard-gated to IHostEnvironment.IsDevelopment() on the backend).
+    if (!devBypassActive && (!organization || !stations?.[0]?.isSetupComplete)) {
       throw redirect({ to: "/onboarding" });
     }
   },
@@ -29,8 +34,15 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardLayout() {
-  const { user, logout: clearAuth } = useAuthStore();
+  const { user, stations, devBypassActive, logout: clearAuth } = useAuthStore();
   const { location } = useRouterState();
+  const { t } = useTranslation();
+
+  // [M12-F02-R04] Banner is shown only when the bypass is active AND the
+  // station hasn't completed onboarding. A fully-onboarded owner in dev
+  // mode sees no banner (per AC6).
+  const showDevBypassBanner =
+    devBypassActive && !stations?.[0]?.isSetupComplete;
 
   const handleLogout = async () => {
     try {
@@ -121,6 +133,22 @@ function DashboardLayout() {
           </div>
         </div>
       </header>
+
+      {showDevBypassBanner && (
+        <div className="border-b border-accent bg-accent/40">
+          <div className="container mx-auto px-4 py-2">
+            <Alert className="border-0 bg-transparent p-0">
+              <AlertCircle className="text-accent-foreground" />
+              <AlertTitle className="text-accent-foreground">
+                {t("dashboard.devBypass.bannerTitle")}
+              </AlertTitle>
+              <AlertDescription className="text-accent-foreground/80">
+                {t("dashboard.devBypass.bannerDescription")}
+              </AlertDescription>
+            </Alert>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1">
         <Outlet />
