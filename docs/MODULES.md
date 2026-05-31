@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-30
+**Last Updated:** 2026-05-31
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -67,7 +67,7 @@ The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that
 
 | # | ID | Title | Area |
 |---|---|---|---|
-| 1 | [M14-F01](#m14-f01--control-plane--tenant-dbcontext-split) | Per-Tenant DB architecture — Phase 1: split `AppDbContext` into `ControlPlaneDbContext` (Identity, Tenants, reference data) + `AppDbContext` (operational, per-tenant). Pure code-level refactor; same physical DB. Foundational for M14-F02..F06. | Backend |
+| 1 | [M14-F02](#m14-f02--tenant-registry--connection-resolution) | Per-Tenant DB architecture — Phase 2: `ITenantConnectionResolver` + `AddDbContextFactory<AppDbContext>` + 18-repo refactor + `UnitOfWork` saga redesign. Builds directly on the M14-F01 split that just shipped. | Backend |
 | 2 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
 | 3 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
 | 4 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
@@ -1417,7 +1417,7 @@ Shift-derived attendance (M04-F02 assignment = Present); leave types with annual
 
 ---
 
-### M14-F01 — Control Plane / Tenant DbContext Split   [Status: In Progress]
+### M14-F01 — Control Plane / Tenant DbContext Split   [Status: Done]
 
 Establish the conceptual split between control-plane data and tenant data before any infrastructure change. After F01, the application still runs against one PostgreSQL database, but the code knows which tables are platform-wide and which are tenant-scoped. This makes F02–F06 mechanical instead of architectural.
 
@@ -1425,11 +1425,11 @@ Establish the conceptual split between control-plane data and tenant data before
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M14-F01-R01 | Two EF Core contexts: `ControlPlaneDbContext` (Identity, `Tenants`, `Subscriptions`, `SubscriptionPlans`, `OMCs`, `OMCFuelTypes`, `FuelTypes`, `PhoneVerifications`, `RefreshTokens`) and `AppDbContext` (`Organizations`, `Stations`, `FuelTanks`, `FuelNozzles`, `FuelPrices`, `StationShifts`, `ShiftAssignments`, `NozzleReadings`, `FuelTankReadings`, `DipCharts`, `DipChartEntries`, `StationShiftConfigs`, `BankAccounts`, `UserStations`). Both target the same physical Postgres database in this feature; per-tenant routing arrives in [M14-F02](#m14-f02--tenant-registry--connection-resolution). | — | Planned |
-| M14-F01-R02 | Migration histories rewritten as two fresh `Initial` migrations under `server/FuelFlow.Infrastructure/Migrations/ControlPlane/` and `server/FuelFlow.Infrastructure/Migrations/Tenant/`. All 58 existing migration files deleted; dev databases wiped. Acceptable pre-launch (no production data). | — | Planned |
-| M14-F01-R03 | New `Tenant` entity in `FuelFlow.Domain.Entities` with `Id (Guid, == OrganizationId)`, `DatabaseName (string)`, `Status (TenantStatus enum: Provisioning, Active, Suspended, Deleted)`, `ProvisionedAt (DateTime)`, `DeletedAt (DateTime?)`. Plus new `TenantStatus` enum in `FuelFlow.Domain.Enums`. Configured in `ControlPlaneDbContext`. `Tenant.Id == Organization.Id` enforced at app layer. | — | Planned |
-| M14-F01-R04 | All cross-DbContext navigation properties dropped: `Organization.Owner` (was `AppUser`), `UserStation.User` (was `AppUser`), `Subscription.Organization` (was `Organization`). Replaced with plain `Guid` FK columns; cross-context referential integrity becomes app-layer concern (handlers call `ExistsAsync` on the correctly-routed repo before insert/update). | — | Planned |
-| M14-F01-R05 | Handlers rebound to use correctly-routed repositories. Identity / `Subscription` / `SubscriptionPlans` / `OMC` / `OMCFuelType` / `FuelType` / `PhoneVerification` / `RefreshToken` repositories receive `ControlPlaneDbContext`; operational repositories receive `AppDbContext`. `OnboardingCommandHandler` becomes the canonical cross-context case (still one physical DB, so `TransactionScope` over both contexts continues to work — F03 will replace this with a real saga). | — | Planned |
+| M14-F01-R01 | Two EF Core contexts: `ControlPlaneDbContext` (Identity, `Tenants`, `Subscriptions`, `SubscriptionPlans`, `OMCs`, `OMCFuelTypes`, `FuelTypes`, `PhoneVerifications`, `RefreshTokens`) and `AppDbContext` (`Organizations`, `Stations`, `FuelTanks`, `FuelNozzles`, `FuelPrices`, `StationShifts`, `ShiftAssignments`, `NozzleReadings`, `FuelTankReadings`, `DipCharts`, `DipChartEntries`, `StationShiftConfigs`, `BankAccounts`, `UserStations`). Both target the same physical Postgres database in this feature; per-tenant routing arrives in [M14-F02](#m14-f02--tenant-registry--connection-resolution). | — | Done |
+| M14-F01-R02 | Migration histories rewritten as two fresh `Initial` migrations under `server/FuelFlow.Infrastructure/Migrations/ControlPlane/` and `server/FuelFlow.Infrastructure/Migrations/Tenant/`. All 58 existing migration files deleted; dev databases wiped. Acceptable pre-launch (no production data). | — | Done |
+| M14-F01-R03 | New `Tenant` entity in `FuelFlow.Domain.Entities` with `Id (Guid, == OrganizationId)`, `DatabaseName (string)`, `Status (TenantStatus enum: Provisioning, Active, Suspended, Deleted)`, `ProvisionedAt (DateTime?)`, `DeletedAt (DateTime?)`. Plus new `TenantStatus` enum in `FuelFlow.Domain.Enums`. Configured in `ControlPlaneDbContext`. `Tenant.Id == Organization.Id` enforced at app layer. | — | Done |
+| M14-F01-R04 | Identity-side cross-context navigation properties dropped (`Organization.Owner`, `UserStation.User`, `OMC.Stations` reverse, `FuelType.Station`, `AppUserConfiguration.HasOne<Organization>()` + the `HasOne<AppUser>()` FK declarations on `StationShift`, `FuelTankReading`, `NozzleReadings`, `ShiftAssignment`). Replaced with plain `Guid` FK columns; cross-context referential integrity becomes app-layer concern. The `FuelTank.FuelType`, `Station.OMC`, `FuelPrices.FuelType` navs were retained as F01 shims (registered in `AppDbContext.OnModelCreating` with `ExcludeFromMigrations`) to keep existing `.Include()` queries working in F01; M14-F03 will remove or replicate them. | — | Done |
+| M14-F01-R05 | Handlers rebound to use correctly-routed repositories — 7 control-plane-bound (RefreshToken, PhoneVerification, Subscription, SubscriptionPlan, OMC, OMCFuelType, FuelType) and 11 tenant-bound. `OnboardingCommandHandler` becomes the canonical cross-context case (still one physical DB in F01, so `TransactionScope` continues to work). UnitOfWork redesigned to flush both contexts. F03 replaces this with a real saga. | — | Done |
 
 **Acceptance Criteria:**
 - **AC1** Given a fresh empty Postgres database, When `dotnet ef database update --context ControlPlaneDbContext` then `--context AppDbContext` are run, Then both `Initial` migrations apply cleanly with zero errors.
