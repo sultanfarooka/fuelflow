@@ -120,10 +120,16 @@ test.describe("M14-F01 — Control Plane / Tenant DbContext Split (smoke)", () =
     // us somewhere unexpected.
     await seedAuthState(page, { devBypassActive: true, isSetupComplete: true })
     await page.goto(`${BASE_URL}/dashboard`)
+    // The negative assertion is the strong M14-F01 signal: if the data-layer
+    // refactor crashed any code on the dashboard route guard's path (auth-store
+    // hydration, organization lookup, station list), the page would redirect
+    // to /auth/login. Staying on /dashboard proves the guard accepted the
+    // seeded state and the shell mounted cleanly. The page <main> landmark
+    // is mobile-viewport-friendly (M12-F02's R02 uses an Organization sidebar
+    // link assertion that's behind a hamburger on mobile-chrome — we avoid
+    // that here so M14-F01 doesn't inherit M12-F02's known mobile flakiness).
     await expect(page).toHaveURL(/\/dashboard\/?$/)
-    // The dashboard shell's "Organization" nav link is a stable landmark
-    // shared with M12-F02's R02 test.
-    await expect(page.getByRole("link", { name: /Organization/i })).toBeVisible()
+    await expect(page.locator("main")).toBeVisible()
   })
 
   test("M14_F01_R04_LoginPageRendersWithoutCrash", async ({ page }) => {
