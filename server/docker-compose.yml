@@ -17,7 +17,7 @@ services:
     container_name: fuelflow-db
     #restart: unless-stopped
     ports:
-      - "5432:5432"          # host:container
+      - "5433:5432"          # host:container
     environment:
       POSTGRES_USER: fuelflow
       POSTGRES_PASSWORD: fuelflow123
