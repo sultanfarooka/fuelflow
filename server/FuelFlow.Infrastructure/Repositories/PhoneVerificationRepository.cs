@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Enums;
@@ -12,9 +12,9 @@ namespace FuelFlow.Infrastructure.Repositories;
 /// </summary>
 public class PhoneVerificationRepository : IPhoneVerificationRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly ControlPlaneDbContext _dbContext;
 
-    public PhoneVerificationRepository(AppDbContext dbContext)
+    public PhoneVerificationRepository(ControlPlaneDbContext dbContext)
     {
         _dbContext = dbContext;
     }

@@ -1,12 +1,12 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Infrastructure.Data;
 
 public class OMCRepository : IOMCRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly ControlPlaneDbContext _dbContext;
 
-    public OMCRepository(AppDbContext dbContext)
+    public OMCRepository(ControlPlaneDbContext dbContext)
     {
         _dbContext = dbContext;
     }

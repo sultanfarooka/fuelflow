@@ -1,45 +1,47 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Entities.StationEntities;
-using FuelFlow.Infrastructure.Identity;
 
 namespace FuelFlow.Infrastructure.Data;
 
 /// <summary>
-/// The main database context — the bridge between C# and PostgreSQL.
-/// 
-/// WHY extend IdentityDbContext instead of plain DbContext?
-/// - IdentityDbContext automatically adds tables for Identity:
-///   AspNetUsers, AspNetRoles, AspNetUserRoles, AspNetUserClaims, etc.
-/// - We get user management, password hashing, role assignment for FREE
-/// - The generic parameters tell Identity to use our custom AppUser/AppRole with Guid keys
-/// 
-/// HOW it works:
-/// - DbSet<T> properties define which entities become database tables
-/// - OnModelCreating() configures HOW entities map to tables (names, relationships, indexes)
-/// - EF Core reads these configs and generates SQL migrations
+/// The per-tenant operational database context (M14-F01).
+///
+/// HOLDS: <see cref="Organization"/> + every operational table that belongs to one
+/// tenant's filling-station business — Stations, FuelTanks, FuelNozzles, FuelPrices,
+/// StationShifts, ShiftAssignments, NozzleReadings, FuelTankReadings, DipChart,
+/// DipChartEntry, StationShiftConfig, BankAccount, and the UserStation junction.
+///
+/// DOES NOT EXTEND IdentityDbContext (M14-F01 change): Identity tables and platform
+/// reference data moved to <see cref="ControlPlaneDbContext"/>. The shared physical
+/// Postgres database in F01 still contains both contexts' tables, but each context's
+/// model owns its own subset.
+///
+/// CROSS-CONTEXT REFERENCES IN F01:
+/// - <see cref="Organization.OwnerId"/> and <see cref="UserStation.UserId"/> point at
+///   AspNetUsers rows in ControlPlaneDbContext but are stored as plain Guid columns
+///   (no FK constraint at the EF model level). Handlers enforce existence via the
+///   control-plane AppUser repository.
+/// - <see cref="FuelTank.FuelType"/>, <see cref="Station.OMC"/>, and
+///   <see cref="FuelPrices.FuelType"/> still have EF navigations into control-plane
+///   entities. This works in F01 because both contexts target the same physical DB.
+///   <b>F03 must remove these or replicate FuelType/OMC into tenant DBs.</b> The
+///   FuelType, OMC, and OMCFuelTypes configurations are applied here with
+///   <c>ExcludeFromMigrations</c> so AppDbContext can resolve the navs at query time
+///   without trying to own those tables' migrations (ControlPlaneDbContext owns them).
 /// </summary>
-public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
+public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
 
-    // Our business tables (Identity tables like AspNetUsers are added automatically)
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Station> Stations => Set<Station>();
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public DbSet<PhoneVerification> PhoneVerifications => Set<PhoneVerification>();
     public DbSet<UserStation> UserStations => Set<UserStation>();
-    public DbSet<Subscription> Subscriptions => Set<Subscription>();
-    public DbSet<SubscriptionPlans> SubscriptionPlans => Set<SubscriptionPlans>();
     public DbSet<FuelTank> FuelTanks => Set<FuelTank>();
-    public DbSet<FuelType> FuelTypes => Set<FuelType>();
-    public DbSet<OMC> OMCs => Set<OMC>();
-    public DbSet<OMCFuelTypes> OMCFuelTypes => Set<OMCFuelTypes>();
-    public DbSet<FuelPrices> FuelPrices => Set<FuelPrices>();
     public DbSet<FuelNozzle> FuelNozzles => Set<FuelNozzle>();
+    public DbSet<FuelPrices> FuelPrices => Set<FuelPrices>();
     public DbSet<StationShift> StationShifts => Set<StationShift>();
     public DbSet<ShiftAssignment> ShiftAssignments => Set<ShiftAssignment>();
     public DbSet<NozzleReadings> NozzleReadings => Set<NozzleReadings>();
@@ -48,22 +50,36 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
     public DbSet<DipChartEntry> DipChartEntries => Set<DipChartEntry>();
     public DbSet<StationShiftConfig> StationShiftConfigs => Set<StationShiftConfig>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
-
-    // Note: We do NOT add DbSet<User> (Domain entity) here.
-    // Identity's AppUser IS our user table. The Domain User entity
-    // is a business concept; AppUser is the persisted version.
+    // Removed in M14-F01 (moved to ControlPlaneDbContext): RefreshTokens,
+    // PhoneVerifications, Subscriptions, SubscriptionPlans, OMCs, OMCFuelTypes,
+    // FuelTypes. Identity tables (AspNetUsers etc.) likewise no longer live in
+    // this context — see ControlPlaneDbContext.
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // IMPORTANT: Call base first — this configures all Identity tables
         base.OnModelCreating(modelBuilder);
 
-        // Apply all entity configurations from this assembly
-        // (reads all IEntityTypeConfiguration<T> classes from Data/Configurations/)
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        // Apply only the per-tenant configurations.
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(AppDbContext).Assembly,
+            t => t.Namespace == "FuelFlow.Infrastructure.Data.Configurations.PerTenant");
 
-        // Domain User is discovered via other entities; AssignedStations is populated in app layer from user_stations junction
-        modelBuilder.Entity<User>().Ignore(u => u.AssignedStations);
-        modelBuilder.Entity<User>().Ignore(u => u.Subscriptions);
+        // M14-F01 cross-context shim: FuelTank.FuelType, Station.OMC, and
+        // FuelPrices.FuelType navigation properties still target control-plane
+        // entities. To keep `.Include(f => f.FuelType)`-style queries working in
+        // F01 (shared physical DB), apply the relevant configurations here too —
+        // but mark the tables as ExcludeFromMigrations so AppDbContext does not
+        // try to manage their schema (ControlPlaneDbContext owns those migrations).
+        //
+        // TODO M14-F03: when the physical DBs split, either remove these navs
+        // entirely (Phase 6 handler rewrites do per-row lookups against the
+        // control-plane repository) or replicate FuelType/OMC/OMCFuelTypes
+        // into each tenant DB at provisioning time.
+        modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.FuelTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.OMCConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.OMCFuelTypeConfiguration());
+        modelBuilder.Entity<FuelType>().ToTable("fuel_types", t => t.ExcludeFromMigrations());
+        modelBuilder.Entity<OMC>().ToTable("omcs", t => t.ExcludeFromMigrations());
+        modelBuilder.Entity<OMCFuelTypes>().ToTable("omc_fuel_types", t => t.ExcludeFromMigrations());
     }
 }
