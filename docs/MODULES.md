@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-31
+**Last Updated:** 2026-06-01
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -48,7 +48,7 @@
 | [M02](#m02--fuel-inventory--tank-control) | Fuel Inventory & Tank Control | In Progress | INV-* |
 | [M03](#m03--pump--nozzle-operations) | Pump & Nozzle Operations | In Progress | — |
 | [M04](#m04--shift-management) | Shift Management | Planned | SH-* |
-| [M05](#m05--finance--accounts) | Finance & Accounts | Planned | CR-* |
+| [M05](#m05--finance--accounts) | Finance & Accounts | Planned | — |
 | [M06](#m06--pricing--rate-management) | Pricing & Rate Management | Planned | PR-* |
 | [M07](#m07--reporting--analytics) | Reporting & Analytics | In Progress | — |
 | [M08](#m08--settings--configuration) | Settings & Configuration | In Progress | — |
@@ -58,6 +58,7 @@
 | [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | In Progress | — |
 | [M13](#m13--staff--payroll) | Staff & Payroll | Planned | — |
 | [M14](#m14--per-tenant-database-architecture) | Per-Tenant Database Architecture | Planned | — |
+| [M15](#m15--credit-customer-management) | Credit Customer Management | Planned | CR-* |
 
 ---
 
@@ -538,28 +539,21 @@ Capture cash denominations and payment-method breakdown. Configurable: daily ban
 
 ## M05 — Finance & Accounts
 
-**Purpose:** Manage credit customers (udhaar receivables), supplier payments (payables), daily expenses, and bank accounts.
+**Purpose:** Single-source-of-truth financial ledger (F11) plus the features that read and write it: account heads (F09), daily expenses (F03), other income (F10), bank accounts (F04), cash book view (F05), supplier invoices (F06), supplier payments (F02), bank reconciliation (F07), opening balances (F08), and AR summary (F01). Credit customer management lives in [M15](#m15--credit-customer-management). Every rupee in or out is a row in `FinancialEntries` (F11) — all other features are reads or structured writes on that one table.
 
-### M05-F01 — Credit Customers (Udhaar / Receivables)   [Status: Planned]
+### M05-F01 — Accounts Receivable (AR) Summary   [Status: Planned]
 
-Three customer types (Individual, Fleet/Corporate, Government). Configurable credit limit, billing cycle, partial payments. No interest/late fee.
+Aggregate financial view of total credit customer exposure. All customer profiles, ledgers, payment recording, and statements are managed in [M15 — Credit Customer Management](#m15--credit-customer-management). This feature exposes the AR total and aging buckets that feed M05 financial reports and M07-F03 P&L.
+
+> _Note: Business rules previously registered as M05-F01-R01 through R09 (legacy CR-001 to CR-004) have been superseded by M15. Appendix A updated accordingly._
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M05-F01-R01 | Credit sale blocked if customer balance is at or above credit limit | CR-001 | Planned |
-| M05-F01-R02 | Partial payments reduce outstanding balance | CR-002 | Planned |
-| M05-F01-R03 | Customer balance = Sum(sales) − Sum(payments) | CR-003 | Planned |
-| M05-F01-R04 | Aging calculated from transaction date | CR-004 | Planned |
-| M05-F01-R05 | Customer types: Individual, Fleet/Corporate, Government | — | Planned |
-| M05-F01-R06 | Credit limit configurable per customer | — | Planned |
-| M05-F01-R07 | Billing cycle configurable per customer (weekly/fortnightly/monthly/custom) | — | Planned |
-| M05-F01-R08 | Identification methods: physical slip + driver signature; future: plastic card / vehicle lookup | — | Planned |
-| M05-F01-R09 | No interest or late fees applied | — | Planned |
-
-**Acceptance Criteria:**
-- **AC1** Given a customer at credit limit, When a credit sale is attempted, Then API returns `409 Conflict` with current balance and limit in the response.
+| M05-F01-R01 | Total AR outstanding = Σ(all active credit customer balances from [M15-F02](#m15-f02--credit-sales-ledger-party-account)) | CR-003 | Planned |
+| M05-F01-R02 | AR aging buckets (current / 1–30 days / 31–60 days / 61–90 days / 90+ days) aggregated from [M15-F04-R05](#m15-f04--statements--reports); feeds [M07-F03-R02](#m07-f03--financial-reports) Receivables Aging | CR-004 | Planned |
+| M05-F01-R03 | Total credit sales income aggregated from M15-F02 transactions; feeds P&L income accounts via [M05-F09](#m05-f09--account-head-management) | — | Planned |
 
 ---
 
@@ -574,34 +568,254 @@ Supplier types: OMC, Carriage Contractor, Lubricant Supplier, Utility, Custom. C
 | M05-F02-R01 | Supplier types: OMC, Carriage Contractor, Lubricant Supplier, Utility, Other | — | Planned |
 | M05-F02-R02 | Payment terms configurable per supplier (advance / on delivery / credit) | — | Planned |
 | M05-F02-R03 | Payment proof (receipt/voucher/bank slip image) attached to each payment | — | Planned |
+| M05-F02-R04 | Each payment is allocated to one or more supplier invoices ([M05-F06](#m05-f06--supplier-invoice--purchase-bill-entry)); partial allocation supported; unallocated payments are flagged | — | Planned |
 
 ---
 
 ### M05-F03 — Daily Expenses   [Status: Planned]
 
-Categorized expenses. Any user can add. No approval workflow. No petty cash tracking.
+Entry point for recording operating expenses. Writes one `FinancialEntries` row (EntryType=Expense) per entry — no separate expense table. Expense categories are account heads from [M05-F09](#m05-f09--account-head-management).
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M05-F03-R01 | Default categories: Salaries, Electricity, Generator fuel, Repairs, Staff tea/food, Stationery | — | Planned |
-| M05-F03-R02 | Custom expense categories can be added per organization | — | Planned |
+| M05-F03-R01 | Default expense account heads (seeded via [M05-F09-R03](#m05-f09--account-head-management)): Generator Fuel, Electricity, Repairs & Maintenance, Staff Food/Tea, Stationery, Transport, Miscellaneous | — | Planned |
+| M05-F03-R02 | Custom expense heads managed via [M05-F09-R04](#m05-f09--account-head-management) | — | Planned |
 | M05-F03-R03 | Any user role can add an expense entry | — | Planned |
 | M05-F03-R04 | No approval workflow required | — | Planned |
+| M05-F03-R05 | Each expense entry writes one row to [M05-F11 FinancialEntries](#m05-f11--financial-ledger-unified-entry-table) with `EntryType=Expense`, the selected `AccountHeadId`, `Amount` (negative), and `PaymentMethod` (Cash or Bank) | — | Planned |
+| M05-F03-R06 | Each expense entry must reference an expense account head (type=EXPENSE) from [M05-F09](#m05-f09--account-head-management) | — | Planned |
 
 ---
 
 ### M05-F04 — Bank Accounts   [Status: Planned]
 
-Track deposits across multiple bank accounts; assign accounts to specific purposes.
+Bank account master records (name, purpose tag). Running balance is **derived** from [M05-F11 FinancialEntries](#m05-f11--financial-ledger-unified-entry-table) — `SUM(Amount) WHERE BankAccountId = X`; not stored on the account entity. Deposit and withdrawal entries are rows in FinancialEntries, not a separate transaction table.
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M05-F04-R01 | Multiple bank accounts supported per organization | — | Planned |
+| M05-F04-R01 | Multiple bank accounts supported per organization; each has a name and optional purpose tag (e.g., OMC payments, salaries) | — | Planned |
 | M05-F04-R02 | Accounts can be tagged for specific purposes (e.g., OMC payments, salaries) | — | Planned |
+| M05-F04-R03 | Running balance = `SUM(Amount) WHERE BankAccountId = X` in [M05-F11](#m05-f11--financial-ledger-unified-entry-table); computed on-read, never stored | — | Planned |
+| M05-F04-R04 | Bank deposit (cash → bank): two linked `FinancialEntries` rows sharing a `TransactionGroupId` — one `PaymentMethod=Cash, Amount=-X` (cash out) and one `PaymentMethod=Bank, BankAccountId=Y, Amount=+X` (bank in) | — | Planned |
+| M05-F04-R05 | Bank withdrawal / outgoing payment: one `FinancialEntries` row with `PaymentMethod=Bank, BankAccountId=Y, Amount=-X` | — | Planned |
+
+---
+
+### M05-F05 — Cash Book & Daily Cash Position   [Status: Planned]
+
+> _Discovery (2026-06-01): self-identified accounting gap — own analysis of the full financial lifecycle of a filling station · outcome = Owner sees real-time cash-in-hand per station and can trace every rupee from shift collection through expense payment to bank deposit · maps to ProjectOverView §5 Finance & Accounts; prerequisite for accurate M07-F03 Cash Flow reporting · cost-of-not-building: no answer to "how much cash do I have right now" — the most basic daily question a station owner asks; M07-F03 financial reports have no cash-flow data_
+> _Revised (2026-06-01): Cash Book is a **derived view** over [M05-F11 FinancialEntries](#m05-f11--financial-ledger-unified-entry-table) — not a separate table. No new table is created by this feature; it delivers the query, the API endpoint, and the UI that presents the cash view._
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=yes; notification-trigger=no; money-touch=none; shift-lifecycle-touch=close
+
+**Derived view** over [M05-F11](#m05-f11--financial-ledger-unified-entry-table): filters `FinancialEntries` to rows where `PaymentMethod ∈ {Cash, Card, Digital}`, ordered by date, with running balance computed in-app. No separate table. Supports both daily-deposit and safe-storage operating models (per M04-F06-R03).
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M05-F05-R01 | Cash Book records three entry types: RECEIPT (cash in), PAYMENT (cash out), TRANSFER (cash deposited to bank) | — | Planned |
+| M05-F05-R02 | On shift close, a RECEIPT entry is auto-created for the net cash collected per shift (sourced from [M04-F05-R01](#m04-f05--sales--shortage-settlement)) | — | Planned |
+| M05-F05-R03 | Cash expenses paid in cash ([M05-F03-R05](#m05-f03--daily-expenses)) auto-create a PAYMENT entry | — | Planned |
+| M05-F05-R04 | Cash-to-bank deposit creates a TRANSFER entry: Cash Book balance decreases by the deposit amount; the linked bank account balance increases ([M05-F04-R04](#m05-f04--bank-accounts)) | — | Planned |
+| M05-F05-R05 | Cash Book shows a real-time running cash-in-hand balance per station; each entry records the before/after balance | — | Planned |
+| M05-F05-R06 | Owner views consolidated cash-in-hand across all stations; Managers see only their assigned station(s) | — | Planned |
+| M05-F05-R07 | Manual Cash Book entry allowed for corrections and opening balance initialization ([M05-F08-R04](#m05-f08--opening--migration-balances)); requires reason; written to audit trail ([M01-F08](#m01-f08--audit-trail)) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a shift closes with Rs. 50,000 cash collected, When shift close is confirmed, Then a RECEIPT entry of Rs. 50,000 auto-appears in the Cash Book and cash-in-hand balance increases by Rs. 50,000.
+- **AC2** Given a cash expense of Rs. 1,500 is saved with payment method = Cash, When saved, Then a PAYMENT entry is auto-created and cash-in-hand decreases by Rs. 1,500.
+- **AC3** Given the Owner records a bank deposit of Rs. 40,000, When confirmed, Then Cash Book balance decreases by Rs. 40,000 and the linked bank account balance ([M05-F04-R03](#m05-f04--bank-accounts)) increases by Rs. 40,000.
+- **AC4** Given a station with opening balance Rs. 10,000 and day's receipts Rs. 80,000 and payments Rs. 20,000, When the daily Cash Book is viewed, Then closing balance = Rs. 70,000.
+
+---
+
+### M05-F06 — Supplier Invoice & Purchase Bill Entry   [Status: Planned]
+
+> _Discovery (2026-06-01): self-identified accounting gap — own analysis · outcome = AP balance is known before payment (not just after), enabling accurate payables reporting (M07-F03-R03) and due-date tracking · maps to ProjectOverView §5.2 Supplier Payments · cost-of-not-building: M05-F02 payments have nothing to allocate against; what the station owes to suppliers is invisible until it is paid — no advance warning on cash needed_
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=yes; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+Captures supplier bills at invoice-receipt time, before payment. Creates the AP liability that M05-F02 payments are then allocated against. Auto-drafts invoices from confirmed fuel tanker deliveries (M02-F06).
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M05-F06-R01 | Invoice captures: supplier ([M05-F02-R01](#m05-f02--supplier-payments-payables)), invoice number, invoice date, due date, line items (description, qty, unit price, amount), total amount, payment terms | — | Planned |
+| M05-F06-R02 | Confirmed fuel tanker delivery ([M02-F06](#m02-f06--fuel-receiving-tanker-delivery)) auto-generates a draft invoice pre-filled with supplier, quantity, unit price, and delivery reference; Owner or Manager confirms to post the payable | — | Planned |
+| M05-F06-R03 | Non-delivery invoices (utilities, lubricants, services) entered manually by Owner or Manager | — | Planned |
+| M05-F06-R04 | Invoice status lifecycle: Draft → Confirmed → Partially Paid → Paid (auto-computed from payments allocated via [M05-F02-R04](#m05-f02--supplier-payments-payables)); Overdue when past due date with remaining balance > 0 | — | Planned |
+| M05-F06-R05 | Outstanding AP balance per supplier = Σ(confirmed invoice amounts) − Σ(payments allocated to those invoices) | — | Planned |
+| M05-F06-R06 | Invoice creation and confirmation logged to audit trail ([M01-F08](#m01-f08--audit-trail)) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a fuel delivery of 10,000 L at Rs. 280/L is confirmed in [M02-F06](#m02-f06--fuel-receiving-tanker-delivery), When saved, Then a draft invoice of Rs. 2,800,000 is auto-generated for the linked OMC supplier.
+- **AC2** Given a confirmed invoice of Rs. 500,000 with Rs. 200,000 paid and allocated, When the supplier's AP is viewed, Then outstanding balance = Rs. 300,000 and invoice status = Partially Paid.
+- **AC3** Given an invoice's due date passes with Rs. 50,000 outstanding, When the AP view loads, Then the invoice is flagged Overdue with days-past-due shown.
+- **AC4** Given a manually entered electricity bill of Rs. 8,000 is confirmed, When added, Then total outstanding AP increases by Rs. 8,000.
+
+---
+
+### M05-F07 — Bank Reconciliation   [Status: Planned]
+
+> _Discovery (2026-06-01): self-identified accounting gap — own analysis · outcome = Owner can periodically verify that system bank balances match the bank's official statement, surfacing missed charges, unrecorded credits, and deposits in transit · maps to ProjectOverView §5.4 Bank Accounts · cost-of-not-building: system bank balance drifts silently from actual balance; errors and unrecorded charges go undetected; financial reports are unreliable_
+
+**Tags:** tenant-scope=per-organization; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=yes; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+Periodic matching of system deposit/withdrawal entries ([M05-F04](#m05-f04--bank-accounts)) against the bank's official statement. Produces a reconciled closing balance and surfaces two classes of unreconciled items: outstanding system entries and unrecorded bank entries.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M05-F07-R01 | Bank statement entries entered manually (row by row) or uploaded as CSV; each entry: date, description, debit/credit amount | — | Planned |
+| M05-F07-R02 | Reconciliation matches system entries ([M05-F04-R04](#m05-f04--bank-accounts), [M05-F04-R05](#m05-f04--bank-accounts)) against imported statement entries; matched pairs are marked "reconciled" | — | Planned |
+| M05-F07-R03 | Unreconciled items listed in two groups: (a) system entries not on the statement (deposits in transit, outstanding cheques); (b) statement entries not in the system (bank charges, direct credits) with a shortcut to add the missing system entry | — | Planned |
+| M05-F07-R04 | Reconciliation saved as-of a cutoff date; next reconciliation session opens from the prior session's reconciled closing balance | — | Planned |
+| M05-F07-R05 | Only Owner can finalize a reconciliation; Manager can view but not finalize | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given the system has 5 deposit entries and the bank statement matches 4 of them, When reconciliation is run, Then 4 pairs are marked reconciled and 1 deposit appears in group (a) as "outstanding — not on statement yet."
+- **AC2** Given the bank statement has a service charge not in the system, When reconciliation runs, Then it appears in group (b) with an "Add to system" shortcut to create a withdrawal entry.
+- **AC3** Given a finalized reconciliation as of 2026-05-31, When a June reconciliation is opened, Then opening balance = May's reconciled closing balance.
+
+---
+
+### M05-F08 — Opening / Migration Balances   [Status: Planned]
+
+> _Discovery (2026-06-01): self-identified accounting gap — own analysis · outcome = owners migrating from manual records start with accurate AR, AP, cash, and bank figures so all subsequent calculations and reports are correct from day one · maps to ProjectOverView §5 Finance & Accounts (onboarding context); relates to M12-F01 onboarding wizard as a potential optional post-wizard step · cost-of-not-building: any business with prior history produces incorrect financial reports and receivables aging from day one; adoption blocked for existing stations_
+
+**Tags:** tenant-scope=per-organization; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=yes; notification-trigger=no; money-touch=credit; shift-lifecycle-touch=none
+
+One-time entry of financial state as of a chosen cutover date. Seeds AR per credit customer ([M05-F01](#m05-f01--credit-customers-udhaar--receivables)), AP per supplier ([M05-F06](#m05-f06--supplier-invoice--purchase-bill-entry)), cash-in-hand per station ([M05-F05](#m05-f05--cash-book--daily-cash-position)), and bank balance per account ([M05-F04](#m05-f04--bank-accounts)) so all subsequent transactions build on accurate opening figures.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M05-F08-R01 | Owner sets a cutover date; all opening entries are timestamped at this date and distinguished as "opening balance" entry type in every ledger view | — | Planned |
+| M05-F08-R02 | Opening AR per credit customer: creates a synthetic "opening balance" transaction in the customer's ledger ([M05-F01](#m05-f01--credit-customers-udhaar--receivables)) equal to the amount outstanding as of cutover date | — | Planned |
+| M05-F08-R03 | Opening AP per supplier: creates a synthetic "opening balance" invoice in [M05-F06](#m05-f06--supplier-invoice--purchase-bill-entry) | — | Planned |
+| M05-F08-R04 | Opening cash-in-hand per station: seeds the Cash Book opening balance via [M05-F05-R07](#m05-f05--cash-book--daily-cash-position) | — | Planned |
+| M05-F08-R05 | Opening bank balance per account: seeds the running balance ([M05-F04-R03](#m05-f04--bank-accounts)) | — | Planned |
+| M05-F08-R06 | Opening balance entry is Owner-only; requires explicit confirmation before committing; clearly labelled as "opening balance" across all ledger and report views | — | Planned |
+| M05-F08-R07 | Opening balances can be amended within 30 days of the cutover date with Owner confirmation; after 30 days, corrections require a manual adjusting entry (M05-F05-R07 for cash; M05-F06 for AP; direct customer ledger correction for AR) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given the Owner sets cutover 2026-06-01 and enters Rs. 15,000 opening AR for Customer A, When saved, Then Customer A's ledger shows an "opening balance" transaction on 2026-06-01 and their balance starts at Rs. 15,000.
+- **AC2** Given Rs. 50,000 opening cash-in-hand for Station 1, When confirmed, Then Cash Book opening balance for Station 1 = Rs. 50,000.
+- **AC3** Given opening balances committed 2026-06-01, When the Owner amends AR for Customer A on 2026-06-15 (<30 days), Then amendment is allowed with explicit confirmation prompt.
+- **AC4** Given opening balances committed 2026-06-01, When amendment is attempted on 2026-07-10 (>30 days), Then direct amendment is blocked and the system prompts to create an adjusting entry instead.
+
+---
+
+### M05-F09 — Account Head Management   [Status: In Progress]
+
+> _Discovery (2026-06-01): self-identified gap — income and expense entries need formal categorization for P&L reporting (M07-F03); M05-F03 had informal categories only on the expense side; no income heads existed anywhere in the system · outcome = every rupee in or out is labelled with an account head so P&L can be produced by head; fuel-type income heads auto-seeded from onboarding fuel selection · cost-of-not-building: P&L report has no category breakdown; M05-F10 and M05-F03 have no heads to reference; expenses are uncategorized_
+
+**Tags:** tenant-scope=per-organization; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=no; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+Unified registry of income and expense account heads per organization. Referenced by all financial entries (M05-F03 expenses, M05-F10 other income) for categorization and P&L roll-up. Fuel-type income heads auto-seeded from active fuel types at onboarding.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M05-F09-R01 | Each account head has: name, type (INCOME / EXPENSE), optional description, active status; scoped per organization | — | Planned |
+| M05-F09-R02 | Fuel-sale income heads auto-seeded per active fuel type during onboarding ([M12-F01](#m12-f01--onboarding-wizard)): `Fuel Sales [FuelType] (Cash/Card)` and `Credit Sales [FuelType]`; system-managed — can be renamed but not deleted | — | Planned |
+| M05-F09-R03 | Default expense heads seeded on org creation: Generator Fuel, Electricity, Repairs & Maintenance, Staff Food/Tea, Stationery, Transport, Miscellaneous; supersedes the informal category list in [M05-F03-R01](#m05-f03--daily-expenses) | — | Planned |
+| M05-F09-R04 | Owner or Manager can add custom income or expense heads at any time | — | Planned |
+| M05-F09-R05 | An account head with no transactions can be deactivated (soft-delete); one with existing transactions can only be renamed, not deactivated | — | Planned |
+| M05-F09-R06 | All financial entry forms that require a head (M05-F03, M05-F10) filter the picker to the matching type (INCOME or EXPENSE) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a new organization completes onboarding with PMG and HSD active, When seeding completes, Then four system income heads exist: `Fuel Sales PMG (Cash/Card)`, `Credit Sales PMG`, `Fuel Sales HSD (Cash/Card)`, `Credit Sales HSD`.
+- **AC2** Given an expense head has 10 existing entries, When deactivation is attempted, Then the system blocks it with a "has existing transactions" message.
+- **AC3** Given a custom INCOME head "Tyre Shop Rent" is created, When saved, Then it is available in the M05-F10 income picker and the M07-F03 P&L income section.
+
+---
+
+### M05-F10 — Other Income Recording   [Status: Planned]
+
+> _Discovery (2026-06-01): self-identified gap — no way to record non-fuel, non-shift income (shop rent, washing bay, etc.); without this the P&L income side shows only fuel sales; stations that earn from on-premises shops have no way to capture that income · cost-of-not-building: P&L understates total income; owner cannot see true profitability_
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=yes; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+Entry point for recording non-fuel, non-shift income. Writes one `FinancialEntries` row (EntryType=OtherIncome) — no separate table. The Cash Book and Bank balance update automatically because they are derived views over [M05-F11](#m05-f11--financial-ledger-unified-entry-table).
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M05-F10-R01 | Entry captures: income account head (INCOME type from [M05-F09](#m05-f09--account-head-management)), amount, date, description, receipt method (Cash / Bank) | — | Planned |
+| M05-F10-R02 | Writes one row to [M05-F11 FinancialEntries](#m05-f11--financial-ledger-unified-entry-table): `EntryType=OtherIncome`, `AccountHeadId` (INCOME type), `Amount` (positive), `PaymentMethod`, `BankAccountId?` | — | Planned |
+| M05-F10-R03 | Because Cash Book and Bank Balance are derived from M05-F11, no secondary write is needed — the Cash / Bank views update automatically | — | Planned |
+| M05-F10-R04 | Entries appear in P&L report ([M07-F03-R01](#m07-f03--financial-reports)) under the selected income head | — | Planned |
+| M05-F10-R05 | Only Owner and Manager can record other income | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a "Tyre Shop Rent" cash entry of Rs. 8,000, When saved, Then one `FinancialEntries` row exists with `EntryType=OtherIncome`, `PaymentMethod=Cash`, `Amount=+8,000`; the Cash Book running balance increases by Rs. 8,000 immediately.
+- **AC2** Given other income via bank transfer, When saved, Then `PaymentMethod=Bank`, `BankAccountId` set; Bank Account balance increases by the amount.
+
+---
+
+### M05-F11 — Financial Ledger (Unified Entry Table)   [Status: Planned]
+
+> _Discovery (2026-06-01): design decision — rather than separate transaction tables per feature (Cash Book, Daily Expenses, Other Income, Customer Ledger, Supplier Payments), a single `FinancialEntries` table becomes the authoritative record of every rupee in and out; all other M05 / M15 features are structured reads or writes on this table · outcome = P&L, Cash Book, Bank Balance, Customer Balance, and any future report all query one source; no cross-table joins to reconstruct financial state · cost-of-not-building: each feature creates its own table and the P&L must stitch them together; Customer Balance and Cash Position require queries across four modules_
+
+**Tags:** tenant-scope=per-organization; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=yes; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+Single `FinancialEntries` table that all financial events write to. Every row is one monetary event with a mandatory amount and date, an optional account head (for P&L categorization), and optional dimension columns (customer, vehicle, supplier, shift, bank account) that are populated only when relevant. Features such as Cash Book (F05) and Bank Account balance (F04) are **derived views** over this table, not separate stores.
+
+**Entry types:**
+
+| EntryType | AccountHeadId | P&L? | Key dimensions |
+|---|---|---|---|
+| `FuelSaleCash` | Fuel Sales [type] (Cash/Card) | ✓ Income | StationId, ShiftId |
+| `FuelSaleCredit` | Credit Sales [type] | ✓ Income | CustomerId, VehicleId?, ShiftId |
+| `CustomerPayment` | null — balance-sheet movement | ✗ | CustomerId |
+| `Expense` | Expense head (M05-F09) | ✓ Expense | StationId, SupplierId? |
+| `OtherIncome` | Income head (M05-F09) | ✓ Income | StationId |
+| `SupplierPayment` | Fuel Purchase Cost / relevant head | ✓ Expense | SupplierId, InvoiceId |
+| `SalaryPayment` | Salaries (expense head) | ✓ Expense | EmployeeId |
+| `BankDeposit` | null — internal transfer | ✗ | BankAccountId; paired via TransactionGroupId |
+| `OpeningBalance` | null or specific head | ✗ | CustomerId? / SupplierId? |
+| `ManualAdjustment` | head of corrected entry | ✓ | requires reason; audit-logged |
+
+**Derived views:**
+
+| View | How derived from FinancialEntries |
+|---|---|
+| Cash Book (F05) | `WHERE PaymentMethod IN (Cash, Card, Digital) ORDER BY Date` |
+| Bank Account balance (F04) | `SUM(Amount) WHERE BankAccountId = X` |
+| Customer balance (M15) | `SUM(Amount) WHERE CustomerId = X` |
+| P&L income (M07-F03) | `SUM(Amount) WHERE AccountHeadId IS NOT NULL AND Type = Income` |
+| P&L expenses (M07-F03) | `SUM(Amount) WHERE AccountHeadId IS NOT NULL AND Type = Expense` |
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M05-F11-R01 | `FinancialEntries` table stores all financial events; mandatory columns: `Id`, `Date`, `EntryType`, `Amount` (decimal 18,4; positive = in, negative = out), `OrganizationId`, `CreatedByUserId`, `CreatedAt` | — | Planned |
+| M05-F11-R02 | Optional dimension columns: `AccountHeadId?` (FK → AccountHeads; required for all P&L entry types; null for CustomerPayment, BankDeposit, OpeningBalance cash/bank rows), `StationId?`, `BankAccountId?`, `CustomerId?`, `VehicleId?`, `SupplierId?`, `InvoiceId?`, `ShiftId?`, `EmployeeId?`, `TransactionGroupId?` (links paired entries such as a bank deposit's two legs) | — | Planned |
+| M05-F11-R03 | `PaymentMethod` column (Cash / Bank / Card / Digital / Credit / None) indicates how the transaction was settled; Cash Book view filters on `{Cash, Card, Digital}` | — | Planned |
+| M05-F11-R04 | `IsSystemGenerated` flag marks entries auto-created by shift close or seeding; system-generated entries cannot be edited or deleted | — | Planned |
+| M05-F11-R05 | Entries are immutable once created; corrections are made via a paired `ManualAdjustment` entry (reversal row + new correcting row sharing a `TransactionGroupId`); requires reason text; logged to audit trail ([M01-F08](#m01-f08--audit-trail)) | — | Planned |
+| M05-F11-R06 | Global query filter by `OrganizationId` enforced at AppDbContext level; no cross-tenant entry visible | — | Planned |
+| M05-F11-R07 | All features that previously planned their own transaction tables (M05-F03, M05-F04 balance, M05-F05, M05-F10, M15-F02, M15-F03) write to `FinancialEntries` instead | — | Planned |
+| M05-F11-R08 | Indexes: `(OrganizationId, Date)` for time-range queries; `(CustomerId, Date)` for customer ledger; `(AccountHeadId, Date)` for P&L; `(BankAccountId, Date)` for bank balance; `(ShiftId)` for shift reconciliation | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a credit sale of Rs. 56,000 for Ahmed Traders (LEA-4521), When saved via M15-F02, Then one `FinancialEntries` row exists with `EntryType=FuelSaleCredit`, `AccountHeadId=Credit Sales HSD`, `CustomerId=Ahmed`, `VehicleId=LEA-4521`, `Amount=+56,000`.
+- **AC2** Given the Owner records an electricity expense of Rs. 8,000 in cash, When saved via M05-F03, Then one row exists: `EntryType=Expense`, `AccountHeadId=Electricity`, `Amount=-8,000`, `PaymentMethod=Cash`; Cash Book balance decreases by Rs. 8,000.
+- **AC3** Given a bank deposit of Rs. 40,000 is recorded, When saved, Then TWO rows exist sharing a `TransactionGroupId`: one `PaymentMethod=Cash, Amount=-40,000` and one `PaymentMethod=Bank, BankAccountId=X, Amount=+40,000`; Cash position drops by Rs. 40,000; Bank balance rises by Rs. 40,000.
+- **AC4** Given a shift closes with Rs. 140,000 cash sales and Rs. 56,000 credit sales, When entries are auto-generated, Then `IsSystemGenerated=true` on both rows; a direct edit attempt returns `400 Bad Request`.
+- **AC5** Given a P&L query for June, When run, Then it returns only rows where `AccountHeadId IS NOT NULL` grouped by account head name; CustomerPayment and BankDeposit rows do not appear.
 
 ---
 
@@ -1480,6 +1694,106 @@ Detailed requirements (R-rows + acceptance criteria) will be defined when the te
 
 ---
 
+## M15 — Credit Customer Management
+
+**Purpose:** Manage the full lifecycle of credit customers (udhaar / receivables): customer master, registered vehicles for fleet accounts, credit sales ledger (party account per customer), payment recording, and statements of account. Creating a customer here automatically initializes their AR entry in [M05-F01](#m05-f01--accounts-receivable-ar-summary). Supersedes and expands the original M05-F01 scope.
+
+### M15-F01 — Customer Master   [Status: Planned]
+
+> _Discovery (2026-06-01): reorganized from M05-F01 — credit customers serve both operational staff (nozzlemen check credit limit at the pump; managers allocate credit sales at shift close) and financial reporting (AR aggregate in M05); keeping them inside Finance made operational use awkward and precluded per-vehicle fleet tracking · outcome = dedicated module with auto-ledger creation on customer setup, vehicle roster for fleet/corporate/government accounts, and clean integration with M05 AR aggregate and M04 shift-close credit allocation · cost-of-not-building: no vehicle-level tracking for fleet customers; no point-of-sale credit limit lookup without entering Finance screens_
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=no; notification-trigger=no; money-touch=credit; shift-lifecycle-touch=none
+
+Customer profiles, credit terms, and vehicle roster. Creating a customer automatically opens their party ledger (M15-F02) and their AR entry in M05-F01.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M15-F01-R01 | Customer types: Individual, Fleet/Corporate, Government | — | Planned |
+| M15-F01-R02 | Customer profile: full name, type, phone, address, authorized contact person, credit limit, billing cycle (weekly / fortnightly / monthly / custom) | — | Planned |
+| M15-F01-R03 | Creating a customer automatically initializes their party ledger (M15-F02) and their AR entry in M05-F01 with balance Rs. 0 | — | Planned |
+| M15-F01-R04 | Fleet/Corporate/Government customers support multiple registered vehicles; each vehicle: registration number, optional driver name, optional vehicle type | — | Planned |
+| M15-F01-R05 | Individual customers may optionally add one vehicle | — | Planned |
+| M15-F01-R06 | Customer status: Active / Suspended; Suspended blocks all further credit sales for that customer | — | Planned |
+| M15-F01-R07 | Credit limit configurable per customer by Owner or Manager | — | Planned |
+| M15-F01-R08 | No interest or late fees applied to any customer balance | — | Planned |
+| M15-F01-R09 | Identification at point of sale: physical slip + driver signature; vehicle registration lookup for fleet customers | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a new Fleet customer is created with 3 registered vehicles, When saved, Then their party ledger initializes at Rs. 0 balance and all 3 vehicles are queryable at point-of-sale.
+- **AC2** Given a customer status is set to Suspended, When a credit sale is attempted, Then the sale is blocked with a "customer suspended" reason and current balance shown.
+
+---
+
+### M15-F02 — Credit Sales Ledger (Party Account)   [Status: Planned]
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=no; notification-trigger=no; money-touch=credit; shift-lifecycle-touch=close
+
+Per-customer running ledger of all credit sales. Writes to [M05-F11 FinancialEntries](#m05-f11--financial-ledger-unified-entry-table) with `EntryType=FuelSaleCredit`, `CustomerId`, `VehicleId?`. Running balance is derived: `SUM(Amount) WHERE CustomerId = X` over FinancialEntries — never stored.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M15-F02-R01 | Each credit sale writes one `FinancialEntries` row: `EntryType=FuelSaleCredit`, `AccountHeadId=Credit Sales [FuelType]`, `CustomerId`, `VehicleId?` (mandatory for Fleet/Corp/Govt; optional for Individual), `ShiftId`, `NozzleId`; supplementary detail (liters, rate, driver name) stored in a linked `CreditSaleDetail` row | — | Planned |
+| M15-F02-R02 | Credit sale blocked if resulting balance would equal or exceed the customer's credit limit | CR-001 | Planned |
+| M15-F02-R03 | Running balance = `SUM(Amount) WHERE CustomerId = X` in FinancialEntries; always computed, never stored | CR-003 | Planned |
+| M15-F02-R04 | At shift close ([M04-F04](#m04-f04--close-shift)), Manager allocates the shift's total credit amount across individual customers; unallocated credit balance blocks shift close | — | Planned |
+| M15-F02-R05 | Manual override of sale amount requires Manager confirmation and is logged to audit trail ([M01-F08](#m01-f08--audit-trail)) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a Fleet customer with balance Rs. 45,000 and limit Rs. 50,000, When a credit sale of Rs. 6,000 is attempted, Then API returns `409 Conflict` with current balance and limit.
+- **AC2** Given a credit sale for vehicle LEA-4521, When saved, Then the registration appears in the ledger row and is filterable by vehicle number.
+- **AC3** Given a shift closes with Rs. 28,000 total credit and Manager allocates only Rs. 22,000 across customers, When shift close is attempted, Then it is blocked until the remaining Rs. 6,000 is allocated.
+
+---
+
+### M15-F03 — Payment Recording   [Status: Planned]
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=yes; notification-trigger=no; money-touch=credit; shift-lifecycle-touch=none
+
+Records cash, bank-transfer, or cheque payments from credit customers. Writes one `FinancialEntries` row with `EntryType=CustomerPayment`, `CustomerId`, `Amount` (negative — reduces customer balance). Cash Book and Bank balance update automatically as derived views of [M05-F11](#m05-f11--financial-ledger-unified-entry-table).
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M15-F03-R01 | Payment entry: customer, date, amount, method (Cash / Bank Transfer / Cheque), reference number (bank/cheque), received by (user) | — | Planned |
+| M15-F03-R02 | Partial payments supported; customer balance reduces by the exact amount paid | CR-002 | Planned |
+| M15-F03-R03 | Writes one `FinancialEntries` row: `EntryType=CustomerPayment`, `CustomerId`, `Amount=-X`, `PaymentMethod`, `BankAccountId?`; no secondary write needed — Cash Book and Bank balance derive from this row automatically | — | Planned |
+| M15-F03-R04 | The single write to FinancialEntries is atomic; if it fails, no balance change occurs | — | Planned |
+| M15-F03-R05 | A printable payment receipt / acknowledgement can be generated for the customer | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a cash payment of Rs. 15,000 for Shaukat Logistics, When saved, Then one `FinancialEntries` row exists: `EntryType=CustomerPayment`, `CustomerId=Shaukat`, `Amount=-15,000`, `PaymentMethod=Cash`; customer balance drops by Rs. 15,000; Cash Book running balance rises by Rs. 15,000.
+- **AC2** Given a bank transfer payment of Rs. 50,000, When saved, Then `PaymentMethod=Bank`, `BankAccountId` set; Bank Account balance increases by Rs. 50,000.
+
+---
+
+### M15-F04 — Statements & Reports   [Status: Planned]
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=PKR-only; sensitive-action=no; notification-trigger=no; money-touch=credit; shift-lifecycle-touch=none
+
+Party ledger views, printable statements, per-vehicle consumption reports for fleet customers, and overdue / aging summary.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M15-F04-R01 | Party ledger view per customer: chronological list of all transactions (sales + payments + opening balance from [M05-F08-R02](#m05-f08--opening--migration-balances)), columns: date, description, vehicle, debit (sale), credit (payment), running balance | — | Planned |
+| M15-F04-R02 | Printable / downloadable statement of account per customer for a specified date range; Owner and Manager only | — | Planned |
+| M15-F04-R03 | Per-vehicle consumption report for Fleet/Corporate/Government customers: total liters, total amount, and visit count per vehicle per period | — | Planned |
+| M15-F04-R04 | Overdue accounts list: customers whose billing cycle has elapsed with outstanding balance > 0, sorted by days overdue | — | Planned |
+| M15-F04-R05 | AR aging summary across all customers: current / 1–30 days / 31–60 days / 61–90 days / 90+ days overdue; feeds [M05-F01-R02](#m05-f01--accounts-receivable-ar-summary) and [M07-F03-R02](#m07-f03--financial-reports) | CR-004 | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given a customer has 15 transactions in June, When the party ledger is opened, Then all 15 rows appear in date order with a running balance column accurate to every entry.
+- **AC2** Given a Fleet customer with 3 vehicles, When the per-vehicle report is run for June, Then each vehicle shows total liters, total amount, and visit count.
+- **AC3** Given a customer is 45 days past their billing cycle with Rs. 12,000 outstanding, When the overdue list is viewed, Then they appear with "45 days overdue" and the outstanding amount.
+
+---
+
 ## Appendix A — Legacy → New ID Map
 
 Quick lookup for every legacy business-rule ID. Use this when reading old commits, PRs, code comments, or PRD §5.
@@ -1506,10 +1820,10 @@ Quick lookup for every legacy business-rule ID. Use this when reading old commit
 | SH-004 | M04-F05-R01 | Shifts | Shortage = Calculated Sales − Collections |
 | SH-005 | M04-F05-R02 | Shifts | Shortage added to nozzleman balance-due |
 | SH-006 | M04-F05-R03 | Shifts | Excess logged but not credited |
-| CR-001 | M05-F01-R01 | Credit | Credit sale blocked at/above limit |
-| CR-002 | M05-F01-R02 | Credit | Partial payments reduce outstanding |
-| CR-003 | M05-F01-R03 | Credit | Balance = Sum(sales) − Sum(payments) |
-| CR-004 | M05-F01-R04 | Credit | Aging from transaction date |
+| CR-001 | M15-F02-R02 | Credit Customer | Credit sale blocked at/above limit |
+| CR-002 | M15-F03-R02 | Credit Customer | Partial payments reduce outstanding |
+| CR-003 | M15-F02-R03 | Credit Customer | Balance = Σ(sales) − Σ(payments) |
+| CR-004 | M15-F04-R05 | Credit Customer | Aging from transaction date |
 | PR-001 | M06-F01-R01 | Pricing | One active price per fuel/station |
 | PR-002 | M06-F02-R01 | Pricing | Double-confirmation on price change |
 | PR-003 | M06-F02-R03 | Pricing | Price change notifies all station users |
