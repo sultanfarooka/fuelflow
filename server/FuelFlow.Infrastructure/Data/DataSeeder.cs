@@ -1,4 +1,4 @@
-using FuelFlow.Domain.Entities;
+﻿using FuelFlow.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,7 +9,7 @@ namespace FuelFlow.Infrastructure.Data;
 /// <summary>
 /// Seeds reference data on app startup if not already present.
 /// Uses predefined GUIDs from <see cref="SeedData"/>.
-/// Idempotent: safe to delete data and restart — it will re-seed.
+/// Idempotent: safe to delete data and restart â€” it will re-seed.
 /// </summary>
 public class DataSeeder : IHostedService
 {
@@ -25,7 +25,7 @@ public class DataSeeder : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<ControlPlaneDbContext>();
 
         try
         {
@@ -42,7 +42,7 @@ public class DataSeeder : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    private static async Task SeedOmcsAsync(AppDbContext db, CancellationToken ct)
+    private static async Task SeedOmcsAsync(ControlPlaneDbContext db, CancellationToken ct)
     {
         var existing = await db.OMCs
             .Where(o => o.Id == SeedData.PsoId || o.Id == SeedData.ShellId || o.Id == SeedData.TotalId)
@@ -67,7 +67,7 @@ public class DataSeeder : IHostedService
         }
     }
 
-    private static async Task SeedSubscriptionPlansAsync(AppDbContext db, CancellationToken ct)
+    private static async Task SeedSubscriptionPlansAsync(ControlPlaneDbContext db, CancellationToken ct)
     {
         var existing = await db.SubscriptionPlans
             .Where(s => s.Id == SeedData.StarterPlanId || s.Id == SeedData.ProfessionalPlanId || s.Id == SeedData.EnterprisePlanId)
@@ -89,7 +89,7 @@ public class DataSeeder : IHostedService
         }
     }
 
-    private static async Task SeedOmcFuelTypesAsync(AppDbContext db, CancellationToken ct)
+    private static async Task SeedOmcFuelTypesAsync(ControlPlaneDbContext db, CancellationToken ct)
     {
         var allIds = new[]
         {

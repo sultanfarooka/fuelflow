@@ -15,6 +15,12 @@ public class FuelType : BaseEntity
     public Guid? OMCId { get; set; } = null;
 
     /// <summary>Null = predefined (seeded); set = custom type for this station.</summary>
+    /// <remarks>
+    /// M14-F01: the previous <c>Station? Station</c> navigation was dropped because it
+    /// pointed from a control-plane entity (FuelType) into a per-tenant entity
+    /// (Station). EF Core would otherwise pull Station's entire tree into the
+    /// control-plane model. <see cref="StationId"/> remains as a plain nullable Guid;
+    /// app-layer code resolves the Station against AppDbContext when needed.
+    /// </remarks>
     public Guid? StationId { get; set; }
-    public Station? Station { get; set; }
 }

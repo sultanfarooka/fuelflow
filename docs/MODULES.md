@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-05-30
+**Last Updated:** 2026-05-31
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -57,6 +57,7 @@
 | [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
 | [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | In Progress | — |
 | [M13](#m13--staff--payroll) | Staff & Payroll | Planned | — |
+| [M14](#m14--per-tenant-database-architecture) | Per-Tenant Database Architecture | Planned | — |
 
 ---
 
@@ -66,11 +67,12 @@ The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that
 
 | # | ID | Title | Area |
 |---|---|---|---|
-| 1 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
-| 2 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
-| 3 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
-| 4 | [M08-F05-R05](#m08-f05--system-preferences) | i18n content sweep — wire `useTranslation` across all shipped auth / dashboard / onboarding screens (foundation already in place per M07-F09-R04) | Frontend |
-| 5 | [M13](#m13--staff--payroll) | Staff & Payroll — employee records, salary/payroll, advances & loans, attendance with shift-derived attendance (M04) and shortage-deduction integration (M04-F05) | Backend + Frontend |
+| 1 | [M14-F02](#m14-f02--tenant-registry--connection-resolution) | Per-Tenant DB architecture — Phase 2: `ITenantConnectionResolver` + `AddDbContextFactory<AppDbContext>` + 18-repo refactor + `UnitOfWork` saga redesign. Builds directly on the M14-F01 split that just shipped. | Backend |
+| 2 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
+| 3 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
+| 4 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
+| 5 | [M08-F05-R05](#m08-f05--system-preferences) | i18n content sweep — wire `useTranslation` across all shipped auth / dashboard / onboarding screens (foundation already in place per M07-F09-R04) | Frontend |
+| 6 | [M13](#m13--staff--payroll) | Staff & Payroll — employee records, salary/payroll, advances & loans, attendance with shift-derived attendance (M04) and shortage-deduction integration (M04-F05) | Backend + Frontend |
 
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -1400,6 +1402,81 @@ Shift-derived attendance (M04-F02 assignment = Present); leave types with annual
 - **AC1** Given an employee with 0 annual leave remaining, When a leave request is submitted, Then the system records it as Leave Without Pay and the Owner is notified via [M10-F01-R12](#m10-f01--notification-events).
 - **AC2** Given an employee has a shift assignment on a given date (M04-F02), When the monthly attendance report is generated, Then that date is counted as Present.
 - **AC3** Given Owner approves a leave request, When approved, Then the leave balance decrements and a notification fires per [M10-F01-R12](#m10-f01--notification-events).
+
+---
+
+## M14 — Per-Tenant Database Architecture
+
+> _Discovery (2026-05-30): user-driven architectural pivot away from the previously-planned Option C / M01-F10 "Tenant Isolation Hardening" (shared-DB + global query filters) toward physical database-per-Organization isolation · outcome = each Organization is provisioned its own PostgreSQL database at signup; per-request connection routing resolves the tenant DB from the JWT `org_id` claim; Identity and pre-org flows target a small "control plane" database · maps to root [`CLAUDE.md`](../CLAUDE.md) "Multi-Tenancy Model" section (will be rewritten by M14-F06) and supersedes the strategy-plan artefact at `~/.claude/plans/compaision-for-shifting-to-memoized-tower.md` · cost-of-not-building: cannot offer per-tenant backups/restore, regional data residency, or physical isolation to future enterprise/govt customers · cost-of-building-now: ~4–6 weeks across 6 PRs, pauses M04–M10 MVP velocity, ~5–30s first-signup latency, one Postgres connection pool per tenant, ops complexity scales linearly with tenant count_
+
+**Tags:** tenant-scope=platform-global; tier=All; capacity-impact=high; locale=N/A; sensitive-action=yes; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+**Purpose.** Split the current single PostgreSQL database into a **control plane** (Identity, Tenants registry, Subscriptions, SubscriptionPlans, OMC reference, FuelType reference, PhoneVerification, RefreshToken) and **per-tenant operational databases** (Organization, Stations, FuelTanks, FuelNozzles, FuelPrices, Shifts, ShiftAssignments, NozzleReadings, FuelTankReadings, DipCharts, StationShiftConfig, BankAccount, UserStation). Each Organization receives its own PostgreSQL database, dynamically provisioned at signup via `ITenantProvisioningService.ProvisionAsync(organizationId)`. Per-request connection routing through `ITenantConnectionResolver` resolves the tenant DB from the JWT `org_id` claim. Pre-org-creation flows (registration, phone OTP, login by phone) target only the control plane.
+
+**Ships as six sequential PRs (F01 → F06).** MVP feature work (M04–M10) is paused for the duration. F01 is the foundational refactor; F02–F06 build the per-tenant infrastructure on top.
+
+---
+
+### M14-F01 — Control Plane / Tenant DbContext Split   [Status: Done]
+
+Establish the conceptual split between control-plane data and tenant data before any infrastructure change. After F01, the application still runs against one PostgreSQL database, but the code knows which tables are platform-wide and which are tenant-scoped. This makes F02–F06 mechanical instead of architectural.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M14-F01-R01 | Two EF Core contexts: `ControlPlaneDbContext` (Identity, `Tenants`, `Subscriptions`, `SubscriptionPlans`, `OMCs`, `OMCFuelTypes`, `FuelTypes`, `PhoneVerifications`, `RefreshTokens`) and `AppDbContext` (`Organizations`, `Stations`, `FuelTanks`, `FuelNozzles`, `FuelPrices`, `StationShifts`, `ShiftAssignments`, `NozzleReadings`, `FuelTankReadings`, `DipCharts`, `DipChartEntries`, `StationShiftConfigs`, `BankAccounts`, `UserStations`). Both target the same physical Postgres database in this feature; per-tenant routing arrives in [M14-F02](#m14-f02--tenant-registry--connection-resolution). | — | Done |
+| M14-F01-R02 | Migration histories rewritten as two fresh `Initial` migrations under `server/FuelFlow.Infrastructure/Migrations/ControlPlane/` and `server/FuelFlow.Infrastructure/Migrations/Tenant/`. All 58 existing migration files deleted; dev databases wiped. Acceptable pre-launch (no production data). | — | Done |
+| M14-F01-R03 | New `Tenant` entity in `FuelFlow.Domain.Entities` with `Id (Guid, == OrganizationId)`, `DatabaseName (string)`, `Status (TenantStatus enum: Provisioning, Active, Suspended, Deleted)`, `ProvisionedAt (DateTime?)`, `DeletedAt (DateTime?)`. Plus new `TenantStatus` enum in `FuelFlow.Domain.Enums`. Configured in `ControlPlaneDbContext`. `Tenant.Id == Organization.Id` enforced at app layer. | — | Done |
+| M14-F01-R04 | Identity-side cross-context navigation properties dropped (`Organization.Owner`, `UserStation.User`, `OMC.Stations` reverse, `FuelType.Station`, `AppUserConfiguration.HasOne<Organization>()` + the `HasOne<AppUser>()` FK declarations on `StationShift`, `FuelTankReading`, `NozzleReadings`, `ShiftAssignment`). Replaced with plain `Guid` FK columns; cross-context referential integrity becomes app-layer concern. The `FuelTank.FuelType`, `Station.OMC`, `FuelPrices.FuelType` navs were retained as F01 shims (registered in `AppDbContext.OnModelCreating` with `ExcludeFromMigrations`) to keep existing `.Include()` queries working in F01; M14-F03 will remove or replicate them. | — | Done |
+| M14-F01-R05 | Handlers rebound to use correctly-routed repositories — 7 control-plane-bound (RefreshToken, PhoneVerification, Subscription, SubscriptionPlan, OMC, OMCFuelType, FuelType) and 11 tenant-bound. `OnboardingCommandHandler` becomes the canonical cross-context case (still one physical DB in F01, so `TransactionScope` continues to work). UnitOfWork redesigned to flush both contexts. F03 replaces this with a real saga. | — | Done |
+
+**Acceptance Criteria:**
+- **AC1** Given a fresh empty Postgres database, When `dotnet ef database update --context ControlPlaneDbContext` then `--context AppDbContext` are run, Then both `Initial` migrations apply cleanly with zero errors.
+- **AC2** Given the full smoke flow (register → verify phone OTP → log in → complete onboarding wizard → CRUD on Station/Tank/Nozzle → log out → log back in), When run on a fresh local dev environment via `./scripts/dev.ps1`, Then every M01-F09 and M12-F01/F02 user-visible behavior works exactly as before; M14-F01 is invisible to users.
+- **AC3** Given the `DataSeeder` runs at startup, When the app boots against fresh control-plane tables, Then OMCs, FuelTypes, SubscriptionPlans, and Identity roles are seeded into the control-plane schema. Re-running the app produces no duplicate rows (idempotent).
+- **AC4** Given Postgres after a successful migration, When inspecting the schema, Then no FK constraint crosses from a tenant-context table into an Identity table — those references are plain `Guid` columns with app-layer enforcement only.
+- **AC5** Given a Playwright e2e run of `fuel-flow-web/e2e-tests/M14-F01.spec.ts`, When the full regression flow executes, Then all assertions pass without modification to pre-existing flows.
+
+---
+
+### M14-F02 — Tenant Registry & Connection Resolution   [Status: Planned]
+
+`ITenantConnectionResolver` reads the JWT `org_id` claim and looks up the per-tenant connection string from control-plane `Tenants` (cached). Replace `AddDbContext<AppDbContext>` with `AddDbContextFactory<AppDbContext>` that consumes the resolver. All 18 repositories refactored to inject `IDbContextFactory<AppDbContext>` and create contexts per operation. `UnitOfWork` redesigned for factory-created contexts and explicit transaction scopes.
+
+Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F02 via its own `/feature-planning` run.
+
+---
+
+### M14-F03 — Tenant Provisioning Service   [Status: Planned]
+
+`ITenantProvisioningService.ProvisionAsync(organizationId)`: `CREATE DATABASE tenant_<org_id>` via Npgsql → run all tenant migrations against the new DB → insert the initial `Organization` row → flip control-plane `Tenants.Status` to `Active`. Compensating actions on failure (drop DB, delete control-plane row).
+
+Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F03 via its own `/feature-planning` run.
+
+---
+
+### M14-F04 — Onboarding Flow Adaptation   [Status: Planned]
+
+`POST /onboarding` step 1 now creates the control-plane `Tenant` row (status `Provisioning`), calls `ITenantProvisioningService`, re-issues the JWT with the `org_id` claim, and returns. Steps 2–9 of the wizard route by `stationId` and naturally hit the new tenant DB via the resolver. Wizard chrome shows a "Provisioning your workspace…" state during step 1 (~5–30s).
+
+Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F04 via its own `/feature-planning` run.
+
+---
+
+### M14-F05 — Identity & Auth Adaptation   [Status: Planned]
+
+Pre-org-creation flows (registration, phone OTP, login by phone, password recovery) hit only the control plane — no tenant context needed. After login, JWT carries `org_id`; subsequent requests are tenant-routed. `UserStation` cross-DB link enforced at app layer (no FK). Phone uniqueness enforced via index on control-plane `AspNetUsers`.
+
+Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F05 via its own `/feature-planning` run.
+
+---
+
+### M14-F06 — Migration Tooling & Dev/Ops   [Status: Planned]
+
+`server/db-migration-add.ps1` and `db-update.ps1` extended to take a `-Context` parameter (`ControlPlane` or `Tenant`). Startup task scans control-plane `Tenants` and applies pending tenant migrations to each tenant DB on app boot. `scripts/dev.ps1` extended with `--reset-all` (drops control plane + every tenant DB; rebuilds). Documentation updated across all scoped CLAUDE.md files; root `CLAUDE.md` "Multi-Tenancy Model" section rewritten.
+
+Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F06 via its own `/feature-planning` run.
 
 ---
 

@@ -35,12 +35,29 @@ public static class DependencyInjection
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        // 1. Register PostgreSQL + EF Core
+        // 1. Register PostgreSQL + EF Core (M14-F01: two DbContexts)
+        //
+        // Both contexts target the same physical Postgres database in M14-F01;
+        // separate MigrationsHistoryTable names prevent the contexts' migration
+        // records from colliding on the shared __EFMigrationsHistory table.
+        // M14-F02 will diverge AppDbContext's connection string per tenant via
+        // ITenantConnectionResolver — at that point each tenant DB gets its own
+        // history table named "__EFMigrationsHistory_AppDb" and the control
+        // plane keeps its own.
+        var connStr = configuration.GetConnectionString("DefaultConnection");
+
+        services.AddDbContext<ControlPlaneDbContext>(options =>
+            options.UseNpgsql(
+                connStr,
+                npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory_ControlPlane")));
+
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection")));
+                connStr,
+                npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory_AppDb")));
 
-        // 2. Register ASP.NET Identity
+        // 2. Register ASP.NET Identity — backed by the CONTROL-PLANE context
+        //    (M14-F01: AspNetUsers, AspNetRoles, RefreshTokens etc. moved there).
         services.AddIdentity<AppUser, AppRole>(options =>
         {
             // Password rules (from PRD: min 6 chars, must include number)
@@ -60,7 +77,7 @@ public static class DependencyInjection
             // email is actually provided.
             options.User.RequireUniqueEmail = false;
         })
-        .AddEntityFrameworkStores<AppDbContext>()
+        .AddEntityFrameworkStores<ControlPlaneDbContext>()
         .AddDefaultTokenProviders();
 
         // 2b. Password reset token expiry (default 1 day; explicit for clarity)

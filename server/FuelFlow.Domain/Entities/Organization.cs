@@ -24,9 +24,12 @@ public class Organization : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
 
+    // M14-F01: cross-context FK. AppUser/User lives in the control-plane
+    // DbContext; Organization lives per-tenant. Stored as a plain Guid;
+    // existence is enforced in handlers via the control-plane AppUser repo.
+    // The Owner navigation property was dropped — no FK constraint at the
+    // model level (M14-F04 will compensate in the onboarding saga).
     public Guid OwnerId { get; set; }
-    public User Owner { get; set; } = null!;
 
     public ICollection<Station> Stations { get; set; } = new List<Station>();
-
 }

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Infrastructure.Data;
@@ -7,9 +7,9 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class FuelTypeRepository : IFuelTypeRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly ControlPlaneDbContext _dbContext;
 
-    public FuelTypeRepository(AppDbContext dbContext)
+    public FuelTypeRepository(ControlPlaneDbContext dbContext)
     {
         _dbContext = dbContext;
     }

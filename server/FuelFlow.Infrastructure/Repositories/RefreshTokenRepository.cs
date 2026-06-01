@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Infrastructure.Data;
@@ -13,9 +13,9 @@ namespace FuelFlow.Infrastructure.Repositories;
 /// </summary>
 public class RefreshTokenRepository : IRefreshTokenRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly ControlPlaneDbContext _dbContext;
 
-    public RefreshTokenRepository(AppDbContext dbContext)
+    public RefreshTokenRepository(ControlPlaneDbContext dbContext)
     {
         _dbContext = dbContext;
     }
