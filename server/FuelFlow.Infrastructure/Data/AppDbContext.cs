@@ -1,6 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using FuelFlow.Domain.Entities;
 using FuelFlow.Domain.Entities.StationEntities;
+using Microsoft.EntityFrameworkCore;
 
 namespace FuelFlow.Infrastructure.Data;
 
@@ -50,6 +50,7 @@ public class AppDbContext : DbContext
     public DbSet<DipChartEntry> DipChartEntries => Set<DipChartEntry>();
     public DbSet<StationShiftConfig> StationShiftConfigs => Set<StationShiftConfig>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<AccountHead> AccountHeads => Set<AccountHead>();
     // Removed in M14-F01 (moved to ControlPlaneDbContext): RefreshTokens,
     // PhoneVerifications, Subscriptions, SubscriptionPlans, OMCs, OMCFuelTypes,
     // FuelTypes. Identity tables (AspNetUsers etc.) likewise no longer live in

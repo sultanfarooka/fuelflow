@@ -22,6 +22,70 @@ namespace FuelFlow.Infrastructure.Migrations.Tenant
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FuelFlow.Domain.Entities.AccountHead", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsSystemManaged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_system_managed")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id")
+                        .HasName("PK_account_heads");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("IX_account_heads_organization_id");
+
+                    b.HasIndex("OrganizationId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_account_heads_organization_id_name");
+
+                    b.ToTable("account_heads");
+                });
+
             modelBuilder.Entity("FuelFlow.Domain.Entities.BankAccount", b =>
                 {
                     b.Property<Guid>("Id")
@@ -932,6 +996,17 @@ namespace FuelFlow.Infrastructure.Migrations.Tenant
                         {
                             t.ExcludeFromMigrations();
                         });
+                });
+
+            modelBuilder.Entity("FuelFlow.Domain.Entities.AccountHead", b =>
+                {
+                    b.HasOne("FuelFlow.Domain.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("FuelFlow.Domain.Entities.BankAccount", b =>
