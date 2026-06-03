@@ -19,6 +19,7 @@ public class CreateFuelTypeCommandHandler : IRequestHandler<CreateFuelTypeComman
     private readonly IFuelTypeRepository _fuelTypeRepo;
     private readonly IStationRepository _stationRepo;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAccountHeadSeeder _accountHeadSeeder;
     private readonly ILogger<CreateFuelTypeCommandHandler> _logger;
 
     public CreateFuelTypeCommandHandler(
@@ -26,12 +27,14 @@ public class CreateFuelTypeCommandHandler : IRequestHandler<CreateFuelTypeComman
         IFuelTypeRepository fuelTypeRepo,
         IStationRepository stationRepo,
         IUnitOfWork unitOfWork,
+        IAccountHeadSeeder accountHeadSeeder,
         ILogger<CreateFuelTypeCommandHandler> logger)
     {
         _currentUser = currentUser;
         _fuelTypeRepo = fuelTypeRepo;
         _stationRepo = stationRepo;
         _unitOfWork = unitOfWork;
+        _accountHeadSeeder = accountHeadSeeder;
         _logger = logger;
     }
 
@@ -74,6 +77,18 @@ public class CreateFuelTypeCommandHandler : IRequestHandler<CreateFuelTypeComman
         {
             _logger.LogError(ex, "Failed to create fuel type {Name} for station {StationId}", req.Name, stationId);
             return Result<CreateFuelTypeResponse>.Failure("Failed to create fuel type.");
+        }
+
+        // Seed the matching income account heads for this fuel type (M05-F09-R02):
+        // "Fuel Sales {name} (Cash/Card)" and "Credit Sales {name}". Idempotent and
+        // best-effort — a seeding failure must not fail fuel-type creation.
+        try
+        {
+            await _accountHeadSeeder.SeedFuelTypeIncomeHeadsAsync(orgId.Value, fuelType.Name, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to seed income account heads for fuel type {Name} in org {OrgId}", fuelType.Name, orgId);
         }
 
         return Result<CreateFuelTypeResponse>.Success(new CreateFuelTypeResponse()

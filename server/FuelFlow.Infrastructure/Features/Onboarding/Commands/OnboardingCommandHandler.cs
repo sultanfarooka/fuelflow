@@ -34,6 +34,7 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
     private readonly JwtTokenService _jwtTokenService;
     private readonly IRequestContextService _requestContext;
     private readonly IOMCRepository _omcRepo;
+    private readonly IAccountHeadSeeder _accountHeadSeeder;
     private readonly ILogger<OnboardingCommandHandler> _logger;
 
     /// <summary>Plan used for the 14-day trial (Professional features).</summary>
@@ -51,6 +52,7 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
         JwtTokenService jwtTokenService,
         IRequestContextService requestContext,
         IOMCRepository omcRepo,
+        IAccountHeadSeeder accountHeadSeeder,
         ILogger<OnboardingCommandHandler> logger)
     {
         _currentUser = currentUser;
@@ -64,6 +66,7 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
         _jwtTokenService = jwtTokenService;
         _requestContext = requestContext;
         _omcRepo = omcRepo;
+        _accountHeadSeeder = accountHeadSeeder;
         _logger = logger;
     }
 
@@ -167,6 +170,18 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
             await _unitOfWork.RollbackAsync();
             _logger.LogError(ex, "Failed to complete onboarding for user {UserId}", userId);
             return Result<AuthResponse>.Failure("Failed to complete onboarding.");
+        }
+
+        // --- Step 5b: Seed default expense account heads for the new organization (M05-F09-R03) ---
+        // Runs after the onboarding transaction commits so the organization row is durable.
+        // Idempotent and best-effort: a seeding failure must not fail an otherwise-successful onboarding.
+        try
+        {
+            await _accountHeadSeeder.SeedDefaultExpenseHeadsAsync(newOrganization.Id, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to seed default expense account heads for org {OrganizationId}", newOrganization.Id);
         }
 
         // --- Step 6: Load roles and build auth response (same pattern as Login/Refresh) ---
