@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-01
+**Last Updated:** 2026-06-04
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -726,12 +726,12 @@ Unified registry of income and expense account heads per organization. Reference
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M05-F09-R01 | Each account head has: name, type (INCOME / EXPENSE), optional description, active status; scoped per organization | — | Planned |
-| M05-F09-R02 | Fuel-sale income heads auto-seeded per active fuel type during onboarding ([M12-F01](#m12-f01--onboarding-wizard)): `Fuel Sales [FuelType] (Cash/Card)` and `Credit Sales [FuelType]`; system-managed — can be renamed but not deleted | — | Planned |
-| M05-F09-R03 | Default expense heads seeded on org creation: Generator Fuel, Electricity, Repairs & Maintenance, Staff Food/Tea, Stationery, Transport, Miscellaneous; supersedes the informal category list in [M05-F03-R01](#m05-f03--daily-expenses) | — | Planned |
-| M05-F09-R04 | Owner or Manager can add custom income or expense heads at any time | — | Planned |
-| M05-F09-R05 | An account head with no transactions can be deactivated (soft-delete); one with existing transactions can only be renamed, not deactivated | — | Planned |
-| M05-F09-R06 | All financial entry forms that require a head (M05-F03, M05-F10) filter the picker to the matching type (INCOME or EXPENSE) | — | Planned |
+| M05-F09-R01 | Each account head has: name, type (INCOME / EXPENSE), optional description, active status; scoped per organization | — | Done |
+| M05-F09-R02 | Fuel-sale income heads auto-seeded per active fuel type during onboarding ([M12-F01](#m12-f01--onboarding-wizard)): `Fuel Sales [FuelType] (Cash/Card)` and `Credit Sales [FuelType]`; system-managed — can be renamed but not deleted | — | Done |
+| M05-F09-R03 | Default expense heads seeded on org creation: Generator Fuel, Electricity, Repairs & Maintenance, Staff Food/Tea, Stationery, Transport, Miscellaneous; supersedes the informal category list in [M05-F03-R01](#m05-f03--daily-expenses) | — | Done |
+| M05-F09-R04 | Owner or Manager can add custom income or expense heads at any time | — | Done |
+| M05-F09-R05 | An account head with no transactions can be deactivated (soft-delete); one with existing transactions can only be renamed, not deactivated | — | Done |
+| M05-F09-R06 | All financial entry forms that require a head (M05-F03, M05-F10) filter the picker to the matching type (INCOME or EXPENSE) | — | Planned · API `?type=` filter shipped in M05-F09; picker wiring lands with [M05-F03](#m05-f03--daily-expenses) / [M05-F10](#m05-f10--other-income-recording) |
 
 **Acceptance Criteria:**
 - **AC1** Given a new organization completes onboarding with PMG and HSD active, When seeding completes, Then four system income heads exist: `Fuel Sales PMG (Cash/Card)`, `Credit Sales PMG`, `Fuel Sales HSD (Cash/Card)`, `Credit Sales HSD`.
