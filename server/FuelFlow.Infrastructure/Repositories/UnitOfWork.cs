@@ -5,56 +5,52 @@ using FuelFlow.Infrastructure.Data;
 namespace FuelFlow.Infrastructure.Repositories;
 
 /// <summary>
-/// Wraps DbContext transaction + change-tracking management behind the
-/// <see cref="IUnitOfWork"/> interface.
+/// Wraps DbContext transaction + change-tracking management behind
+/// <see cref="IUnitOfWork"/>.
 ///
-/// M14-F01: now manages two DbContexts —
-/// <see cref="AppDbContext"/> (per-tenant operational data) and
-/// <see cref="ControlPlaneDbContext"/> (Identity + Tenants + reference data).
-/// <see cref="SaveChangesAsync"/> flushes both.
+/// M14-F02: now uses <see cref="TenantDbContextAccessor"/> for the per-tenant
+/// <see cref="AppDbContext"/> (created lazily per HTTP request with the correct
+/// tenant connection string) alongside the direct
+/// <see cref="ControlPlaneDbContext"/> injection.
 ///
 /// <para>
-/// <b>F01 transaction limitation:</b> <see cref="BeginTransactionAsync"/> still
-/// opens the transaction on <see cref="AppDbContext"/> only — its writes are
-/// atomic, but control-plane writes commit independently. This is acceptable
-/// in F01 because both contexts target the same physical Postgres database
-/// and existing handlers (notably <c>OnboardingCommandHandler</c>) already
-/// commit some control-plane operations (UserManager.UpdateAsync) outside
-/// the transaction today. <b>M14-F03 must replace this with an explicit
-/// saga + compensation</b> once tenant databases physically split — at that
-/// point a single connection-level transaction can no longer span both DBs.
+/// <b>Save order:</b> <see cref="SaveChangesAsync"/> flushes the tenant
+/// <see cref="AppDbContext"/> first (so any newly-created <c>Organization</c> row
+/// is visible), then <see cref="ControlPlaneDbContext"/>.
+/// </para>
+/// <para>
+/// <b>Transaction limitation (F02):</b> <see cref="BeginTransactionAsync"/> opens
+/// the transaction on the tenant <see cref="AppDbContext"/> only. Both contexts
+/// target the same physical Postgres database in F01/F02, so cross-context reads
+/// see committed tenant changes; control-plane writes commit independently.
+/// M14-F03 replaces this with an explicit saga + compensation once tenant
+/// databases physically split.
 /// </para>
 /// </summary>
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly AppDbContext _appDbContext;
+    private readonly TenantDbContextAccessor _tenantAccessor;
     private readonly ControlPlaneDbContext _controlPlaneDbContext;
     private IDbContextTransaction? _transaction;
 
-    public UnitOfWork(AppDbContext appDbContext, ControlPlaneDbContext controlPlaneDbContext)
+    public UnitOfWork(TenantDbContextAccessor tenantAccessor, ControlPlaneDbContext controlPlaneDbContext)
     {
-        _appDbContext = appDbContext;
+        _tenantAccessor = tenantAccessor;
         _controlPlaneDbContext = controlPlaneDbContext;
     }
 
     public async Task SaveChangesAsync()
     {
-        // Save AppDbContext first so any FK from control-plane to per-tenant
-        // (e.g. AppUser.OrganizationId after onboarding) resolves against a
-        // freshly-committed Organization row when the control-plane save runs.
-        await _appDbContext.SaveChangesAsync();
+        // Flush tenant DB first, then control plane (see class doc).
+        var tenantCtx = await _tenantAccessor.GetContextAsync();
+        await tenantCtx.SaveChangesAsync();
         await _controlPlaneDbContext.SaveChangesAsync();
     }
 
     public async Task BeginTransactionAsync()
     {
-        // TODO M14-F03: replace single-DbContext transaction with an explicit
-        // saga + compensation pattern. In F01 the AppDbContext transaction is
-        // sufficient because both contexts share the same physical DB and
-        // control-plane writes are already non-transactional in practice
-        // (UserManager.UpdateAsync flushes its own context outside any
-        // ambient transaction).
-        _transaction = await _appDbContext.Database.BeginTransactionAsync();
+        var tenantCtx = await _tenantAccessor.GetContextAsync();
+        _transaction = await tenantCtx.Database.BeginTransactionAsync();
     }
 
     public async Task CommitAsync()

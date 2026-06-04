@@ -7,16 +7,17 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class ShiftAssignmentRepository : IShiftAssignmentRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public ShiftAssignmentRepository(AppDbContext dbContext)
+    public ShiftAssignmentRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<List<ShiftAssignment>> GetByShiftIdAsync(Guid stationShiftId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.ShiftAssignments
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.ShiftAssignments
             .AsNoTracking()
             .Include(s => s.FuelNozzle)
             .Where(s => s.StationShiftId == stationShiftId)
@@ -25,13 +26,15 @@ public class ShiftAssignmentRepository : IShiftAssignmentRepository
 
     public async Task<ShiftAssignment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.ShiftAssignments
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.ShiftAssignments
             .Include(s => s.FuelNozzle)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
     public async Task AddAsync(ShiftAssignment shiftAssignment)
     {
-        await _dbContext.ShiftAssignments.AddAsync(shiftAssignment);
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.ShiftAssignments.AddAsync(shiftAssignment);
     }
 }

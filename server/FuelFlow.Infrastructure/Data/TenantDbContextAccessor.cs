@@ -26,6 +26,16 @@ public sealed class TenantDbContextAccessor : IAsyncDisposable
     }
 
     /// <summary>
+    /// Returns the already-initialised <see cref="AppDbContext"/> synchronously.
+    /// Only safe to call after at least one <see cref="GetContextAsync"/> call in the
+    /// same request has completed. Used by synchronous repository methods (e.g. Update)
+    /// that are always invoked after an async load that initialises the context.
+    /// </summary>
+    public AppDbContext Context => _context
+        ?? throw new InvalidOperationException(
+            "TenantDbContextAccessor.Context accessed before GetContextAsync was called in this request.");
+
+    /// <summary>
     /// Returns the tenant's <see cref="AppDbContext"/>, creating it on first call.
     /// Subsequent calls within the same HTTP request return the cached instance.
     /// </summary>

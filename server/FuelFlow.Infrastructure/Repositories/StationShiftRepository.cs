@@ -8,16 +8,17 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class StationShiftRepository : IStationShiftRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public StationShiftRepository(AppDbContext dbContext)
+    public StationShiftRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<List<StationShift>> GetByStationIdAsync(Guid stationId, int limit = 50, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.StationShifts
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.StationShifts
             .AsNoTracking()
             .Where(s => s.StationId == stationId)
             .OrderByDescending(s => s.OpenedAt)
@@ -27,23 +28,26 @@ public class StationShiftRepository : IStationShiftRepository
 
     public async Task<StationShift?> GetOpenShiftByStationIdAsync(Guid stationId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.StationShifts
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.StationShifts
             .FirstOrDefaultAsync(s => s.StationId == stationId && s.Status == ShiftStatus.Open, cancellationToken);
     }
 
     public async Task<StationShift?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.StationShifts
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.StationShifts
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
     public async Task AddAsync(StationShift stationShift)
     {
-        await _dbContext.StationShifts.AddAsync(stationShift);
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.StationShifts.AddAsync(stationShift);
     }
 
     public void Update(StationShift stationShift)
     {
-        _dbContext.StationShifts.Update(stationShift);
+        _accessor.Context.StationShifts.Update(stationShift);
     }
 }

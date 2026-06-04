@@ -7,16 +7,17 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class FuelPricesRepository : IFuelPricesRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public FuelPricesRepository(AppDbContext dbContext)
+    public FuelPricesRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<List<FuelPrices>> GetByStationIdAsync(Guid stationId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.FuelPrices
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.FuelPrices
             .AsNoTracking()
             .Include(p => p.FuelType)
             .Where(p => p.StationId == stationId)
@@ -26,8 +27,9 @@ public class FuelPricesRepository : IFuelPricesRepository
 
     public async Task<FuelPrices?> GetCurrentByStationAndFuelTypeAsync(Guid stationId, Guid fuelTypeId, CancellationToken cancellationToken = default)
     {
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
         var now = DateTime.UtcNow;
-        return await _dbContext.FuelPrices
+        return await ctx.FuelPrices
             .Where(p => p.StationId == stationId && p.FuelTypeId == fuelTypeId
                 && p.EffectiveFrom <= now && (p.EffectiveTo == null || p.EffectiveTo > now))
             .OrderByDescending(p => p.EffectiveFrom)
@@ -36,18 +38,20 @@ public class FuelPricesRepository : IFuelPricesRepository
 
     public async Task<FuelPrices?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.FuelPrices
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.FuelPrices
             .Include(p => p.FuelType)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
     public async Task AddAsync(FuelPrices fuelPrices)
     {
-        await _dbContext.FuelPrices.AddAsync(fuelPrices);
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.FuelPrices.AddAsync(fuelPrices);
     }
 
     public void Update(FuelPrices fuelPrices)
     {
-        _dbContext.FuelPrices.Update(fuelPrices);
+        _accessor.Context.FuelPrices.Update(fuelPrices);
     }
 }

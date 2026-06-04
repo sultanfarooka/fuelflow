@@ -7,20 +7,18 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class FuelTankRepository : IFuelTankRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public FuelTankRepository(AppDbContext dbContext)
+    public FuelTankRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<List<FuelTank>> GetAllByStationIdAsync(Guid stationId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.FuelTanks
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.FuelTanks
             .AsNoTracking()
-            .Include(f => f.FuelType)
-            .Include(f => f.DipChart)
-                .ThenInclude(d => d.Entries)
             .Where(f => f.StationId == stationId)
             .OrderBy(f => f.Name ?? f.CreatedAt.ToString())
             .ToListAsync(cancellationToken);
@@ -28,19 +26,20 @@ public class FuelTankRepository : IFuelTankRepository
 
     public async Task<FuelTank?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.FuelTanks
-            .Include(f => f.FuelType)
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.FuelTanks
             .FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
     }
 
     public async Task AddAsync(FuelTank fuelTank)
     {
-        await _dbContext.FuelTanks.AddAsync(fuelTank);
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.FuelTanks.AddAsync(fuelTank);
     }
 
     public Task DeleteAsync(FuelTank fuelTank)
     {
-        _dbContext.FuelTanks.Remove(fuelTank);
+        _accessor.Context.FuelTanks.Remove(fuelTank);
         return Task.CompletedTask;
     }
 }

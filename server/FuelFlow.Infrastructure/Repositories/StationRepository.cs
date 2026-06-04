@@ -7,28 +7,31 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class StationRepository : IStationRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public StationRepository(AppDbContext dbContext)
+    public StationRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<Station?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Stations
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.Stations
             .FirstOrDefaultAsync(s => s.Id == id && s.IsActive, cancellationToken);
     }
 
     public async Task<Station?> GetFirstByOrganizationIdAsync(Guid organizationId)
     {
-        return await _dbContext.Stations
+        var ctx = await _accessor.GetContextAsync();
+        return await ctx.Stations
             .FirstOrDefaultAsync(s => s.OrganizationId == organizationId && s.IsActive);
     }
 
     public async Task<List<Station>> GetByOrganizationIdAsync(Guid organizationId)
     {
-        return await _dbContext.Stations
+        var ctx = await _accessor.GetContextAsync();
+        return await ctx.Stations
             .Where(s => s.OrganizationId == organizationId && s.IsActive)
             .ToListAsync();
     }
@@ -39,19 +42,22 @@ public class StationRepository : IStationRepository
         if (idList.Count == 0)
             return new List<Station>();
 
-        return await _dbContext.Stations
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.Stations
             .Where(s => idList.Contains(s.Id) && s.IsActive)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<int> CountByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Stations
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.Stations
             .CountAsync(s => s.OrganizationId == organizationId && s.IsActive, cancellationToken);
     }
 
     public async Task AddAsync(Station station)
     {
-        await _dbContext.Stations.AddAsync(station);
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.Stations.AddAsync(station);
     }
 }
