@@ -26,6 +26,13 @@ public sealed class TenantDbContextAccessor : IAsyncDisposable
     }
 
     /// <summary>
+    /// True once <see cref="GetContextAsync"/> has been called and the context is ready.
+    /// UnitOfWork uses this to skip tenant flushing for control-plane-only requests
+    /// (e.g. pre-onboarding login, where no tenant repos are touched).
+    /// </summary>
+    public bool IsInitialized => _context is not null;
+
+    /// <summary>
     /// Returns the already-initialised <see cref="AppDbContext"/> synchronously.
     /// Only safe to call after at least one <see cref="GetContextAsync"/> call in the
     /// same request has completed. Used by synchronous repository methods (e.g. Update)

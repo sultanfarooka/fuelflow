@@ -41,9 +41,13 @@ public class UnitOfWork : IUnitOfWork
 
     public async Task SaveChangesAsync()
     {
-        // Flush tenant DB first, then control plane (see class doc).
-        var tenantCtx = await _tenantAccessor.GetContextAsync();
-        await tenantCtx.SaveChangesAsync();
+        // Flush tenant DB first (if initialized — pre-onboarding/control-plane-only requests
+        // never call GetContextAsync, so IsInitialized is false and tenant flush is skipped).
+        if (_tenantAccessor.IsInitialized)
+        {
+            var tenantCtx = await _tenantAccessor.GetContextAsync();
+            await tenantCtx.SaveChangesAsync();
+        }
         await _controlPlaneDbContext.SaveChangesAsync();
     }
 
