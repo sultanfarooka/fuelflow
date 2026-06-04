@@ -19,7 +19,6 @@ public class FuelPricesRepository : IFuelPricesRepository
         var ctx = await _accessor.GetContextAsync(cancellationToken);
         return await ctx.FuelPrices
             .AsNoTracking()
-            .Include(p => p.FuelType)
             .Where(p => p.StationId == stationId)
             .OrderByDescending(p => p.EffectiveFrom)
             .ToListAsync(cancellationToken);
@@ -40,7 +39,6 @@ public class FuelPricesRepository : IFuelPricesRepository
     {
         var ctx = await _accessor.GetContextAsync(cancellationToken);
         return await ctx.FuelPrices
-            .Include(p => p.FuelType)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
