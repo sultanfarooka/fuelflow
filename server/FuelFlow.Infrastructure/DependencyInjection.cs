@@ -169,6 +169,9 @@ public static class DependencyInjection
         services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
         services.AddScoped<TenantDbContextAccessor>();
 
+        // M14-F03: tenant provisioning (CREATE DATABASE + MigrateAsync + seed Org row).
+        services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+
         // 5. Register MediatR (CQRS handlers from Infrastructure)
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(RegisterCommandHandler).Assembly));
 
