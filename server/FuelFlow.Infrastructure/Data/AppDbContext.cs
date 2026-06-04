@@ -64,22 +64,9 @@ public class AppDbContext : DbContext
             typeof(AppDbContext).Assembly,
             t => t.Namespace == "FuelFlow.Infrastructure.Data.Configurations.PerTenant");
 
-        // M14-F01 cross-context shim: FuelTank.FuelType, Station.OMC, and
-        // FuelPrices.FuelType navigation properties still target control-plane
-        // entities. To keep `.Include(f => f.FuelType)`-style queries working in
-        // F01 (shared physical DB), apply the relevant configurations here too —
-        // but mark the tables as ExcludeFromMigrations so AppDbContext does not
-        // try to manage their schema (ControlPlaneDbContext owns those migrations).
-        //
-        // TODO M14-F03: when the physical DBs split, either remove these navs
-        // entirely (Phase 6 handler rewrites do per-row lookups against the
-        // control-plane repository) or replicate FuelType/OMC/OMCFuelTypes
-        // into each tenant DB at provisioning time.
-        modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.FuelTypeConfiguration());
-        modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.OMCConfiguration());
-        modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.OMCFuelTypeConfiguration());
-        modelBuilder.Entity<FuelType>().ToTable("fuel_types", t => t.ExcludeFromMigrations());
-        modelBuilder.Entity<OMC>().ToTable("omcs", t => t.ExcludeFromMigrations());
-        modelBuilder.Entity<OMCFuelTypes>().ToTable("omc_fuel_types", t => t.ExcludeFromMigrations());
+        // M14-F02: F01 cross-context shims removed. FuelTank.FuelType, Station.OMC,
+        // and FuelPrices.FuelType nav properties and HasOne configurations are dropped.
+        // FK constraints dropped via DropCrossContextForeignKeys Tenant migration.
+        // Handlers now use IFuelTypeRepository / IOMCRepository for explicit lookups.
     }
 }

@@ -7,26 +7,33 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class BankAccountRepository : IBankAccountRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public BankAccountRepository(AppDbContext dbContext)
+    public BankAccountRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<List<BankAccount>> GetByOrganizationIdAsync(Guid orgId, CancellationToken ct = default)
-        => await _dbContext.BankAccounts
+    {
+        var ctx = await _accessor.GetContextAsync(ct);
+        return await ctx.BankAccounts
             .Where(b => b.OrganizationId == orgId)
             .OrderByDescending(b => b.IsPrimary)
             .ThenBy(b => b.CreatedAt)
             .ToListAsync(ct);
+    }
 
     public async Task AddAsync(BankAccount account)
-        => await _dbContext.BankAccounts.AddAsync(account);
+    {
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.BankAccounts.AddAsync(account);
+    }
 
     public async Task DemotePrimaryAsync(Guid orgId, CancellationToken ct = default)
     {
-        var primary = await _dbContext.BankAccounts
+        var ctx = await _accessor.GetContextAsync(ct);
+        var primary = await ctx.BankAccounts
             .FirstOrDefaultAsync(b => b.OrganizationId == orgId && b.IsPrimary, ct);
         if (primary != null)
         {

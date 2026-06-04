@@ -7,25 +7,32 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class StationShiftConfigRepository : IStationShiftConfigRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public StationShiftConfigRepository(AppDbContext dbContext)
+    public StationShiftConfigRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<StationShiftConfig?> GetByStationIdAsync(Guid stationId, CancellationToken ct = default)
-        => await _dbContext.StationShiftConfigs
+    {
+        var ctx = await _accessor.GetContextAsync(ct);
+        return await ctx.StationShiftConfigs
             .FirstOrDefaultAsync(c => c.StationId == stationId, ct);
+    }
 
     public async Task AddAsync(StationShiftConfig config)
-        => await _dbContext.StationShiftConfigs.AddAsync(config);
+    {
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.StationShiftConfigs.AddAsync(config);
+    }
 
     public async Task DeleteByStationIdAsync(Guid stationId, CancellationToken ct = default)
     {
-        var existing = await _dbContext.StationShiftConfigs
+        var ctx = await _accessor.GetContextAsync(ct);
+        var existing = await ctx.StationShiftConfigs
             .FirstOrDefaultAsync(c => c.StationId == stationId, ct);
         if (existing != null)
-            _dbContext.StationShiftConfigs.Remove(existing);
+            ctx.StationShiftConfigs.Remove(existing);
     }
 }

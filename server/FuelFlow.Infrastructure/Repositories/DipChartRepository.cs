@@ -7,35 +7,38 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class DipChartRepository : IDipChartRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public DipChartRepository(AppDbContext dbContext)
+    public DipChartRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<DipChart?> GetByTankIdAsync(Guid tankId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.DipCharts
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.DipCharts
             .Include(d => d.Entries.OrderBy(e => e.DepthCm))
             .FirstOrDefaultAsync(d => d.TankId == tankId, cancellationToken);
     }
 
     public async Task AddAsync(DipChart dipChart)
     {
-        await _dbContext.DipCharts.AddAsync(dipChart);
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.DipCharts.AddAsync(dipChart);
     }
 
     public async Task DeleteByTankIdAsync(Guid tankId, CancellationToken cancellationToken = default)
     {
-        var existing = await _dbContext.DipCharts
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        var existing = await ctx.DipCharts
             .Include(d => d.Entries)
             .FirstOrDefaultAsync(d => d.TankId == tankId, cancellationToken);
 
         if (existing != null)
         {
-            _dbContext.DipChartEntries.RemoveRange(existing.Entries);
-            _dbContext.DipCharts.Remove(existing);
+            ctx.DipChartEntries.RemoveRange(existing.Entries);
+            ctx.DipCharts.Remove(existing);
         }
     }
 }

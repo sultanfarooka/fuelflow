@@ -7,23 +7,23 @@ using FuelFlow.Application.Interfaces.Services;
 
 namespace FuelFlow.Infrastructure.Features.FuelTank.Queries;
 
-/// <summary>
-/// Returns all fuel tanks for a station. Validates station belongs to user's org.
-/// </summary>
 public class GetFuelTanksByStationQueryHandler : IRequestHandler<GetFuelTanksByStationQuery, Result<List<FuelTankDto>>>
 {
     private readonly ICurrentUserService _currentUser;
     private readonly IStationRepository _stationRepo;
     private readonly IFuelTankRepository _fuelTankRepo;
+    private readonly IFuelTypeRepository _fuelTypeRepo;
 
     public GetFuelTanksByStationQueryHandler(
         ICurrentUserService currentUser,
         IStationRepository stationRepo,
-        IFuelTankRepository fuelTankRepo)
+        IFuelTankRepository fuelTankRepo,
+        IFuelTypeRepository fuelTypeRepo)
     {
         _currentUser = currentUser;
         _stationRepo = stationRepo;
         _fuelTankRepo = fuelTankRepo;
+        _fuelTypeRepo = fuelTypeRepo;
     }
 
     public async Task<Result<List<FuelTankDto>>> Handle(
@@ -42,13 +42,18 @@ public class GetFuelTanksByStationQueryHandler : IRequestHandler<GetFuelTanksByS
             return Result<List<FuelTankDto>>.Failure("You do not have access to this station.");
 
         var tanks = await _fuelTankRepo.GetAllByStationIdAsync(request.StationId, cancellationToken);
+
+        // Batch-load fuel type names via control-plane repo (M14-F02: cross-context nav removed).
+        var fuelTypes = await _fuelTypeRepo.GetAllForStationAsync(request.StationId, cancellationToken);
+        var fuelTypeMap = fuelTypes.ToDictionary(ft => ft.Id, ft => ft.Name);
+
         var dtos = tanks.Select(t => new FuelTankDto
         {
             Id = t.Id,
             Name = t.Name,
             CapacityLiters = t.CapacityLiters,
             FuelTypeId = t.FuelTypeId,
-            FuelTypeName = t.FuelType?.Name,
+            FuelTypeName = fuelTypeMap.GetValueOrDefault(t.FuelTypeId),
             HasDipChart = t.DipChart != null,
             DipChartEntryCount = t.DipChart?.Entries?.Count ?? 0,
         }).ToList();

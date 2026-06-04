@@ -97,7 +97,7 @@ public class CreateFuelTankCommandHandler : IRequestHandler<CreateFuelTankComman
             Name = newFuelTank.Name,
             CapacityLiters = newFuelTank.CapacityLiters,
             FuelTypeId = newFuelTank.FuelTypeId,
-            FuelTypeName = newFuelTank.FuelType?.Name,
+            FuelTypeName = fuelType.Name,
         });
     }
 }

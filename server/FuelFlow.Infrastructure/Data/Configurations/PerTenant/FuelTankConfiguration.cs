@@ -38,15 +38,12 @@ public class FuelTankConfiguration : IEntityTypeConfiguration<FuelTank>
 
         // 3. Relationships (FK property with its relationship block)
 
-        // Relationship: FuelTank â†’ FuelType (many-to-one)
-        // On delete cascade: if fuel type is deleted, its fuel tanks go too
+        // Cross-context FK column — references control-plane fuel_types by Guid.
+        // M14-F02: nav property + HasOne removed; FK constraint dropped via migration.
+        // Handlers use IFuelTypeRepository for explicit lookups.
         builder.Property(f => f.FuelTypeId)
             .HasColumnName("fuel_type_id")
             .IsRequired();
-        builder.HasOne(f => f.FuelType)
-            .WithMany()
-            .HasForeignKey(f => f.FuelTypeId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         // Relationship: FuelTank â†’ Station (many-to-one)
         // On delete cascade: if station is deleted, its fuel tanks go too

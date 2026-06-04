@@ -175,6 +175,7 @@ if (app.Environment.IsDevelopment())
 // 3. Authorization must be before Controllers
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();     // Applies named policies declared via [EnableRateLimiting] ([M01-F09-R12])
+app.UseMiddleware<FuelFlow.Api.Middleware.TenantExceptionMiddleware>(); // M14-F03: 503 for missing tenant DB
 app.UseAuthentication();  // Validates JWT token
 app.UseAuthorization();   // Checks [Authorize] attributes
 app.MapControllers();
