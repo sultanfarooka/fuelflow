@@ -51,7 +51,10 @@ public static class DependencyInjection
                 connStr,
                 npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory_ControlPlane")));
 
-        services.AddDbContext<AppDbContext>(options =>
+        // M14-F02: replaced AddDbContext with AddDbContextFactory. TenantDbContextAccessor
+        // creates AppDbContext instances with per-tenant connection strings at runtime.
+        // The scoped AppDbContext registration is removed; repos inject TenantDbContextAccessor.
+        services.AddDbContextFactory<AppDbContext>(options =>
             options.UseNpgsql(
                 connStr,
                 npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory_AppDb")));
@@ -161,6 +164,10 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IRequestContextService, RequestContextService>();
+
+        // M14-F02: tenant connection resolution + per-request AppDbContext accessor.
+        services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
+        services.AddScoped<TenantDbContextAccessor>();
 
         // 5. Register MediatR (CQRS handlers from Infrastructure)
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(RegisterCommandHandler).Assembly));
