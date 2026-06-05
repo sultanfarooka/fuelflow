@@ -1486,11 +1486,22 @@ Scoped `TenantDbContextAccessor` wraps `IDbContextFactory<AppDbContext>` and res
 
 ---
 
-### M14-F04 — Onboarding Flow Adaptation   [Status: Planned]
+### M14-F04 — Onboarding Flow Adaptation   [Status: In Progress]
 
-`POST /onboarding` step 1 now creates the control-plane `Tenant` row (status `Provisioning`), calls `ITenantProvisioningService`, re-issues the JWT with the `org_id` claim, and returns. Steps 2–9 of the wizard route by `stationId` and naturally hit the new tenant DB via the resolver. Wizard chrome shows a "Provisioning your workspace…" state during step 1 (~5–30s).
+`POST /onboarding` step 1 now creates the control-plane `Tenant` row (status `Provisioning`), calls `ITenantProvisioningService`, re-issues the JWT with the `org_id` claim, and returns. Steps 2–9 of the wizard route by `stationId` and naturally hit the new tenant DB via the resolver. Wizard chrome shows a "Provisioning your workspace…" state during step 1 (~5–30s). Purely frontend — M14-F02/F03 completed the backend provisioning.
 
-Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F04 via its own `/feature-planning` run.
+| ID | Requirement | Notes | Status |
+|---|---|---|---|
+| M14-F04-R01 | During step 1 provisioning (mutation in flight), the wizard UI is replaced by a full-screen overlay ("Setting up your workspace…" + spinner + ~30s note); all wizard interaction is blocked; a `beforeunload` listener warns if the user tries to navigate away. | New `ProvisioningOverlay` component rendered in `StepOrgStation` | Planned |
+| M14-F04-R02 | If step 1 returns HTTP 500, the overlay is dismissed, the form re-enables, a Sonner error toast fires, and the inline `<Alert variant="destructive">` shows the server error; user can retry without a page reload. | Extension of existing `submitError` + `isSubmitting` state | Planned |
+| M14-F04-R03 | Playwright E2E spec `fuel-flow-web/e2e-tests/M14-F04.spec.ts` walks the full journey: registration → phone OTP → login → onboarding (all 9 steps, provisioning overlay observed during step 1) → station/tank/nozzle CRUD → logout → re-login. | Covers M14-F02/F03-AC7 deferred from that PR | Planned |
+
+**Acceptance criteria:**
+
+- **AC1** — After step 1 submission the full-screen overlay replaces the wizard content; no wizard interaction is possible while it is visible; pressing the browser Back button triggers a `beforeunload` warning.
+- **AC2** — When `POST /onboarding` succeeds, the overlay disappears and the wizard advances to step 2; the auth store is updated with the new JWT carrying `org_id`.
+- **AC3** — When `POST /onboarding` returns HTTP 500, the overlay is dismissed, the form re-enables, a Sonner error toast fires, and the inline `<Alert>` shows the error; the user can retry without a page reload.
+- **AC4** — Playwright spec `M14-F04.spec.ts` passes end-to-end: registration → phone OTP → login → onboarding (provisioning overlay observed) → wizard completion → station/tank/nozzle CRUD.
 
 ---
 
