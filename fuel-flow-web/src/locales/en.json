@@ -27,6 +27,11 @@
   "onboarding": {
     "progress": "Step {{current}} of {{total}}",
     "resuming": "Resuming your setup…",
+    "provisioning": {
+      "title": "Setting up your workspace…",
+      "body": "We're creating your database and getting everything ready.",
+      "note": "This takes about 30 seconds. Please don't close this window."
+    },
     "stationNotFound": "Station not found. Please go back to Step 1.",
     "backToStart": "Back to start",
     "devBypass": {
