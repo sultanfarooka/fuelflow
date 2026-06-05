@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-04
+**Last Updated:** 2026-06-05
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -67,12 +67,11 @@ The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that
 
 | # | ID | Title | Area |
 |---|---|---|---|
-| 1 | [M14-F04](#m14-f04--onboarding-flow-adaptation) | Onboarding Flow Adaptation — wizard "Provisioning your workspace…" state, handle provisioning latency in the frontend, step-2+ routing to tenant DB via new JWT | Frontend + Backend |
-| 2 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
-| 3 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
-| 4 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
-| 5 | [M08-F05-R05](#m08-f05--system-preferences) | i18n content sweep — wire `useTranslation` across all shipped auth / dashboard / onboarding screens (foundation already in place per M07-F09-R04) | Frontend |
-| 6 | [M13](#m13--staff--payroll) | Staff & Payroll — employee records, salary/payroll, advances & loans, attendance with shift-derived attendance (M04) and shortage-deduction integration (M04-F05) | Backend + Frontend |
+| 1 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
+| 2 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
+| 3 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
+| 4 | [M08-F05-R05](#m08-f05--system-preferences) | i18n content sweep — wire `useTranslation` across all shipped auth / dashboard / onboarding screens (foundation already in place per M07-F09-R04) | Frontend |
+| 5 | [M13](#m13--staff--payroll) | Staff & Payroll — employee records, salary/payroll, advances & loans, attendance with shift-derived attendance (M04) and shortage-deduction integration (M04-F05) | Backend + Frontend |
 
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -1486,15 +1485,15 @@ Scoped `TenantDbContextAccessor` wraps `IDbContextFactory<AppDbContext>` and res
 
 ---
 
-### M14-F04 — Onboarding Flow Adaptation   [Status: In Progress]
+### M14-F04 — Onboarding Flow Adaptation   [Status: Done]
 
 `POST /onboarding` step 1 now creates the control-plane `Tenant` row (status `Provisioning`), calls `ITenantProvisioningService`, re-issues the JWT with the `org_id` claim, and returns. Steps 2–9 of the wizard route by `stationId` and naturally hit the new tenant DB via the resolver. Wizard chrome shows a "Provisioning your workspace…" state during step 1 (~5–30s). Purely frontend — M14-F02/F03 completed the backend provisioning.
 
 | ID | Requirement | Notes | Status |
 |---|---|---|---|
-| M14-F04-R01 | During step 1 provisioning (mutation in flight), the wizard UI is replaced by a full-screen overlay ("Setting up your workspace…" + spinner + ~30s note); all wizard interaction is blocked; a `beforeunload` listener warns if the user tries to navigate away. | New `ProvisioningOverlay` component rendered in `StepOrgStation` | Planned |
-| M14-F04-R02 | If step 1 returns HTTP 500, the overlay is dismissed, the form re-enables, a Sonner error toast fires, and the inline `<Alert variant="destructive">` shows the server error; user can retry without a page reload. | Extension of existing `submitError` + `isSubmitting` state | Planned |
-| M14-F04-R03 | Playwright E2E spec `fuel-flow-web/e2e-tests/M14-F04.spec.ts` walks the full journey: registration → phone OTP → login → onboarding (all 9 steps, provisioning overlay observed during step 1) → station/tank/nozzle CRUD → logout → re-login. | Covers M14-F02/F03-AC7 deferred from that PR | Planned |
+| M14-F04-R01 | During step 1 provisioning (mutation in flight), the wizard UI is replaced by a full-screen overlay ("Setting up your workspace…" + spinner + ~30s note); all wizard interaction is blocked; a `beforeunload` listener warns if the user tries to navigate away. | New `ProvisioningOverlay` component rendered in `StepOrgStation` | Done |
+| M14-F04-R02 | If step 1 returns HTTP 500, the overlay is dismissed, the form re-enables, a Sonner error toast fires, and the inline `<Alert variant="destructive">` shows the server error; user can retry without a page reload. | Extension of existing `submitError` + `isSubmitting` state | Done |
+| M14-F04-R03 | Playwright E2E spec `fuel-flow-web/e2e-tests/M14-F04.spec.ts` walks the full journey: registration → phone OTP → login → onboarding (all 9 steps, provisioning overlay observed during step 1) → station/tank/nozzle CRUD → logout → re-login. | Covers M14-F02/F03-AC7 deferred from that PR | Done |
 
 **Acceptance criteria:**
 
