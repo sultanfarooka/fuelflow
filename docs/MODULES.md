@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-05 (M14-F05 Done)
+**Last Updated:** 2026-06-06 (M14 complete — all F01–F06 Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -57,7 +57,7 @@
 | [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
 | [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | In Progress | — |
 | [M13](#m13--staff--payroll) | Staff & Payroll | Planned | — |
-| [M14](#m14--per-tenant-database-architecture) | Per-Tenant Database Architecture | Planned | — |
+| [M14](#m14--per-tenant-database-architecture) | Per-Tenant Database Architecture | Done | — |
 
 ---
 
@@ -1522,15 +1522,15 @@ Pre-org-creation flows (registration, phone OTP, login by phone, password recove
 
 ---
 
-### M14-F06 — Migration Tooling & Dev/Ops   [Status: In Progress]
+### M14-F06 — Migration Tooling & Dev/Ops   [Status: Done]
 
 `server/db-migration-add.ps1` and `db-update.ps1` already have `-Context` support (shipped with M14-F01). Remaining work: startup task that applies pending tenant migrations to every active tenant DB on app boot; `scripts/dev.ps1 --reset-all` to wipe and rebuild all DBs for local dev; documentation sweep to rewrite the root `CLAUDE.md` Multi-Tenancy Model section and audit all stale M14 references across scoped CLAUDE.md files.
 
 | ID | Requirement | Notes | Status |
 |---|---|---|---|
-| M14-F06-R01 | On app boot, scan `Tenants` where `Status == Active`, resolve each tenant's connection string via `ITenantConnectionResolver`, and call `AppDbContext.Database.MigrateAsync()` on each. Implemented as an `IHostedService`. On per-tenant failure: log the error and continue — the app starts and serves other tenants; the failing tenant's row is not modified (manual investigation required). | Infrastructure — new `TenantMigrationHostedService` | In Progress |
-| M14-F06-R02 | Extend `scripts/dev.ps1` with a `-ResetAll` switch. When set: (1) drop the control plane DB + all tenant DBs (databases matching the `tenant_*` naming convention via `psql`/docker exec); (2) run `db-update.ps1 -Context ControlPlane` to rebuild; (3) exit. Does not start the app — tenant DBs are provisioned fresh on first onboarding. | Scripts — PowerShell | In Progress |
-| M14-F06-R03 | Documentation sweep: rewrite the root `CLAUDE.md` "Multi-Tenancy Model" section to reflect the current live architecture (per-tenant DBs via `ITenantConnectionResolver`, M14-F01–F05 all Done). Audit `server/CLAUDE.md`, `server/FuelFlow.Infrastructure/CLAUDE.md`, `server/FuelFlow.Api/CLAUDE.md`, `server/FuelFlow.Application/CLAUDE.md`, `server/FuelFlow.Domain/CLAUDE.md`, `fuel-flow-web/CLAUDE.md` for any stale forward-references to M14-F01/F02/F03 as future work and update them. | Docs only — no code changes | In Progress |
+| M14-F06-R01 | On app boot, scan `Tenants` where `Status == Active`, resolve each tenant's connection string via `ITenantConnectionResolver`, and call `AppDbContext.Database.MigrateAsync()` on each. Implemented as an `IHostedService`. On per-tenant failure: log the error and continue — the app starts and serves other tenants; the failing tenant's row is not modified (manual investigation required). | Infrastructure — new `TenantMigrationHostedService` | Done |
+| M14-F06-R02 | Extend `scripts/dev.ps1` with a `-ResetAll` switch. When set: (1) drop the control plane DB + all tenant DBs (databases matching the `tenant_*` naming convention via `psql`/docker exec); (2) run `db-update.ps1 -Context ControlPlane` to rebuild; (3) exit. Does not start the app — tenant DBs are provisioned fresh on first onboarding. | Scripts — PowerShell | Done |
+| M14-F06-R03 | Documentation sweep: rewrite the root `CLAUDE.md` "Multi-Tenancy Model" section to reflect the current live architecture (per-tenant DBs via `ITenantConnectionResolver`, M14-F01–F05 all Done). Audit `server/CLAUDE.md`, `server/FuelFlow.Infrastructure/CLAUDE.md`, `server/FuelFlow.Api/CLAUDE.md`, `server/FuelFlow.Application/CLAUDE.md`, `server/FuelFlow.Domain/CLAUDE.md`, `fuel-flow-web/CLAUDE.md` for any stale forward-references to M14-F01/F02/F03 as future work and update them. | Docs only — no code changes | Done |
 
 **Acceptance criteria:**
 

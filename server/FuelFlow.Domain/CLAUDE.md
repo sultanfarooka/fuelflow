@@ -45,15 +45,15 @@ The columns shown are the meaningful business fields — every entity also has `
 | `Organization` | PT | name, ownerId | Root per-tenant business record. `ownerId` is a plain `Guid` (cross-context → AppUser; no FK). |
 | `Subscription` | CP | userId, planId, status, startedAt, endsAt | One **active** subscription per org ([M11-F01-R01](../../docs/MODULES.md#m11-f01--subscription-plans)). |
 | `SubscriptionPlans` | CP | name, maxStations, maxUsers, price, features (JSONB) | Seeded: Starter / Professional / Enterprise. |
-| `Station` | PT | organizationId, name, address, omcId, isActive | Per-tenant. `omcId` is an F01-shim cross-context nav to control-plane `OMC` (TODO M14-F03: drop). |
+| `Station` | PT | organizationId, name, address, omcId, isActive | Per-tenant. `omcId` is an F01-shim cross-context nav to control-plane `OMC` (F01 shim — kept for backwards compat; use IOMCRepository for new lookups). |
 | `User` (`AspNetUsers`) | CP | email, fullName, phone, role, organizationId | Identity extension; `phone` validated `+92XXXXXXXXXX`. `organizationId` is a plain Guid (cross-context to `Organization`). |
 | `RefreshToken` | CP | userId, tokenHash, expiresAt, revokedAt, ip, userAgent, deviceId | Hashed only — plain token sent at creation. Rotation on refresh; reuse ⇒ revoke chain. |
 | `PhoneVerification` | CP | userId, code, expiresAt, attempts | OTP records; targets pre-org-creation flows so it must live in control plane. |
 | `UserStation` (many-to-many) | PT | userId, stationId | Manager → station assignments ([M01-F07](../../docs/MODULES.md#m01-f07--multi-station-access)). `userId` is a plain Guid (no FK to control-plane AppUser). |
-| `FuelTank` | PT | stationId, fuelTypeId, capacityLiters, name | Tank name unique per station. `fuelTypeId` is an F01-shim cross-context nav (TODO M14-F03). |
+| `FuelTank` | PT | stationId, fuelTypeId, capacityLiters, name | Tank name unique per station. `fuelTypeId` is an F01-shim cross-context nav (F01 shim — kept for backwards compat; use IFuelTypeRepository for new lookups). |
 | `FuelType` | CP | name, unit, isCustom, stationId? | Platform reference data (PMG, HSD, HOBC). `stationId` is a Guid? (no nav after M14-F01 — was cross-context). |
 | `FuelNozzle` | PT | stationId, tankId, nozzleNumber, isActive | Unique per station; nozzle linked to one tank. |
-| `FuelPrices` | PT | stationId, fuelTypeId, price, effectiveFrom | Only one active per (station, fuel) at a time ([M06-F01-R01](../../docs/MODULES.md#m06-f01--price-configuration)). `fuelTypeId` is an F01-shim cross-context nav (TODO M14-F03). |
+| `FuelPrices` | PT | stationId, fuelTypeId, price, effectiveFrom | Only one active per (station, fuel) at a time ([M06-F01-R01](../../docs/MODULES.md#m06-f01--price-configuration)). `fuelTypeId` is an F01-shim cross-context nav (F01 shim — kept for backwards compat; use IFuelTypeRepository for new lookups). |
 | `StationShift` | PT | stationId, status (Open/Closed), openedAt, closedAt, cash totals | One open per station ([M04-F03-R01](../../docs/MODULES.md#m04-f03--open-shift)). `openedByUserId`/`closedByUserId` are plain Guids (no FK to AppUser). |
 | `ShiftAssignment` | PT | shiftId, userId, nozzleId | Who worked which nozzle. `userId` is plain Guid (no FK to AppUser). |
 | `NozzleReadings` | PT | shiftId, nozzleId, readingType (Opening/Closing), totalizerValue, imageUrl | Closing ≥ Opening enforced in handler ([M03-F02-R04](../../docs/MODULES.md#m03-f02--meter-reading-entry)). `recordedByUserId` plain Guid. |
