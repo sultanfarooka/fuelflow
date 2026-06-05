@@ -39,7 +39,6 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
     private readonly IOMCRepository _omcRepo;
     private readonly IConfiguration _configuration;
     private readonly ControlPlaneDbContext _controlPlane;
-    private readonly IAccountHeadSeeder _accountHeadSeeder;
     private readonly ILogger<OnboardingCommandHandler> _logger;
 
     private const SubscriptionPlanName TrialPlan = SubscriptionPlanName.Professional;
@@ -56,7 +55,6 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
         IOMCRepository omcRepo,
         IConfiguration configuration,
         ControlPlaneDbContext controlPlane,
-        IAccountHeadSeeder accountHeadSeeder,
         ILogger<OnboardingCommandHandler> logger)
     {
         _currentUser = currentUser;
@@ -70,7 +68,6 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
         _omcRepo = omcRepo;
         _configuration = configuration;
         _controlPlane = controlPlane;
-        _accountHeadSeeder = accountHeadSeeder;
         _logger = logger;
     }
 
@@ -151,6 +148,24 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
             };
             tenantCtx.Stations.Add(station);
             await tenantCtx.SaveChangesAsync(cancellationToken);
+
+            // --- Step 4b: Seed default expense account heads (M05-F09-R03) ---
+            // Seeded inline into the just-provisioned tenant DB because the current
+            // request's JWT has no org_id yet, so TenantDbContextAccessor cannot
+            // resolve the tenant connection. Best-effort: a seeding failure must not
+            // fail an otherwise-successful onboarding.
+            try
+            {
+                var heads = AccountHeadSeeder.DefaultExpenseHeadNames
+                    .Select(name => AccountHeadSeeder.BuildExpenseHead(orgId, name))
+                    .ToList();
+                await tenantCtx.AccountHeads.AddRangeAsync(heads, cancellationToken);
+                await tenantCtx.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to seed default expense account heads for org {OrgId}", orgId);
+            }
         }
         catch (Exception ex)
         {
@@ -212,18 +227,6 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
         {
             _logger.LogError(ex, "Failed to persist refresh token for user {UserId}", userId);
             return Result<AuthResponse>.Failure("Workspace created but failed to issue session token.");
-        }
-
-        // --- Step 5b: Seed default expense account heads for the new organization (M05-F09-R03) ---
-        // Runs after the onboarding transaction commits so the organization row is durable.
-        // Idempotent and best-effort: a seeding failure must not fail an otherwise-successful onboarding.
-        try
-        {
-            await _accountHeadSeeder.SeedDefaultExpenseHeadsAsync(newOrganization.Id, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to seed default expense account heads for org {OrganizationId}", newOrganization.Id);
         }
 
         // --- Step 7: Build auth response with new access token (org_id now embedded) ---
