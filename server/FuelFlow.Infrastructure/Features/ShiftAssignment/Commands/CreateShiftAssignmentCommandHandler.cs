@@ -55,6 +55,10 @@ public class CreateShiftAssignmentCommandHandler : IRequestHandler<CreateShiftAs
         if (nozzle.StationId != request.StationId)
             return Result<ShiftAssignmentDto>.Failure("Nozzle does not belong to this station.");
 
+        // TODO M01-F05: verify request.Request.UserId exists in the control plane
+        // (UserManager.FindByIdAsync) before inserting the ShiftAssignment row.
+        // UserStation.UserId is a plain Guid column — no DB FK; app layer enforces
+        // existence. Deferred to M01-F05 (user management).
         var now = DateTime.UtcNow;
         var assignment = new Domain.Entities.ShiftAssignment
         {

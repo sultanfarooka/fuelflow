@@ -16,6 +16,7 @@ namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 /// CQRS Handler: Exchanges a valid refresh token for new access + refresh tokens (rotation).
 /// Validates the incoming token (exists, not revoked, not expired), revokes it, creates a new one
 /// and links the old to the new for audit. Returns the same <see cref="AuthResponse"/> shape as login.
+/// M14 contract: ControlPlane only — refresh tokens live in ControlPlane; no tenant lookup on token refresh [M14-F05-R02].
 /// </summary>
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<AuthResponse>>
 {

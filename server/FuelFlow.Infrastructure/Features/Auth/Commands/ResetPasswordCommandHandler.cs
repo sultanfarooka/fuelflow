@@ -10,6 +10,7 @@ namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 /// <summary>
 /// CQRS Handler: Resets password using token from reset link (userId + token + new password).
 /// Token is issued by ForgotPassword flow and validated by Identity.
+/// M14 contract: ControlPlane only — no TenantDbContextAccessor used [M14-F05-R02].
 /// </summary>
 public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, Result<ResetPasswordResponse>>
 {

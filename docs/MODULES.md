@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-05
+**Last Updated:** 2026-06-05 (M14-F05 Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -1504,15 +1504,15 @@ Scoped `TenantDbContextAccessor` wraps `IDbContextFactory<AppDbContext>` and res
 
 ---
 
-### M14-F05 — Identity & Auth Adaptation   [Status: In Progress]
+### M14-F05 — Identity & Auth Adaptation   [Status: Done]
 
 Pre-org-creation flows (registration, phone OTP, login by phone, password recovery) hit only the control plane — no tenant context needed. After login, JWT carries `org_id`; subsequent requests are tenant-routed. `UserStation` cross-DB link enforced at app layer (no FK). Phone uniqueness enforced via index on control-plane `AspNetUsers`. Purely backend — no frontend changes.
 
 | ID | Requirement | Notes | Status |
 |---|---|---|---|
-| M14-F05-R01 | Add a unique index on `AspNetUsers.PhoneNumber` in the ControlPlane DB via a new EF Core migration and `AppUserConfiguration` update. PostgreSQL UNIQUE indexes natively allow multiple NULLs, so a standard (non-partial) unique index on the nullable column is correct. The existing app-level check in `RegisterCommandHandler` remains as an earlier-exit guard. | ControlPlane migration + configuration | In Progress |
-| M14-F05-R02 | Verify that all pre-org-creation handlers (`RegisterCommandHandler`, `LoginCommandHandler`, `VerifyPhoneCommandHandler`, `ForgotPasswordCommandHandler`, `ResetPasswordCommandHandler`, `RefreshTokenCommandHandler`, `GetCurrentUserQueryHandler`) touch only `ControlPlaneDbContext`; no `TenantDbContextAccessor` is accessed for users without `org_id`. Document the M14 multi-tenancy contract in each handler's class-level summary. | Verification pass + doc comments; `LoginCommandHandler` guard already correct at line 118 | In Progress |
-| M14-F05-R03 | `UserStation` cross-DB link: document in code that `UserStation.UserId` is a plain `Guid` column (no FK) and that handlers inserting `UserStation` rows must verify user existence via `UserManager.FindByIdAsync` before insert. Note deferred handlers (e.g. `CreateShiftAssignmentCommandHandler`) as `TODO M01-F05` in a code comment. | Code comments only; ShiftAssignment user-existence check deferred to M01-F05 | In Progress |
+| M14-F05-R01 | Add a unique index on `AspNetUsers.PhoneNumber` in the ControlPlane DB via a new EF Core migration and `AppUserConfiguration` update. PostgreSQL UNIQUE indexes natively allow multiple NULLs, so a standard (non-partial) unique index on the nullable column is correct. The existing app-level check in `RegisterCommandHandler` remains as an earlier-exit guard. | ControlPlane migration + configuration | Done |
+| M14-F05-R02 | Verify that all pre-org-creation handlers (`RegisterCommandHandler`, `LoginCommandHandler`, `VerifyPhoneCommandHandler`, `ForgotPasswordCommandHandler`, `ResetPasswordCommandHandler`, `RefreshTokenCommandHandler`, `GetCurrentUserQueryHandler`) touch only `ControlPlaneDbContext`; no `TenantDbContextAccessor` is accessed for users without `org_id`. Document the M14 multi-tenancy contract in each handler's class-level summary. | Verification pass + doc comments; `LoginCommandHandler` guard already correct at line 118 | Done |
+| M14-F05-R03 | `UserStation` cross-DB link: document in code that `UserStation.UserId` is a plain `Guid` column (no FK) and that handlers inserting `UserStation` rows must verify user existence via `UserManager.FindByIdAsync` before insert. Note deferred handlers (e.g. `CreateShiftAssignmentCommandHandler`) as `TODO M01-F05` in a code comment. | Code comments only; ShiftAssignment user-existence check deferred to M01-F05 | Done |
 
 **Acceptance criteria:**
 
