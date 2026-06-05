@@ -1522,11 +1522,21 @@ Pre-org-creation flows (registration, phone OTP, login by phone, password recove
 
 ---
 
-### M14-F06 — Migration Tooling & Dev/Ops   [Status: Planned]
+### M14-F06 — Migration Tooling & Dev/Ops   [Status: In Progress]
 
-`server/db-migration-add.ps1` and `db-update.ps1` extended to take a `-Context` parameter (`ControlPlane` or `Tenant`). Startup task scans control-plane `Tenants` and applies pending tenant migrations to each tenant DB on app boot. `scripts/dev.ps1` extended with `--reset-all` (drops control plane + every tenant DB; rebuilds). Documentation updated across all scoped CLAUDE.md files; root `CLAUDE.md` "Multi-Tenancy Model" section rewritten.
+`server/db-migration-add.ps1` and `db-update.ps1` already have `-Context` support (shipped with M14-F01). Remaining work: startup task that applies pending tenant migrations to every active tenant DB on app boot; `scripts/dev.ps1 --reset-all` to wipe and rebuild all DBs for local dev; documentation sweep to rewrite the root `CLAUDE.md` Multi-Tenancy Model section and audit all stale M14 references across scoped CLAUDE.md files.
 
-Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F06 via its own `/feature-planning` run.
+| ID | Requirement | Notes | Status |
+|---|---|---|---|
+| M14-F06-R01 | On app boot, scan `Tenants` where `Status == Active`, resolve each tenant's connection string via `ITenantConnectionResolver`, and call `AppDbContext.Database.MigrateAsync()` on each. Implemented as an `IHostedService`. On per-tenant failure: log the error and continue — the app starts and serves other tenants; the failing tenant's row is not modified (manual investigation required). | Infrastructure — new `TenantMigrationHostedService` | In Progress |
+| M14-F06-R02 | Extend `scripts/dev.ps1` with a `-ResetAll` switch. When set: (1) drop the control plane DB + all tenant DBs (databases matching the `tenant_*` naming convention via `psql`/docker exec); (2) run `db-update.ps1 -Context ControlPlane` to rebuild; (3) exit. Does not start the app — tenant DBs are provisioned fresh on first onboarding. | Scripts — PowerShell | In Progress |
+| M14-F06-R03 | Documentation sweep: rewrite the root `CLAUDE.md` "Multi-Tenancy Model" section to reflect the current live architecture (per-tenant DBs via `ITenantConnectionResolver`, M14-F01–F05 all Done). Audit `server/CLAUDE.md`, `server/FuelFlow.Infrastructure/CLAUDE.md`, `server/FuelFlow.Api/CLAUDE.md`, `server/FuelFlow.Application/CLAUDE.md`, `server/FuelFlow.Domain/CLAUDE.md`, `fuel-flow-web/CLAUDE.md` for any stale forward-references to M14-F01/F02/F03 as future work and update them. | Docs only — no code changes | In Progress |
+
+**Acceptance criteria:**
+
+- **AC1** — Fresh `dotnet run` on a DB with 2+ active `Tenant` records applies any pending tenant migrations to each tenant DB before requests are served; if one tenant's migration fails, the error is logged, the app starts, and other tenants are unaffected.
+- **AC2** — `./scripts/dev.ps1 -ResetAll` drops the control plane DB and all `tenant_*` databases, runs `db-update.ps1 -Context ControlPlane` successfully, and exits (no server start).
+- **AC3** — Root `CLAUDE.md` Multi-Tenancy Model section and all scoped `CLAUDE.md` files contain no stale forward-references to M14 features as future work; the current architecture is accurately described.
 
 ---
 
