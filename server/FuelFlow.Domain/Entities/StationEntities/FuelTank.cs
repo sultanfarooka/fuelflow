@@ -11,15 +11,14 @@ public class FuelTank : BaseEntity
     public string? Name { get; set; }
     public decimal CapacityLiters { get; set; }
 
+    // Cross-context FK — references control-plane FuelType by plain Guid (M14-F02).
+    // Nav property dropped; handlers use IFuelTypeRepository for lookups.
     public Guid FuelTypeId { get; set; }
-    public FuelType FuelType { get; set; } = null!;
 
     public Guid StationId { get; set; }
     public Station Station { get; set; } = null!;
 
     public DipChart DipChart { get; set; } = null!;
-
-
 }
 
 /// <summary>

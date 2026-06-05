@@ -27,8 +27,9 @@ public class Station : BaseEntity
     public Guid OrganizationId { get; set; }
     // Navigation property — EF Core uses this to JOIN to organizations table
     public Organization Organization { get; set; } = null!;
+    // Cross-context FK — references control-plane OMC by plain Guid (M14-F02).
+    // Nav property dropped; handlers use IOMCRepository for lookups.
     public Guid OMCId { get; set; }
-    public OMC OMC { get; set; } = null!;
     public ICollection<FuelTank> FuelTanks { get; set; } = new List<FuelTank>();
     public ICollection<FuelNozzle> FuelNozzles { get; set; } = new List<FuelNozzle>();
     public ICollection<StationShift> StationShifts { get; set; } = new List<StationShift>();

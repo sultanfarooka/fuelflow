@@ -6,16 +6,17 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class UserStationRepository : IUserStationRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public UserStationRepository(AppDbContext dbContext)
+    public UserStationRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<List<Guid>> GetStationIdsByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.UserStations
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.UserStations
             .Where(us => us.UserId == userId)
             .Select(us => us.StationId)
             .ToListAsync(cancellationToken);
@@ -23,7 +24,8 @@ public class UserStationRepository : IUserStationRepository
 
     public async Task<List<Guid>> GetUserIdsByStationIdAsync(Guid stationId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.UserStations
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.UserStations
             .Where(us => us.StationId == stationId)
             .Select(us => us.UserId)
             .ToListAsync(cancellationToken);

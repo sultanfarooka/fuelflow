@@ -7,16 +7,17 @@ namespace FuelFlow.Infrastructure.Repositories;
 
 public class FuelNozzleRepository : IFuelNozzleRepository
 {
-    private readonly AppDbContext _dbContext;
+    private readonly TenantDbContextAccessor _accessor;
 
-    public FuelNozzleRepository(AppDbContext dbContext)
+    public FuelNozzleRepository(TenantDbContextAccessor accessor)
     {
-        _dbContext = dbContext;
+        _accessor = accessor;
     }
 
     public async Task<List<FuelNozzle>> GetByStationIdAsync(Guid stationId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.FuelNozzles
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.FuelNozzles
             .AsNoTracking()
             .Include(n => n.FuelTank)
             .Where(n => n.StationId == stationId)
@@ -26,19 +27,21 @@ public class FuelNozzleRepository : IFuelNozzleRepository
 
     public async Task<FuelNozzle?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.FuelNozzles
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.FuelNozzles
             .Include(n => n.FuelTank)
             .FirstOrDefaultAsync(n => n.Id == id, cancellationToken);
     }
 
     public async Task AddAsync(FuelNozzle fuelNozzle)
     {
-        await _dbContext.FuelNozzles.AddAsync(fuelNozzle);
+        var ctx = await _accessor.GetContextAsync();
+        await ctx.FuelNozzles.AddAsync(fuelNozzle);
     }
 
     public Task DeleteAsync(FuelNozzle fuelNozzle)
     {
-        _dbContext.FuelNozzles.Remove(fuelNozzle);
+        _accessor.Context.FuelNozzles.Remove(fuelNozzle);
         return Task.CompletedTask;
     }
 }

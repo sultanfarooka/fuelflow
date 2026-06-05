@@ -68,7 +68,7 @@ The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that
 
 | # | ID | Title | Area |
 |---|---|---|---|
-| 1 | [M14-F02](#m14-f02--tenant-registry--connection-resolution) | Per-Tenant DB architecture — Phase 2: `ITenantConnectionResolver` + `AddDbContextFactory<AppDbContext>` + 18-repo refactor + `UnitOfWork` saga redesign. Builds directly on the M14-F01 split that just shipped. | Backend |
+| 1 | [M14-F04](#m14-f04--onboarding-flow-adaptation) | Onboarding Flow Adaptation — wizard "Provisioning your workspace…" state, handle provisioning latency in the frontend, step-2+ routing to tenant DB via new JWT | Frontend + Backend |
 | 2 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
 | 3 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
 | 4 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
@@ -1654,19 +1654,49 @@ Establish the conceptual split between control-plane data and tenant data before
 
 ---
 
-### M14-F02 — Tenant Registry & Connection Resolution   [Status: Planned]
+### M14-F02 — Tenant Registry & Connection Resolution   [Status: Done]
 
-`ITenantConnectionResolver` reads the JWT `org_id` claim and looks up the per-tenant connection string from control-plane `Tenants` (cached). Replace `AddDbContext<AppDbContext>` with `AddDbContextFactory<AppDbContext>` that consumes the resolver. All 18 repositories refactored to inject `IDbContextFactory<AppDbContext>` and create contexts per operation. `UnitOfWork` redesigned for factory-created contexts and explicit transaction scopes.
+Scoped `TenantDbContextAccessor` wraps `IDbContextFactory<AppDbContext>` and resolves the correct per-tenant `AppDbContext` once per HTTP request from the JWT `org_id` claim. All 11 per-tenant repositories and `UnitOfWork` are refactored to inject the accessor instead of `AppDbContext` directly. Ships in the same PR as M14-F03 so `DatabaseName` is always populated before the resolver runs.
 
-Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F02 via its own `/feature-planning` run.
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M14-F02-R01 | `ITenantConnectionResolver` interface in `FuelFlow.Application.Interfaces.Services`. Implementation reads `ICurrentUserService.OrganizationId`, queries `ControlPlaneDbContext.Tenants` for the matching row, and derives the connection string by replacing the database name in `DefaultConnection` with `Tenant.DatabaseName`. Returns `null` when `org_id` is absent (unauthenticated / pre-org flows). Throws `TenantNotFoundException` (maps to 503) when `org_id` is present but no `Tenant` row exists. No in-process caching. | — | Done |
+| M14-F02-R02 | `TenantDbContextAccessor` scoped service registered in DI. On first access it calls `ITenantConnectionResolver`, builds `DbContextOptions<AppDbContext>` with the resolved connection string, and creates an `AppDbContext` via `IDbContextFactory<AppDbContext>`. Subsequent accesses within the same HTTP request return the same instance. | — | Done |
+| M14-F02-R03 | `AddDbContext<AppDbContext>` replaced with `AddDbContextFactory<AppDbContext>` in `DependencyInjection.cs`. `TenantDbContextAccessor` registered as Scoped. The `AppDbContext` scoped registration is removed. | — | Done |
+| M14-F02-R04 | All 11 per-tenant repositories (`OrganizationRepository`, `StationRepository`, `FuelTankRepository`, `FuelNozzleRepository`, `FuelPricesRepository`, `StationShiftRepository`, `ShiftAssignmentRepository`, `DipChartRepository`, `UserStationRepository`, `StationShiftConfigRepository`, `BankAccountRepository`) refactored to inject `TenantDbContextAccessor` and access `AppDbContext` via its `.Context` property. | — | Done |
+| M14-F02-R05 | `UnitOfWork` refactored to inject `TenantDbContextAccessor` instead of `AppDbContext` directly. `SaveChangesAsync`, `BeginTransactionAsync`, `CommitAsync`, and `RollbackAsync` all operate on `accessor.Context`. | — | Done |
+
+**Acceptance criteria:**
+
+- **AC1** — An authenticated request with a valid `org_id` JWT claim resolves to the correct tenant DB; queries hit the right `AppDbContext` instance.
+- **AC2** — An unauthenticated request (no `org_id`) that touches only control-plane repos completes without error; `TenantDbContextAccessor` is never accessed.
+- **AC3** — A request with an `org_id` that has no `Tenant` row returns HTTP 503.
+- **AC4** — All existing integration tests pass with no behaviour change observable at the API level.
 
 ---
 
-### M14-F03 — Tenant Provisioning Service   [Status: Planned]
+### M14-F03 — Tenant Provisioning Service   [Status: Done]
 
-`ITenantProvisioningService.ProvisionAsync(organizationId)`: `CREATE DATABASE tenant_<org_id>` via Npgsql → run all tenant migrations against the new DB → insert the initial `Organization` row → flip control-plane `Tenants.Status` to `Active`. Compensating actions on failure (drop DB, delete control-plane row).
+`ITenantProvisioningService.ProvisionAsync` runs synchronously during onboarding step 1: creates a Postgres database named `tenant_<orgId:N>`, applies all tenant migrations, inserts the `Organization` row, and flips the control-plane `Tenant.Status` to `Active`. Compensating actions roll back on any failure. Ships with M14-F02 in one PR.
 
-Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F03 via its own `/feature-planning` run.
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M14-F03-R01 | `ITenantProvisioningService` interface in `FuelFlow.Application.Interfaces.Services` with `Task ProvisionAsync(Guid organizationId, string organizationName, Guid ownerId, CancellationToken ct)`. | — | Done |
+| M14-F03-R02 | `TenantProvisioningService` implementation: (1) Insert `Tenant` row into control plane (`Status = Provisioning`, `DatabaseName = "tenant_{organizationId:N}"`); (2) Open a raw `NpgsqlConnection` to the control-plane DB and execute `CREATE DATABASE "tenant_{organizationId:N}"` outside any transaction (DDL auto-commit); (3) Build `DbContextOptions<AppDbContext>` targeting the new DB and call `MigrateAsync` to apply all tenant migrations; (4) Insert `Organization` row (`Id = organizationId`, `Name = organizationName`, `OwnerId = ownerId`) into the new tenant DB; (5) Flip `Tenant.Status` to `Active`, set `ProvisionedAt = UtcNow`. | — | Done |
+| M14-F03-R03 | Compensating actions on failure: if the DB was created (step 2 succeeded), execute `DROP DATABASE IF EXISTS "tenant_{organizationId:N}"` before re-throwing. Always delete the `Tenant` row from the control plane on any failure path. | — | Done |
+| M14-F03-R04 | `fuelflow` Postgres user granted `CREATEDB` privilege. `server/docker-compose.yml` updated to include an init SQL file (`docker-entrypoint-initdb.d/01-grants.sql`) that runs `ALTER ROLE fuelflow CREATEDB;`. | — | Done |
+| M14-F03-R05 | `OnboardingCommandHandler` step 1 rewired: call `ITenantProvisioningService.ProvisionAsync(orgId, orgName, ownerId)` instead of creating the `Organization` row directly. After success: set `AppUser.OrganizationId`, persist via `IUnitOfWork`, re-issue JWT with `org_id` claim. The provisioning call blocks synchronously — no background job in this phase. | — | Done |
+
+**Acceptance criteria:**
+
+- **AC1** — Completing onboarding step 1 creates a new Postgres database named `tenant_<orgId>`, a `Tenant` row (Status `Active`) in the control plane, and an `Organization` row in the tenant DB.
+- **AC2** — JWT re-issued after step 1 carries the `org_id` claim. Subsequent authenticated requests (steps 2–9 of the wizard) resolve and route to the tenant DB.
+- **AC3** — If provisioning fails at any step, the control-plane `Tenant` row is deleted and no orphaned DB remains. The HTTP response is 500 with a clear error message.
+- **AC4** — A Playwright E2E run of the full registration → onboarding → station-CRUD flow passes end-to-end against a fresh dev database.
 
 ---
 

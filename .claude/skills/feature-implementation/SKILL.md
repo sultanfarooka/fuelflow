@@ -114,146 +114,50 @@ Before opening the PR (Rule 8):
   work was done and the flip was missed) or do not open the PR (if the
   work isn't actually done). A "tick the boxes" cleanup commit before
   push is acceptable; an unflipped doc at merge time is not.
+- **Refresh the knowledge graph.** If `graphify-out/graph.json` exists, run
+  `graphify update .` (AST-only, no API cost) so the graph reflects this
+  feature's code, then commit the `graphify-out/` diff **with the feature** —
+  fold it into the pre-PR commit that flips `MODULES.md` to `Done` and ticks
+  any remaining boxes, scoped by ID. If `graphify-out/graph.json` does not
+  exist, skip this step. The PR ships a current graph.
 
-### 4.5. E2E verification via Playwright MCP
+### 4.5. E2E verification (delegated to `/feature-e2e-testing`)
 
-Walk the feature in a real browser before the PR exists. This is where bugs
-that unit tests can't catch — wiring mistakes, missing redirects, multi-tenancy
-leaks, raw i18n keys leaking to the UI — surface.
+E2E verification used to live here as a long inline section. It now runs as
+its own skill so it can also be invoked standalone (re-walks, deferred-E2E
+backfills, ad-hoc re-verifications after a fix).
 
-#### A. Applicability gate
+**When to run it:** any item whose `## Layers touched` ticks `Api` or
+`Frontend`. Pure-docs items, or migration-only items with no user-visible
+behavior, skip this step — `/feature-e2e-testing`'s own applicability gate
+will write `E2E: N/A — docs-only` to the impl doc and return cleanly.
 
-Run this step **only if** the implementation doc's `## Layers touched` section
-ticks `Api` or `Frontend`. For pure-docs items (only `Docs` ticked, or only
-`MODULES.md edits` performed), skip Step 4.5 entirely and write
-**`E2E: N/A — docs-only`** under Implementation notes. Migration-only items
-that add a column but ship no user-visible behavior also skip — note the
-reason.
+**How to run it:** invoke `/feature-e2e-testing` (no arguments needed — it
+auto-derives the item ID from the current branch). The skill:
 
-#### B. Bring the app up
+- Resolves the ID from `feat-<id>-<short>` HEAD.
+- Reads `docs/implementation/<id>.md`, runs the applicability gate, then
+  warns-and-proceeds if any task box under `### Phase` or
+  `## MODULES.md edits required` is still `- [ ]`.
+- Spawns the `feature-e2e-tester` subagent, which probes both dev servers
+  (you must have `scripts/dev.ps1` running in your own terminal),
+  baselines the landing page, walks every AC as a browser journey via
+  the Playwright MCP, classifies bugs by the standard severity table
+  (Critical / Regression-minor / Cosmetic), **fixes every Critical on
+  this branch** with `fix(<id>): <symptom>` commits, codifies the
+  passing journey as `fuel-flow-web/e2e-tests/<id>.spec.ts`
+  (append-only if the spec already exists), runs
+  `npm run test:e2e -- <id>` green, and appends a
+  `## E2E verification (Playwright MCP)` section to the impl doc.
+- Returns a summary: ACs walked, Critical bugs fixed (with SHAs), bugs
+  deferred (with reason), spec path, spec-run result.
 
-Probe with `mcp__playwright__browser_navigate` against
-`http://localhost:5173`. If the page fails to load, **stop and tell the user
-to run `scripts/dev.ps1`** in their own terminals — both
-`http://localhost:5173` (frontend) and `http://localhost:5035` (backend) must
-be reachable. Do not launch the dev servers from the agent; they need their
-own terminal windows.
+**Wait for it to finish before Step 5.** No PR may open while a Critical
+bug remains unfixed; the subagent will stop and hand back the bug
+description instead of pretending it's done.
 
-Once both servers respond, establish a baseline: navigate to the landing
-page, run `mcp__playwright__browser_snapshot` and
-`mcp__playwright__browser_console_messages`. No app-origin `error` entries
-should appear. Record the baseline as the first item in the impl doc's new
-`## E2E verification` section (template in block F).
-
-#### C. Walk every acceptance criterion as a journey
-
-For each `ACx` in the implementation doc's **Acceptance criteria** section
-(and the parallel `## Acceptance criteria` items in `MODULES.md`):
-
-1. Translate the AC into a concrete browser sequence (navigate → fill →
-   click → wait → assert). Write it down in the `## E2E verification`
-   section *before* executing — the doc is the journey script.
-2. Execute via the Playwright MCP. Prefer high-level tools
-   (`browser_fill_form`, `browser_click`, `browser_select_option`,
-   `browser_wait_for`) over `browser_evaluate` / `browser_run_code_unsafe`
-   — semantic interactions translate cleanly to the Playwright spec you
-   write in block E; raw JS evaluation does not.
-3. After each interaction collect three signals:
-   - **`browser_snapshot`** — accessibility tree confirms the expected UI
-     state (form visible, success toast rendered, route changed, etc.).
-   - **`browser_console_messages`** — any `error` or `warning` since the
-     last check. Filter browser-extension noise; only app-origin entries
-     count.
-   - **`browser_network_requests`** — confirm expected API calls fired
-     and returned the expected status code. A "success" UI that paired
-     with a silent 500 is a Critical bug.
-4. If the AC contains a rule with two sides (e.g. *"credit sale blocked
-   at/above credit limit"*), walk **both** the pass case and the fail
-   case. A passing happy path tells you nothing about whether the
-   validation is wired.
-5. At the assertion point of each journey, take
-   `mcp__playwright__browser_take_screenshot` saved under
-   `.playwright-mcp/<id>/<journey-name>.png`. The directory is already
-   untracked; do not commit screenshots unless explicitly requested.
-
-#### D. Bug detection + fix loop
-
-A potential bug is anything in the table below. Classify it the moment you
-see it — don't roll detection into a "I'll fix it later" pile.
-
-| Signal | Severity |
-|---|---|
-| AC fails to execute (form won't submit, button missing, page errors out) | **Critical** |
-| Unhandled console `error` originating from app code | **Critical** |
-| Network request returns 5xx, or 4xx when the AC expected 2xx (or vice versa) | **Critical** |
-| Required field shown as a raw i18n key (e.g. `auth.login.email`) instead of translated copy | **Critical** — Pakistani-market UX rule |
-| Multi-tenancy leak (data from another `StationId` visible in a non-Owner view) | **Critical** — security |
-| AC passes but throws a non-fatal console `warning` (React key, missing i18n key, dev-only deprecation) | **Regression / minor** |
-| Visual issue not tied to AC text (broken layout, overflow, dark-mode contrast) | **Minor / cosmetic** |
-
-**Fix-loop rules:**
-
-1. **Every Critical bug is fixed on the same feature branch before the PR
-   exists.** Stop the journey walk-through. Read the relevant
-   Command/Handler/component file to find the root cause — don't guess.
-   Append one line to the impl doc's `## E2E verification` section:
-   `Bug: <symptom> → cause: <one-line> → fix: <commit-sha or "next commit">`.
-   Implement the fix using a conventional commit
-   `fix(mxx-fxx[-rxx]): <symptom>`. Re-run the failing journey from the
-   start — confirm it now passes cleanly. Loop until no Critical remains.
-2. **Regression / minor:** fix if the cause is in code added by this
-   feature. If it pre-exists in the codebase, log it under Implementation
-   notes as **`Discovered, not fixed: <description>`** and mention it in
-   the PR description's Test Plan. Do not expand the feature's scope to
-   sweep pre-existing issues.
-3. **Minor / cosmetic:** same rule as regression — fix if introduced here,
-   log otherwise.
-4. **Do not open the PR while any Critical remains unfixed.** If you
-   genuinely cannot fix a Critical (ambiguous AC, blocked by another
-   unmerged item, missing information from the user), stop the skill and
-   hand back to the user with a clear bug description — same protocol as
-   the existing "reality diverges from the plan" rule.
-
-#### E. Codify the passing journey as a Playwright spec
-
-Once every AC walks clean via the MCP, write
-`fuel-flow-web/e2e-tests/<id>.spec.ts` that re-executes the same journey
-using `@playwright/test`. One `test()` block per AC, named to mirror the
-xUnit naming (e.g.
-`test('M04_F03_R01 — only one open shift per station', ...)`). Use
-`getByRole` / `getByLabel` selectors — the convention already in
-`e2e-tests/example.spec.ts`. Run `npm run test:e2e -- <id>` once against
-the running dev servers and confirm it passes. This produces the
-permanent regression test for the feature.
-
-Leave `e2e-tests/example.spec.ts` alone — it points at an external site
-and is harmless. Do **not** edit `playwright.config.ts` (`baseURL`,
-`webServer`) as part of any feature item — that is repo-wide tooling work
-and belongs in its own item.
-
-#### F. Document in two places
-
-1. **`docs/implementation/<id>.md`** — append a new section:
-
-   ```markdown
-   ## E2E verification (Playwright MCP)
-
-   Run when: <list ACs covered>. Performed via `mcp__playwright__*` against
-   `http://localhost:5173` + `http://localhost:5035`. Screenshots in
-   `.playwright-mcp/<id>/` (untracked).
-
-   - [x] **Baseline** — landing page loads, no app-origin console errors
-   - [x] **AC1 (M01_F09_R01)** — <journey description>; passed clean
-   - [x] **AC2 (M01_F09_R02)** — <journey description>; passed after fix
-     <commit-sha> (handler returned 200 but missing Location header, so
-     the frontend never redirected on success)
-   - [x] **Codified at** `fuel-flow-web/e2e-tests/<id>.spec.ts` —
-     `npm run test:e2e -- <id>` green
-   - Discovered, not fixed: <pre-existing issue> (logged in PR description)
-   ```
-
-2. **PR description** — fill in the E2E lines of the Test Plan template
-   (see root `CLAUDE.md` Rule 6).
+See `.claude/skills/feature-e2e-testing/SKILL.md` for the full procedure
+and `.claude/agents/feature-e2e-tester.md` for the agent definition.
 
 ### 5. Open the PR
 
@@ -282,10 +186,14 @@ own dependencies. When unsure, serialize.
   go** — flip each `- [ ]` to `- [x]` in the same commit as the task it
   tracks. See Step 3 for the surgical-scope rules; see Step 4 for the
   pre-PR verification grep.
+- **The committed graphify graph stays current.** Step 4 runs
+  `graphify update .` (when `graphify-out/graph.json` exists) and the
+  `graphify-out/` diff ships in the same feature PR — never a follow-up.
 - If reality diverges from the plan, stop and raise it with the user rather
   than improvising.
-- **E2E verification via Playwright MCP runs before the PR is opened** for
-  any item that touches `Api` or `Frontend` (Step 4.5). Critical bugs are
-  fixed on the same branch; no Critical bug merges with the feature.
+- **E2E verification runs before the PR is opened** for any item that
+  touches `Api` or `Frontend` — delegated to `/feature-e2e-testing`
+  (Step 4.5). Critical bugs are fixed on the same branch by the
+  `feature-e2e-tester` subagent; no Critical bug merges with the feature.
 - Every feature that ran an e2e verification ships a Playwright spec at
   `fuel-flow-web/e2e-tests/<id>.spec.ts`. Docs-only items are exempt.

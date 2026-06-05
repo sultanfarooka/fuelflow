@@ -12,15 +12,18 @@ public class GetFuelPricesByStationQueryHandler : IRequestHandler<GetFuelPricesB
     private readonly ICurrentUserService _currentUser;
     private readonly IStationRepository _stationRepo;
     private readonly IFuelPricesRepository _fuelPricesRepo;
+    private readonly IFuelTypeRepository _fuelTypeRepo;
 
     public GetFuelPricesByStationQueryHandler(
         ICurrentUserService currentUser,
         IStationRepository stationRepo,
-        IFuelPricesRepository fuelPricesRepo)
+        IFuelPricesRepository fuelPricesRepo,
+        IFuelTypeRepository fuelTypeRepo)
     {
         _currentUser = currentUser;
         _stationRepo = stationRepo;
         _fuelPricesRepo = fuelPricesRepo;
+        _fuelTypeRepo = fuelTypeRepo;
     }
 
     public async Task<Result<List<FuelPricesDto>>> Handle(GetFuelPricesByStationQuery request, CancellationToken cancellationToken)
@@ -36,11 +39,16 @@ public class GetFuelPricesByStationQueryHandler : IRequestHandler<GetFuelPricesB
             return Result<List<FuelPricesDto>>.Failure("You do not have access to this station.");
 
         var list = await _fuelPricesRepo.GetByStationIdAsync(request.StationId, cancellationToken);
+
+        // Batch-load fuel type names via control-plane repo (M14-F02: cross-context nav removed).
+        var fuelTypes = await _fuelTypeRepo.GetAllForStationAsync(request.StationId, cancellationToken);
+        var fuelTypeMap = fuelTypes.ToDictionary(ft => ft.Id, ft => ft.Name);
+
         var dtos = list.Select(p => new FuelPricesDto
         {
             Id = p.Id,
             FuelTypeId = p.FuelTypeId,
-            FuelTypeName = p.FuelType?.Name,
+            FuelTypeName = fuelTypeMap.GetValueOrDefault(p.FuelTypeId),
             StationId = p.StationId,
             Price = p.Price,
             EffectiveFrom = p.EffectiveFrom,
