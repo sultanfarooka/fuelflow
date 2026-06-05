@@ -1504,11 +1504,21 @@ Scoped `TenantDbContextAccessor` wraps `IDbContextFactory<AppDbContext>` and res
 
 ---
 
-### M14-F05 — Identity & Auth Adaptation   [Status: Planned]
+### M14-F05 — Identity & Auth Adaptation   [Status: In Progress]
 
-Pre-org-creation flows (registration, phone OTP, login by phone, password recovery) hit only the control plane — no tenant context needed. After login, JWT carries `org_id`; subsequent requests are tenant-routed. `UserStation` cross-DB link enforced at app layer (no FK). Phone uniqueness enforced via index on control-plane `AspNetUsers`.
+Pre-org-creation flows (registration, phone OTP, login by phone, password recovery) hit only the control plane — no tenant context needed. After login, JWT carries `org_id`; subsequent requests are tenant-routed. `UserStation` cross-DB link enforced at app layer (no FK). Phone uniqueness enforced via index on control-plane `AspNetUsers`. Purely backend — no frontend changes.
 
-Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F05 via its own `/feature-planning` run.
+| ID | Requirement | Notes | Status |
+|---|---|---|---|
+| M14-F05-R01 | Add a unique index on `AspNetUsers.PhoneNumber` in the ControlPlane DB via a new EF Core migration and `AppUserConfiguration` update. PostgreSQL UNIQUE indexes natively allow multiple NULLs, so a standard (non-partial) unique index on the nullable column is correct. The existing app-level check in `RegisterCommandHandler` remains as an earlier-exit guard. | ControlPlane migration + configuration | In Progress |
+| M14-F05-R02 | Verify that all pre-org-creation handlers (`RegisterCommandHandler`, `LoginCommandHandler`, `VerifyPhoneCommandHandler`, `ForgotPasswordCommandHandler`, `ResetPasswordCommandHandler`, `RefreshTokenCommandHandler`, `GetCurrentUserQueryHandler`) touch only `ControlPlaneDbContext`; no `TenantDbContextAccessor` is accessed for users without `org_id`. Document the M14 multi-tenancy contract in each handler's class-level summary. | Verification pass + doc comments; `LoginCommandHandler` guard already correct at line 118 | In Progress |
+| M14-F05-R03 | `UserStation` cross-DB link: document in code that `UserStation.UserId` is a plain `Guid` column (no FK) and that handlers inserting `UserStation` rows must verify user existence via `UserManager.FindByIdAsync` before insert. Note deferred handlers (e.g. `CreateShiftAssignmentCommandHandler`) as `TODO M01-F05` in a code comment. | Code comments only; ShiftAssignment user-existence check deferred to M01-F05 | In Progress |
+
+**Acceptance criteria:**
+
+- **AC1** — Attempting to register two users with the same phone number results in HTTP 400 for the second attempt, enforced at the DB level (not just application code).
+- **AC2** — A freshly-registered user (no `OrganizationId`) can log in, refresh tokens, and call `GET /auth/me` without any 503 or 500 from the tenant-DB stack; the response omits `organization`, `stations`, and `subscription`.
+- **AC3** — An onboarded user (JWT carries `org_id`) can log in and receive `organization`, `stations`, and `subscription` populated from the tenant DB.
 
 ---
 
