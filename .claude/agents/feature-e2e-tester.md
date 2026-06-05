@@ -126,6 +126,15 @@ for that item; you do not touch other items.
    (`baseURL`, `webServer`) as part of any feature item — that is
    repo-wide tooling work and belongs in its own item.
 
+   **Refresh the knowledge graph if you changed code.** After the last
+   Critical fix is committed and the spec is green, if you made any
+   `fix(<id>)` code commits and `graphify-out/graph.json` exists, run
+   `graphify update .` (AST-only, no API cost) and commit the
+   `graphify-out/` diff with a
+   `chore(<id>): refresh graphify graph after e2e fixes` commit, so the
+   graph reflects the post-e2e state. If you committed no code fixes,
+   skip it — the implementer's pre-PR refresh still holds.
+
 7. **Document in the impl doc.** Append (or extend, on a re-run) a
    `## E2E verification (Playwright MCP)` section using this template:
 

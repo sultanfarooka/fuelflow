@@ -114,6 +114,12 @@ Before opening the PR (Rule 8):
   work was done and the flip was missed) or do not open the PR (if the
   work isn't actually done). A "tick the boxes" cleanup commit before
   push is acceptable; an unflipped doc at merge time is not.
+- **Refresh the knowledge graph.** If `graphify-out/graph.json` exists, run
+  `graphify update .` (AST-only, no API cost) so the graph reflects this
+  feature's code, then commit the `graphify-out/` diff **with the feature** —
+  fold it into the pre-PR commit that flips `MODULES.md` to `Done` and ticks
+  any remaining boxes, scoped by ID. If `graphify-out/graph.json` does not
+  exist, skip this step. The PR ships a current graph.
 
 ### 4.5. E2E verification (delegated to `/feature-e2e-testing`)
 
@@ -180,6 +186,9 @@ own dependencies. When unsure, serialize.
   go** — flip each `- [ ]` to `- [x]` in the same commit as the task it
   tracks. See Step 3 for the surgical-scope rules; see Step 4 for the
   pre-PR verification grep.
+- **The committed graphify graph stays current.** Step 4 runs
+  `graphify update .` (when `graphify-out/graph.json` exists) and the
+  `graphify-out/` diff ships in the same feature PR — never a follow-up.
 - If reality diverges from the plan, stop and raise it with the user rather
   than improvising.
 - **E2E verification runs before the PR is opened** for any item that

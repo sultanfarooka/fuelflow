@@ -37,7 +37,13 @@ over from there.
    matching `[Fact]` test (`MXX_FXX_RXX_...`) before checking the box.
 
 5. Run the pre-PR checks (`dotnet format` clean, ESLint + Prettier pass, all
-   implementation-doc checkboxes flipped per Step 4 of the skill).
+   implementation-doc checkboxes flipped per Step 4 of the skill). As part of
+   those checks, **refresh the knowledge graph**: if `graphify-out/graph.json`
+   exists, run `graphify update .` (AST-only, no API cost) so the graph
+   reflects this feature's code, then commit the `graphify-out/` diff **with
+   the feature** — fold it into the pre-PR commit that flips `MODULES.md` to
+   `Done` and ticks any remaining boxes, scoped by ID. Skip it if
+   `graphify-out/graph.json` does not exist.
 
 6. **Return to the orchestrating skill.** It invokes `/feature-e2e-testing`
    (which spawns the `feature-e2e-tester` subagent) for E2E verification,
