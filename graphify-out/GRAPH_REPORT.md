@@ -1,16 +1,16 @@
 # Graph Report - fuelflow  (2026-06-06)
 
 ## Corpus Check
-- 507 files · ~174,224 words
+- 507 files · ~181,420 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3602 nodes · 4954 edges · 432 communities (279 shown, 153 thin omitted)
+- 3604 nodes · 4956 edges · 415 communities (275 shown, 140 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 16 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1961197f`
+- Built from commit: `9a2231e0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -293,6 +293,7 @@
 - [[_COMMUNITY_Community 316|Community 316]]
 - [[_COMMUNITY_Community 317|Community 317]]
 - [[_COMMUNITY_Community 318|Community 318]]
+- [[_COMMUNITY_Community 319|Community 319]]
 - [[_COMMUNITY_Community 320|Community 320]]
 - [[_COMMUNITY_Community 321|Community 321]]
 - [[_COMMUNITY_Community 322|Community 322]]
@@ -313,12 +314,16 @@
 - [[_COMMUNITY_Community 337|Community 337]]
 - [[_COMMUNITY_Community 338|Community 338]]
 - [[_COMMUNITY_Community 339|Community 339]]
+- [[_COMMUNITY_Community 340|Community 340]]
+- [[_COMMUNITY_Community 341|Community 341]]
 - [[_COMMUNITY_Community 342|Community 342]]
 - [[_COMMUNITY_Community 343|Community 343]]
 - [[_COMMUNITY_Community 344|Community 344]]
 - [[_COMMUNITY_Community 345|Community 345]]
 - [[_COMMUNITY_Community 346|Community 346]]
+- [[_COMMUNITY_Community 347|Community 347]]
 - [[_COMMUNITY_Community 348|Community 348]]
+- [[_COMMUNITY_Community 350|Community 350]]
 - [[_COMMUNITY_Community 351|Community 351]]
 - [[_COMMUNITY_Community 352|Community 352]]
 - [[_COMMUNITY_Community 353|Community 353]]
@@ -340,38 +345,16 @@
 - [[_COMMUNITY_Community 396|Community 396]]
 - [[_COMMUNITY_Community 397|Community 397]]
 - [[_COMMUNITY_Community 400|Community 400]]
-- [[_COMMUNITY_Community 403|Community 403]]
 - [[_COMMUNITY_Community 406|Community 406]]
 - [[_COMMUNITY_Community 407|Community 407]]
 - [[_COMMUNITY_Community 410|Community 410]]
 - [[_COMMUNITY_Community 411|Community 411]]
 - [[_COMMUNITY_Community 412|Community 412]]
-- [[_COMMUNITY_Community 413|Community 413]]
-- [[_COMMUNITY_Community 414|Community 414]]
 - [[_COMMUNITY_Community 415|Community 415]]
 - [[_COMMUNITY_Community 416|Community 416]]
 - [[_COMMUNITY_Community 417|Community 417]]
 - [[_COMMUNITY_Community 418|Community 418]]
-- [[_COMMUNITY_Community 419|Community 419]]
-- [[_COMMUNITY_Community 420|Community 420]]
-- [[_COMMUNITY_Community 422|Community 422]]
-- [[_COMMUNITY_Community 426|Community 426]]
-- [[_COMMUNITY_Community 427|Community 427]]
 - [[_COMMUNITY_Community 428|Community 428]]
-- [[_COMMUNITY_Community 429|Community 429]]
-- [[_COMMUNITY_Community 430|Community 430]]
-- [[_COMMUNITY_Community 432|Community 432]]
-- [[_COMMUNITY_Community 433|Community 433]]
-- [[_COMMUNITY_Community 434|Community 434]]
-- [[_COMMUNITY_Community 435|Community 435]]
-- [[_COMMUNITY_Community 436|Community 436]]
-- [[_COMMUNITY_Community 437|Community 437]]
-- [[_COMMUNITY_Community 438|Community 438]]
-- [[_COMMUNITY_Community 439|Community 439]]
-- [[_COMMUNITY_Community 440|Community 440]]
-- [[_COMMUNITY_Community 441|Community 441]]
-- [[_COMMUNITY_Community 442|Community 442]]
-- [[_COMMUNITY_Community 443|Community 443]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 100 edges
@@ -388,8 +371,8 @@
 ## Surprising Connections (you probably didn't know these)
 - `cn()` --calls--> `clsx`  [INFERRED]
   fuel-flow-web/src/lib/utils.ts → fuel-flow-web/package.json
-- `getStationsByOrganization()` --references--> `ICurrentUserService`  [EXTRACTED]
-  fuel-flow-web/src/lib/api/station-management.ts → server/FuelFlow.Infrastructure/Services/TenantConnectionResolver.cs
+- `getFuelNozzlesByStation()` --references--> `ICurrentUserService`  [EXTRACTED]
+  fuel-flow-web/src/lib/api/stations/fuel-nozzles.ts → server/FuelFlow.Infrastructure/Services/TenantConnectionResolver.cs
 - `deleteFuelNozzle()` --references--> `ILogger`  [EXTRACTED]
   fuel-flow-web/src/lib/api/stations/fuel-nozzles.ts → server/FuelFlow.Infrastructure/Services/TenantProvisioningService.cs
 - `getFuelTanksByStation()` --references--> `ICurrentUserService`  [EXTRACTED]
@@ -397,23 +380,23 @@
 - `FuelFlow.Infrastructure` --implements--> `Multi-Tenancy (StationId Isolation)`  [EXTRACTED]
   server/FuelFlow.Infrastructure/FuelFlow.Infrastructure.csproj → CLAUDE.md
 
-## Communities (432 total, 153 thin omitted)
+## Communities (415 total, 140 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.08
-Nodes (54): getOMCs(), OMC, OMCListApiResponse, RegisterForm(), ChangePhonePage(), Route, Stage, OrganizationDashboardPage() (+46 more)
+Cohesion: 0.1
+Nodes (41): RegisterForm(), Route, Stage, FieldApi, FormTextField(), FormTextFieldProps, GoogleIcon(), Props (+33 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.18
 Nodes (3): Auth Controller, AuthCookieOptions, AuthController
 
 ### Community 2 - "Community 2"
-Cohesion: 0.04
-Nodes (14): AppDbContext, AppDbContext, ControlPlaneDbContext, DbContext, IdentityDbContext, IDipChartRepository, BankAccountRepository, DipChartRepository (+6 more)
+Cohesion: 0.26
+Nodes (4): AppDbContext, IDipChartRepository, DipChartRepository, IDipChartRepository
 
 ### Community 3 - "Community 3"
 Cohesion: 0.04
-Nodes (44): Route, Route, Route, Route, Route, Route, Route, Route (+36 more)
+Nodes (45): Route, Route, Route, Route, Route, Route, Route, Route (+37 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.1
@@ -424,8 +407,8 @@ Cohesion: 0.05
 Nodes (37): dependencies, autoprefixer, axios, class-variance-authority, clsx, @fontsource-variable/inter, i18next, lucide-react (+29 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.07
-Nodes (9): CreateAccountHeadCommandHandler, DeactivateAccountHeadCommandHandler, UpdateAccountHeadCommandHandler, IAccountHeadRepository, IAccountHeadUsageChecker, GetAccountHeadByIdQueryHandler, GetAccountHeadsQueryHandler, AccountHeadRepository (+1 more)
+Cohesion: 0.04
+Nodes (29): getStationsByOrganization(), CreateAccountHeadCommandHandler, CreateBankAccountCommandHandler, DeactivateAccountHeadCommandHandler, DeleteFuelNozzleCommandHandler, ResetPasswordCommandHandler, UpdateAccountHeadCommandHandler, UpdatePaymentMethodsCommandHandler (+21 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.08
@@ -437,7 +420,7 @@ Nodes (24): enabledPlugins, frontend-design@claude-plugins-official, gitlab@clau
 
 ### Community 9 - "Community 9"
 Cohesion: 0.14
-Nodes (6): DeleteFuelTypeCommandHandler, UpdatePaymentMethodsCommandHandler, IDbContextTransaction, IUnitOfWork, IUnitOfWork, UnitOfWork
+Nodes (6): DeleteFuelTypeCommandHandler, SetFuelPriceCommandHandler, IDbContextTransaction, IUnitOfWork, IUnitOfWork, UnitOfWork
 
 ### Community 10 - "Community 10"
 Cohesion: 0.1
@@ -448,8 +431,8 @@ Cohesion: 0.1
 Nodes (19): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib, module, moduleDetection, moduleResolution, noEmit (+11 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.14
-Nodes (14): ModeToggle(), DashboardLayout(), Route, useTheme(), DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuItem(), DropdownMenuLabel() (+6 more)
+Cohesion: 0.11
+Nodes (20): Route, ModeToggle(), LABELS, LanguageSwitch(), DashboardLayout(), Route, useTheme(), OnboardingLayout() (+12 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.1
@@ -468,32 +451,32 @@ Cohesion: 0.12
 Nodes (14): Clean Architecture, CQRS Pattern, Multi-Tenancy (StationId Isolation), Fuel Flow Web (React), FuelFlow.Infrastructure.Migrations, InitialCreate, InitialCreate, EF Core 10 (+6 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.09
-Nodes (15): PhoneVerification, RefreshToken, User, BaseEntity, AccountHead, BankAccount, Subscription, SubscriptionPlans (+7 more)
+Cohesion: 0.05
+Nodes (22): PhoneVerification, RefreshToken, User, BaseEntity, DipChartEntryDto, AccountHead, BankAccount, Organization (+14 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.12
-Nodes (5): IFuelTypeRepository, FuelTypeRepository, IFuelTypeRepository, IOMCFuelTypeRepository, OMCFuelTypeRepository
+Cohesion: 0.09
+Nodes (7): IFuelTypeRepository, GetFuelPricesByStationQueryHandler, GetFuelTypesByStationQueryHandler, FuelTypeRepository, IFuelTypeRepository, IOMCFuelTypeRepository, OMCFuelTypeRepository
 
 ### Community 19 - "Community 19"
-Cohesion: 0.14
-Nodes (16): FuelTank, CreateFuelTankRequest, CreateFuelTankResponse, FuelTankDto, UpdateFuelTankRequest, createFuelTank(), CreateFuelTankApiResponse, CreateFuelTankRequest (+8 more)
+Cohesion: 0.12
+Nodes (19): BaseEntity, FuelTank, Organization, Station, CreateFuelTankRequest, CreateFuelTankResponse, FuelTankDto, UpdateFuelTankRequest (+11 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.16
-Nodes (5): DataSeeder, IServiceProvider, FuelFlow.Infrastructure.Migrations, SeedSubscriptionPlans, FuelFlow.Infrastructure.Migrations
+Cohesion: 0.11
+Nodes (8): DataSeeder, IHostedService, IServiceProvider, IServiceScopeFactory, FuelFlow.Infrastructure.Migrations, SeedSubscriptionPlans, FuelFlow.Infrastructure.Migrations, TenantMigrationHostedService
 
 ### Community 21 - "Community 21"
 Cohesion: 0.11
 Nodes (18): devDependencies, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, @playwright/test, @tanstack/react-query-devtools (+10 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.05
-Nodes (29): ConfirmPhoneChangeCommandHandler, ForgotPasswordCommandHandler, RegisterCommandHandler, RequestPhoneChangeCommandHandler, ResendOtpCommandHandler, ResendVerificationCommandHandler, ResetPasswordWithOtpCommandHandler, VerifyPhoneCommandHandler (+21 more)
+Cohesion: 0.06
+Nodes (26): ConfirmPhoneChangeCommandHandler, ForgotPasswordCommandHandler, RegisterCommandHandler, RequestPhoneChangeCommandHandler, ResendOtpCommandHandler, ResendVerificationCommandHandler, ResetPasswordWithOtpCommandHandler, VerifyPhoneCommandHandler (+18 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.07
-Nodes (21): CreateFuelNozzleCommandHandler, DeleteFuelNozzleCommandHandler, CreateFuelNozzleRequest, FuelNozzleDto, ICurrentUserService, IFuelNozzleRepository, IHttpContextAccessor, IRequestContextService (+13 more)
+Cohesion: 0.24
+Nodes (3): IFuelNozzleRepository, FuelNozzleRepository, IFuelNozzleRepository
 
 ### Community 24 - "Community 24"
 Cohesion: 0.12
@@ -504,16 +487,12 @@ Cohesion: 0.17
 Nodes (13): API Client (Axios), Zustand Auth Store, Axios API Client, React Frontend Architecture, TanStack Query, TanStack Router, Zustand Auth Store, Dashboard Route (+5 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.22
-Nodes (5): AbstractValidator, CreateFuelTypeRequestValidator, ForgotPasswordRequestValidator, RefreshTokenRequestValidator, ResendVerificationRequestValidator
-
-### Community 27 - "Community 27"
-Cohesion: 0.11
-Nodes (15): CreateFuelTypeResponse, FuelTypeDto, OMCFuelTypeDto, computeResumeStep(), Props, getFuelPricesByStation(), getFuelTanksByStation(), CreateFuelTypeApiResponse (+7 more)
+Cohesion: 0.05
+Nodes (21): AbstractValidator, CreateFuelTypeRequest, ConfirmPhoneChangeRequestValidator, CreateAccountHeadRequestValidator, CreateFuelTankRequestValidator, CreateShiftConfigRequestValidator, CreateStationRequestValidator, ForgotPasswordRequestValidator (+13 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.09
-Nodes (8): CreateFuelTankCommandHandler, DeleteFuelTankCommandHandler, UploadDipChartCommandHandler, IFuelTankRepository, GetDipChartByTankQueryHandler, GetFuelTanksByStationQueryHandler, FuelTankRepository, IFuelTankRepository
+Nodes (8): CreateFuelNozzleCommandHandler, CreateFuelTankCommandHandler, DeleteFuelTankCommandHandler, UpdateFuelTankCommandHandler, IFuelTankRepository, GetDipChartByTankQueryHandler, FuelTankRepository, IFuelTankRepository
 
 ### Community 29 - "Community 29"
 Cohesion: 0.13
@@ -524,12 +503,12 @@ Cohesion: 0.27
 Nodes (10): ASPNETCORE_ENVIRONMENT, applicationUrl, commandName, dotnetRunMessages, environmentVariables, launchBrowser, profiles, http (+2 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.25
-Nodes (3): CreateBankAccountCommandHandler, IBankAccountRepository, GetBankAccountsQueryHandler
+Cohesion: 0.13
+Nodes (4): AccountHeadRepository, BankAccountRepository, UserStationRepository, TenantDbContextAccessor
 
 ### Community 32 - "Community 32"
-Cohesion: 0.07
-Nodes (12): CreateFuelTypeCommandHandler, CreateOMCCommandHandler, CreateOMCFuelTypeCommandHandler, CreateStationCommandHandler, IAccountHeadSeeder, IOMCFuelTypeRepository, IOMCRepository, GetOMCFuelTypesQueryHandler (+4 more)
+Cohesion: 0.08
+Nodes (11): CreateFuelTypeCommandHandler, CreateOMCCommandHandler, CreateOMCFuelTypeCommandHandler, CreateStationCommandHandler, IAccountHeadSeeder, IOMCFuelTypeRepository, IOMCRepository, GetOMCFuelTypesQueryHandler (+3 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.17
@@ -540,8 +519,8 @@ Cohesion: 0.29
 Nodes (7): scripts, build, dev, lint, preview, test:e2e, test:e2e:ui
 
 ### Community 35 - "Community 35"
-Cohesion: 0.09
-Nodes (22): Acceptance criteria (the test plan), Dependencies, E2E verification (Playwright MCP), Implementation notes, Item, Layers touched, M14-F02 + M14-F03 — Tenant Connection Resolution & Provisioning, MODULES.md edits required (+14 more)
+Cohesion: 0.08
+Nodes (23): Acceptance criteria (the test plan), Dependencies, E2E verification (Playwright MCP), Implementation notes, Item, Layers touched, M14-F02 + M14-F03 — Tenant Connection Resolution & Provisioning, MODULES.md edits required (+15 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.16
@@ -552,8 +531,8 @@ Cohesion: 0.25
 Nodes (5): SeedData, DateTime, Guid, FuelFlow.Infrastructure.Migrations, SeedPakistanOMCFuelTypes
 
 ### Community 39 - "Community 39"
-Cohesion: 0.2
-Nodes (9): DEFAULT_NAMES_2, DEFAULT_NAMES_3, Props, StepOperations(), createShiftConfig(), CreateShiftConfigPayload, getShiftConfig(), ShiftConfigApiResponse (+1 more)
+Cohesion: 0.07
+Nodes (37): getOMCs(), OMC, OMCListApiResponse, ChangePhonePage(), OrganizationDashboardPage(), StationSetupPage(), StationDashboardContent(), computeResumeStep() (+29 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.11
@@ -561,11 +540,11 @@ Nodes (17): Acceptance criteria (the test plan), code:csharp (// TODO M01-F05: v
 
 ### Community 41 - "Community 41"
 Cohesion: 0.07
-Nodes (14): LoginCommandHandler, LogoutCommandHandler, RefreshTokenCommandHandler, FeaturesOptions, IHostEnvironment, IOnboardingBypassFlagProvider, IOrganizationRepository, IUserStationRepository (+6 more)
+Nodes (13): LoginCommandHandler, LogoutCommandHandler, RefreshTokenCommandHandler, FeaturesOptions, IHostEnvironment, IOnboardingBypassFlagProvider, IOrganizationRepository, IUserStationRepository (+5 more)
 
 ### Community 42 - "Community 42"
-Cohesion: 0.06
-Nodes (37): LoginForm(), cn(), StepFuelTypes(), StepPrices(), AlertAction(), CardAction(), Checkbox(), DialogContent() (+29 more)
+Cohesion: 0.07
+Nodes (34): LoginForm(), cn(), CardAction(), Checkbox(), DialogContent(), DialogDescription(), DialogFooter(), DialogHeader() (+26 more)
 
 ### Community 43 - "Community 43"
 Cohesion: 0.25
@@ -624,8 +603,8 @@ Cohesion: 0.25
 Nodes (4): addedSeedDataOMCFuelType, addedSeedDataOMCFuelType, FuelFlow.Infrastructure.Migrations, FuelFlow.Infrastructure.Migrations
 
 ### Community 57 - "Community 57"
-Cohesion: 0.2
-Nodes (9): Props, StepInviteManager(), Props, StepNozzles(), Props, StepTanks(), Tooltip(), TooltipContent() (+1 more)
+Cohesion: 0.22
+Nodes (10): LoginForm(), Props, Props, Props, getFuelTanksByStation(), getFuelTypesByStation(), Input(), Tooltip() (+2 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.22
@@ -680,8 +659,8 @@ Cohesion: 0.06
 Nodes (32): Acceptance criteria (the test plan), Build errors fixed during Phase 1a, Bundle deltas, Dead Vite scaffold removed, Dependencies, Implementation notes, Item, Key technical decisions (+24 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.21
-Nodes (23): LoginForm(), Props, Props, PriceRow(), PriceRowProps, Step2Prices(), Step2PricesProps, parseDipChartCsv() (+15 more)
+Cohesion: 0.15
+Nodes (34): Props, Props, PriceRow(), PriceRowProps, Step2Prices(), Step2PricesProps, Step3TanksProps, parseDipChartCsv() (+26 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.25
@@ -692,8 +671,8 @@ Cohesion: 0.11
 Nodes (17): Acceptance criteria (the test plan), code:csharp (public class TenantMigrationHostedService : IHostedService), code:csharp (services.AddHostedService<TenantMigrationHostedService>();), Dependencies, Implementation notes, Item, Layers touched, M14-F06 — Migration Tooling & Dev/Ops (+9 more)
 
 ### Community 76 - "Community 76"
-Cohesion: 0.11
-Nodes (18): Acceptance criteria (the test plan), Dependencies, E2E verification (Playwright MCP), Implementation notes, Item, Layers touched, M05-F09 — Account Head Management, MODULES.md edits required (+10 more)
+Cohesion: 0.1
+Nodes (19): Acceptance criteria (the test plan), Dependencies, E2E verification (Playwright MCP), Implementation notes, Item, Layers touched, Live onboarding walk (Playwright MCP) — completed 2026-06-06, M05-F09 — Account Head Management (+11 more)
 
 ### Community 79 - "Community 79"
 Cohesion: 0.16
@@ -716,8 +695,8 @@ Cohesion: 0.17
 Nodes (7): ControlPlaneDbContextModelSnapshot, FuelFlow.Infrastructure.Migrations.ControlPlane, AppDbContextModelSnapshot, FuelFlow.Infrastructure.Migrations, ModelSnapshot, AppDbContextModelSnapshot, FuelFlow.Infrastructure.Migrations.Tenant
 
 ### Community 91 - "Community 91"
-Cohesion: 0.06
-Nodes (16): CloseShiftCommandHandler, CreateShiftAssignmentCommandHandler, OpenShiftCommandHandler, ResetPasswordCommandHandler, UpdateFuelTankCommandHandler, VerifyEmailCommandHandler, IRequestHandler, IStationRepository (+8 more)
+Cohesion: 0.08
+Nodes (10): CloseShiftCommandHandler, CreateShiftAssignmentCommandHandler, OpenShiftCommandHandler, IStationRepository, IStationShiftRepository, GetOpenShiftQueryHandler, GetShiftAssignmentsByShiftQueryHandler, GetStationShiftsByStationQueryHandler (+2 more)
 
 ### Community 93 - "Community 93"
 Cohesion: 0.67
@@ -888,8 +867,8 @@ Cohesion: 0.17
 Nodes (11): Appendix A — Legacy → New ID Map, Appendix B — Cross-References, Current Priorities, Fuel Flow — Modules, Features & Requirements, How to Read This File, M12-F01 — Onboarding Wizard   [Status: In Progress], M12-F02 — Onboarding Dev Bypass   [Status: Done], M12 — Onboarding & First-Run Experience (+3 more)
 
 ### Community 203 - "Community 203"
-Cohesion: 0.12
-Nodes (16): onboarding, backToStart, progress, provisioning, resuming, stationNotFound, step8, body (+8 more)
+Cohesion: 0.22
+Nodes (9): onboarding, backToStart, progress, provisioning, resuming, stationNotFound, body, note (+1 more)
 
 ### Community 204 - "Community 204"
 Cohesion: 0.29
@@ -897,7 +876,7 @@ Nodes (7): step8, cardTitle, comingSoon, fullName, hint, phone, sendInvite
 
 ### Community 205 - "Community 205"
 Cohesion: 0.18
-Nodes (10): [1.11.0] - 2026-02-19, [1.5.0] - 2026-02-10, [1.6.0] - 2026-02-18, Added, Changed, Changed, Changed, Changelog (+2 more)
+Nodes (10): [1.0.0] - 2026-02-07, [1.11.0] - 2026-02-19, [1.5.0] - 2026-02-10, Added, Changed, Changed, Changelog, Decisions Made (+2 more)
 
 ### Community 206 - "Community 206"
 Cohesion: 0.18
@@ -909,7 +888,7 @@ Nodes (11): back, cancel, continue, creating, finishing, finishSetup, goBack, sa
 
 ### Community 208 - "Community 208"
 Cohesion: 0.27
-Nodes (3): DipChartController, StationShiftController, IMediator
+Nodes (3): OMCFuelTypeController, StationShiftController, IMediator
 
 ### Community 209 - "Community 209"
 Cohesion: 0.07
@@ -937,7 +916,7 @@ Nodes (10): common, alreadyVerified, back, confirming, sending, signIn, startOve
 
 ### Community 215 - "Community 215"
 Cohesion: 0.21
-Nodes (4): ControllerBase, DashboardController, OrganizationsController, ShiftAssignmentController
+Nodes (4): ControllerBase, DashboardController, FuelPricesController, ShiftAssignmentController
 
 ### Community 216 - "Community 216"
 Cohesion: 0.22
@@ -970,10 +949,6 @@ Nodes (7): auth, dashboard, devBypass, bannerDescription, bannerTitle, skipButto
 ### Community 224 - "Community 224"
 Cohesion: 0.29
 Nodes (4): HttpClient, int, CapcomSmsSender, SmsGatewayOptions
-
-### Community 225 - "Community 225"
-Cohesion: 0.19
-Nodes (4): SetFuelPriceCommandHandler, IFuelPricesRepository, GetFuelPricesByStationQueryHandler, IFuelPricesRepository
 
 ### Community 226 - "Community 226"
 Cohesion: 0.25
@@ -1084,8 +1059,12 @@ Cohesion: 0.33
 Nodes (6): 4.1 Shift Configuration, 4.2 Nozzleman Assignment, 4.3 Shift Opening Checklist, 4.4 Shift Closing Checklist, 4.5 Cash Collection, Module 4: Shift Management
 
 ### Community 257 - "Community 257"
-Cohesion: 0.14
-Nodes (30): getOMCFuelTypesByOmc(), OMCFuelTypeDto, OMCFuelTypeListApiResponse, createStation(), CreateStationApiResponse, CreateStationRequest, getStationsByOrganization(), OrganizationStationDto (+22 more)
+Cohesion: 0.07
+Nodes (24): getOMCFuelTypesByOmc(), OMCFuelTypeDto, OMCFuelTypeListApiResponse, createStation(), CreateStationApiResponse, CreateStationRequest, OrganizationStationDto, StationsByOrganizationApiResponse (+16 more)
+
+### Community 258 - "Community 258"
+Cohesion: 0.27
+Nodes (8): CreateFuelNozzleRequest, FuelNozzleDto, createFuelNozzle(), CreateFuelNozzleApiResponse, CreateFuelNozzleRequest, DeleteFuelNozzleApiResponse, FuelNozzleDto, FuelNozzleListApiResponse
 
 ### Community 261 - "Community 261"
 Cohesion: 0.4
@@ -1155,6 +1134,10 @@ Nodes (3): [1.10.0] - 2026-02-19, Added, Changed
 Cohesion: 0.67
 Nodes (3): [1.8.0] - 2026-02-18, Added, Changed
 
+### Community 287 - "Community 287"
+Cohesion: 0.29
+Nodes (7): step8, cardTitle, comingSoon, fullName, hint, phone, sendInvite
+
 ### Community 289 - "Community 289"
 Cohesion: 0.5
 Nodes (4): [1.12.0] - 2026-02-23, Added, Changed, Technical Decisions
@@ -1191,49 +1174,33 @@ Nodes (4): Manager Use Cases, Nozzleman Use Cases, Owner Use Cases, Use Cases Su
 Cohesion: 0.67
 Nodes (3): [1.9.0] - 2026-02-18, Added, Changed
 
-### Community 317 - "Community 317"
-Cohesion: 0.67
-Nodes (3): BaseEntity, Organization, Station
-
-### Community 351 - "Community 351"
-Cohesion: 0.22
-Nodes (4): TenantDbContextAccessor, IAsyncDisposable, ITenantConnectionResolver, TenantConnectionResolver
-
 ### Community 352 - "Community 352"
 Cohesion: 0.4
 Nodes (5): M15 — Credit Customer Management, M15-F01 — Customer Master   [Status: Planned], M15-F02 — Credit Sales Ledger (Party Account)   [Status: Planned], M15-F03 — Payment Recording   [Status: Planned], M15-F04 — Statements & Reports   [Status: Planned]
 
-### Community 364 - "Community 364"
-Cohesion: 0.17
-Nodes (8): Route, LABELS, LanguageSwitch(), SUPPORTED_LANGUAGES, SupportedLanguage, OnboardingLayout(), Route, DropdownMenu()
-
-### Community 403 - "Community 403"
+### Community 354 - "Community 354"
 Cohesion: 0.5
-Nodes (4): [1.0.0] - 2026-02-07, Added, Decisions Made, Technical Decisions (Pending)
-
-### Community 422 - "Community 422"
-Cohesion: 0.22
-Nodes (5): CookieConstants, FeaturesOptions, OtpOptions, SmsGatewayOptions, string
+Nodes (4): [1.6.0] - 2026-02-18, Added, Changed, Technical Decisions
 
 ## Knowledge Gaps
-- **1560 isolated node(s):** `type`, `command`, `args`, `env`, `shadcn` (+1555 more)
+- **1561 isolated node(s):** `type`, `command`, `args`, `env`, `shadcn` (+1556 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **153 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **140 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `onboarding` connect `Community 246` to `Community 230`, `Community 167`, `Community 231`, `Community 201`, `Community 170`, `Community 204`, `Community 207`, `Community 82`, `Community 179`, `Community 182`, `Community 184`, `Community 223`?**
   _High betweenness centrality (0.083) - this node is a cross-community bridge._
-- **Why does `ILogger` connect `Community 22` to `Community 32`, `Community 224`, `Community 6`, `Community 9`, `Community 187`, `Community 209`, `Community 20`, `Community 23`, `Community 91`, `Community 28`, `Community 31`?**
-  _High betweenness centrality (0.080) - this node is a cross-community bridge._
+- **Why does `ILogger` connect `Community 22` to `Community 32`, `Community 224`, `Community 6`, `Community 9`, `Community 209`, `Community 20`, `Community 187`, `Community 28`?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
 - **Why does `DataSeeder` connect `Community 20` to `Community 22`?**
-  _High betweenness centrality (0.073) - this node is a cross-community bridge._
+  _High betweenness centrality (0.068) - this node is a cross-community bridge._
 - **What connects `type`, `command`, `args` to the rest of the system?**
-  _1561 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1562 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.04 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
   _Cohesion score 0.04 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
