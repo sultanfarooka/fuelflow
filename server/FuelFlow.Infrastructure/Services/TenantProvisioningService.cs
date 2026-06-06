@@ -129,15 +129,27 @@ public class TenantProvisioningService : ITenantProvisioningService
                 {
                     await using var conn = new NpgsqlConnection(baseConnStr);
                     await conn.OpenAsync();
-                    await using var cmd = conn.CreateCommand();
-                    // Force-disconnect existing sessions before dropping.
-                    cmd.CommandText = $"""
-                        SELECT pg_terminate_backend(pid)
-                        FROM pg_stat_activity
-                        WHERE datname = '{dbName}' AND pid <> pg_backend_pid();
-                        DROP DATABASE IF EXISTS "{dbName}";
-                        """;
-                    await cmd.ExecuteNonQueryAsync();
+
+                    // Force-disconnect existing sessions first (separate command).
+                    await using (var terminateCmd = conn.CreateCommand())
+                    {
+                        terminateCmd.CommandText =
+                            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity " +
+                            "WHERE datname = @db AND pid <> pg_backend_pid();";
+                        terminateCmd.Parameters.AddWithValue("db", dbName);
+                        await terminateCmd.ExecuteNonQueryAsync();
+                    }
+
+                    // DROP DATABASE must be the ONLY statement in its command — Npgsql
+                    // batches a multi-statement command into a pipeline, and DROP DATABASE
+                    // cannot run in a pipeline/transaction. dbName is not user input
+                    // (it's "tenant_{guid:N}"), so the quoted identifier is safe.
+                    await using (var dropCmd = conn.CreateCommand())
+                    {
+                        dropCmd.CommandText = $"DROP DATABASE IF EXISTS \"{dbName}\"";
+                        await dropCmd.ExecuteNonQueryAsync();
+                    }
+
                     _logger.LogInformation("Compensation: dropped database {DbName}", dbName);
                 }
             }

@@ -70,12 +70,10 @@ namespace FuelFlow.Infrastructure.Migrations.Tenant
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_stations", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_stations_omcs_omc_id",
-                        column: x => x.omc_id,
-                        principalTable: "omcs",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                    // omc_id is a cross-context reference to the control-plane "omcs"
+                    // table (M14): NO FK constraint — tenant DBs are physically separate
+                    // and don't contain omcs. Existence is enforced at the application
+                    // layer via the control-plane OMC repository.
                     table.ForeignKey(
                         name: "FK_stations_organizations_organization_id",
                         column: x => x.organization_id,
@@ -100,12 +98,8 @@ namespace FuelFlow.Infrastructure.Migrations.Tenant
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_fuel_prices", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_fuel_prices_fuel_types_fuel_type_id",
-                        column: x => x.fuel_type_id,
-                        principalTable: "fuel_types",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                    // fuel_type_id is a cross-context reference to control-plane
+                    // "fuel_types" (M14): NO FK constraint — see note on stations.omc_id.
                     table.ForeignKey(
                         name: "FK_fuel_prices_stations_station_id",
                         column: x => x.station_id,
@@ -129,12 +123,8 @@ namespace FuelFlow.Infrastructure.Migrations.Tenant
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_fuel_tanks", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_fuel_tanks_fuel_types_fuel_type_id",
-                        column: x => x.fuel_type_id,
-                        principalTable: "fuel_types",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                    // fuel_type_id is a cross-context reference to control-plane
+                    // "fuel_types" (M14): NO FK constraint — see note on stations.omc_id.
                     table.ForeignKey(
                         name: "FK_fuel_tanks_stations_station_id",
                         column: x => x.station_id,
