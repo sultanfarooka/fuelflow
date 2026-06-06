@@ -10,8 +10,11 @@ function RootLayout() {
   const isAuthRoute = location.pathname.startsWith("/auth");
   const isOnboardingRoute = location.pathname.startsWith("/onboarding");
   const isDashboardRoute = location.pathname.startsWith("/dashboard");
+  // [M07-F07] /settings renders inside its own AppShell (see settings/route.tsx),
+  // so it gets the bare Outlet like the other authenticated route trees.
+  const isSettingsRoute = location.pathname.startsWith("/settings");
 
-  if (isAuthRoute || isOnboardingRoute || isDashboardRoute) {
+  if (isAuthRoute || isOnboardingRoute || isDashboardRoute || isSettingsRoute) {
     return (
       <>
         <Outlet />
