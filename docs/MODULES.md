@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-06 (M14 complete — all F01–F06 Done)
+**Last Updated:** 2026-06-06 (priority & implementation-order system added)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -17,6 +17,21 @@
 - **Legacy IDs** (SH-001, PR-001, INV-001, CR-001, REG-001, SUB-001, AUD-001, FG-001) are preserved in the Legacy column for backwards compatibility with existing PRs, commits, and code comments.
 
 **Reference an item anywhere as e.g.** `M04-F03-R01` (PR title, commit, test name, issue, code comment).
+
+### Priority & order (how this file is ranked)
+
+Every module and feature carries a **priority tier** and a global **implementation
+order**. These are a *separate ordinal layered on top of* the stable `MXX`/`FXX`
+IDs — they **never** rename an ID (Maintenance Convention 6 forbids renumbering).
+
+- **Tier (P0 = highest, P3 = lowest)** — a severity class pinned to an explicit rule:
+  - **P0 — Critical**: independent (its prerequisites are all `Done`) **and** it blocks revenue or other modules.
+  - **P1 — High**: part of the core operational loop — pricing, inventory, nozzle ops, shifts, finance.
+  - **P2 — Medium**: requires operational data to already exist — reports, notifications.
+  - **P3 — Low**: gated / optional extensions — staff & payroll, lubricants.
+- **Module `Order` (1–14)** — the exact build sequence. See [Priority & Implementation Order](#priority--implementation-order).
+- **Feature `Order` (`<module>.<n>`)** — build sequence within a module. See [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
+- **Ranking rule:** tier by business value first; **within a tier, fewest unmet dependencies wins** (independent items — those depending only on `Done` work — lead; blocked items sink). The `Depends on` columns make this auditable.
 
 ---
 
@@ -42,38 +57,82 @@
 
 ## Module Index
 
-| ID | Module | Status | Legacy Rule Prefix |
-|---|---|---|---|
-| [M01](#m01--user--access-management) | User & Access Management | In Progress | REG-*, AUD-* |
-| [M02](#m02--fuel-inventory--tank-control) | Fuel Inventory & Tank Control | In Progress | INV-* |
-| [M03](#m03--pump--nozzle-operations) | Pump & Nozzle Operations | In Progress | — |
-| [M04](#m04--shift-management) | Shift Management | Planned | SH-* |
-| [M05](#m05--finance--accounts) | Finance & Accounts | Planned | CR-* |
-| [M06](#m06--pricing--rate-management) | Pricing & Rate Management | Planned | PR-* |
-| [M07](#m07--reporting--analytics) | Reporting & Analytics | In Progress | — |
-| [M08](#m08--settings--configuration) | Settings & Configuration | In Progress | — |
-| [M09](#m09--lubricants--oil-shop) | Lubricants / Oil Shop | Planned | — |
-| [M10](#m10--sms--notifications) | SMS / Notifications | Planned | — |
-| [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
-| [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | In Progress | — |
-| [M13](#m13--staff--payroll) | Staff & Payroll | Planned | — |
-| [M14](#m14--per-tenant-database-architecture) | Per-Tenant Database Architecture | Done | — |
+> Sorted below by `ID`. The **Order** column is the implementation sequence — see
+> [Priority & Implementation Order](#priority--implementation-order) for the same
+> table sorted by build order, and [Current Priorities](#current-priorities) for
+> the Top-5 to plan next.
+
+| Order | Priority | ID | Module | Status | Legacy Rule Prefix |
+|---|---|---|---|---|---|
+| 4 | P0 | [M01](#m01--user--access-management) | User & Access Management | In Progress | REG-*, AUD-* |
+| 8 | P1 | [M02](#m02--fuel-inventory--tank-control) | Fuel Inventory & Tank Control | In Progress | INV-* |
+| 9 | P1 | [M03](#m03--pump--nozzle-operations) | Pump & Nozzle Operations | In Progress | — |
+| 11 | P1 | [M04](#m04--shift-management) | Shift Management | Planned | SH-* |
+| 10 | P1 | [M05](#m05--finance--accounts) | Finance & Accounts | Planned | CR-* |
+| 7 | P1 | [M06](#m06--pricing--rate-management) | Pricing & Rate Management | Planned | PR-* |
+| 2 | P0 | [M07](#m07--reporting--analytics) | Reporting, Analytics & Platform UI | In Progress | — |
+| 6 | P1 | [M08](#m08--settings--configuration) | Settings & Configuration | In Progress | — |
+| 14 | P3 | [M09](#m09--lubricants--oil-shop) | Lubricants / Oil Shop | Planned | — |
+| 12 | P2 | [M10](#m10--sms--notifications) | SMS / Notifications | Planned | — |
+| 3 | P0 | [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
+| 5 | P0 | [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | In Progress | — |
+| 13 | P3 | [M13](#m13--staff--payroll) | Staff & Payroll | Planned | — |
+| 1 | P0 | [M14](#m14--per-tenant-database-architecture) | Per-Tenant Database Architecture | Done | — |
 
 ---
 
 ## Current Priorities
 
-The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that drives the branch name (Rule 4), commit scopes (Rule 7), PR title (Rule 5), and status flip (Rule 2).
+**The Top-5 modules to plan next**, in module `Order` (skipping fully-`Done`
+[M14](#m14--per-tenant-database-architecture)). Each row is the highest-priority
+module with outstanding work, pointing at its **single next actionable item** —
+the ★ row for that module in [Appendix C — Priority Matrix](#appendix-c--priority-matrix)
+(continue it if `In Progress`, otherwise its highest-priority independent
+`Planned` item). This is the list the `/feature-planning` skill reads. Every item
+below is **independent** (its prerequisites are all `Done`).
 
-| # | ID | Title | Area |
+| # | Module | Next actionable item | Area |
 |---|---|---|---|
-| 1 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
-| 2 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
-| 3 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
-| 4 | [M08-F05-R05](#m08-f05--system-preferences) | i18n content sweep — wire `useTranslation` across all shipped auth / dashboard / onboarding screens (foundation already in place per M07-F09-R04) | Frontend |
-| 5 | [M13](#m13--staff--payroll) | Staff & Payroll — employee records, salary/payroll, advances & loans, attendance with shift-derived attendance (M04) and shortage-deduction integration (M04-F05) | Backend + Frontend |
+| 1 | [M07](#m07--reporting--analytics) (order 2) | [M07-F07](#m07-f07--ui-shell) — UI shell (layout, sidebar, navigation); builds on shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
+| 2 | [M11](#m11--subscription--billing) (order 3) | [M11-F06](#m11-f06--feature-gating) — feature gating (API-level); then [M11-F08](#m11-f08--plan-comparison--pricing-page) pricing page | Backend + Frontend |
+| 3 | [M01](#m01--user--access-management) (order 4) | [M01-F05-R02](#m01-f05--roles--hierarchy)/[R03](#m01-f05--roles--hierarchy) + [M01-F06](#m01-f06--granular-permissions) — Owner→Manager→Custom users + granular permissions | Backend |
+| 4 | [M12](#m12--onboarding--first-run-experience) (order 5) | [M12-F01-R18](#m12-f01--onboarding-wizard)/[R19](#m12-f01--onboarding-wizard) — opening dip + opening meter readings in the wizard | Frontend + Backend |
+| 5 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
 
+> First below the fold: [M06](#m06--pricing--rate-management) (order 7) → [M06-F01](#m06-f01--price-configuration) price configuration. For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
+>
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
+
+---
+
+## Priority & Implementation Order
+
+The full module ranking that drives [Current Priorities](#current-priorities).
+**Tiers** (P0 = highest): **P0 Critical** (independent + blocks revenue/other
+modules), **P1 High** (core operational loop), **P2 Medium** (needs operational
+data first), **P3 Low** (gated/optional extensions). **Within a tier, the module
+with the fewest unmet dependencies ranks first** — so the most-blocked core
+module ([M04](#m04--shift-management)) sorts last in P1 despite being High value.
+`Order` is the exact build sequence.
+
+| Order | Priority | Module | Status | Depends on (unmet) | Rationale |
+|---|---|---|---|---|---|
+| 1 | P0 | [M14](#m14--per-tenant-database-architecture) — Per-Tenant DB | Done ✓ | — | Foundation, shipped |
+| 2 | P0 | [M07](#m07--reporting--analytics) — Reporting, Analytics & Platform UI | In Progress | — (design [M07-F09](#m07-f09--design-system--theme-foundation) ✓) | UI shell hosts every page; fully independent unblocker |
+| 3 | P0 | [M11](#m11--subscription--billing) — Subscription & Billing | In Progress | — (plans/trial ✓) | Monetization: gating + pricing page; independent |
+| 4 | P0 | [M01](#m01--user--access-management) — User & Access Management | In Progress | — (auth ✓) | Access control: roles, permissions, audit; independent |
+| 5 | P0 | [M12](#m12--onboarding--first-run-experience) — Onboarding & First-Run | In Progress | M02-F04 dip-conv (for [R18](#m12-f01--onboarding-wizard)) | Conversion funnel; near-done finish |
+| 6 | P1 | [M08](#m08--settings--configuration) — Settings & Configuration | In Progress | — | Tank/nozzle config + i18n; mostly independent backbone |
+| 7 | P1 | [M06](#m06--pricing--rate-management) — Pricing & Rate Management | Planned | — (fuel types ✓) | Independent; unblocks sales calculation |
+| 8 | P1 | [M02](#m02--fuel-inventory--tank-control) — Fuel Inventory & Tank Control | In Progress | F05 variance ← shifts | Tanks/supplier independent; variance waits on shifts |
+| 9 | P1 | [M03](#m03--pump--nozzle-operations) — Pump & Nozzle Operations | In Progress | F03 sales ← M06 + readings | Nozzle setup independent; sales calc blocked by M06 |
+| 10 | P1 | [M05](#m05--finance--accounts) — Finance & Accounts | Planned | F01 credit-limit ← sales | F03 expenses / F04 banks are independent quick-wins |
+| 11 | P1 | [M04](#m04--shift-management) — Shift Management | Planned | M02 dip + M03 readings + M06 prices | Operational heartbeat — **most blocked, so last in core** |
+| 12 | P2 | [M10](#m10--sms--notifications) — SMS / Notifications | Planned | event sources (M02/M03/M04/M06) | Needs emitters from other modules first |
+| 13 | P3 | [M13](#m13--staff--payroll) — Staff & Payroll | Planned | M04 attendance + M11 gating | Most-blocked extension |
+| 14 | P3 | [M09](#m09--lubricants--oil-shop) — Lubricants / Oil Shop | Planned | M11 gating | Independent but low-value gated add-on |
+
+Per-feature priority/order/dependencies are in [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
 
 ---
 
@@ -1612,6 +1671,173 @@ Quick lookup for every legacy business-rule ID. Use this when reading old commit
 | Architectural decisions & version history | [`CHANGELOG.md`](CHANGELOG.md) |
 | Business requirements & user stories | [`ProjectOverView.md`](ProjectOverView.md) |
 | EF Core mapping conventions | [`EF_CONFIGURATION_CONVENTIONS.md`](EF_CONFIGURATION_CONVENTIONS.md) |
+
+---
+
+## Appendix C — Priority Matrix
+
+Every feature, numbered. Grouped by module in implementation **Order** (the same
+order as [Priority & Implementation Order](#priority--implementation-order)).
+
+- **Tier:** P0 Critical · P1 High · P2 Medium · P3 Low (P0 = highest). See [Priority & order](#priority--order-how-this-file-is-ranked).
+- **Feature Order** = `<moduleOrder>.<n>`, the build sequence inside the module.
+- **Depends on** = unmet prerequisites (`—` means all prerequisites are `Done` → independent).
+- **★ Next** = the recommended next item to pick up for that module: continue it if `In Progress`, otherwise its highest-priority independent `Planned` item. Fully-`Done` modules have none. The ★ rows are exactly the [Current Priorities](#current-priorities) Top-5 (for the top modules) and the analogous lead item for the rest.
+
+### Order 1 — M14 Per-Tenant DB  ·  P0  ·  Done ✓
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 1.1 | M14-F01 | Control Plane / Tenant DbContext Split | P0 | Done | — | |
+| 1.2 | M14-F02 | Tenant Registry & Connection Resolution | P0 | Done | — | |
+| 1.3 | M14-F03 | Tenant Provisioning Service | P0 | Done | — | |
+| 1.4 | M14-F04 | Onboarding Flow Adaptation | P0 | Done | — | |
+| 1.5 | M14-F05 | Identity & Auth Adaptation | P0 | Done | — | |
+| 1.6 | M14-F06 | Migration Tooling & Dev/Ops | P0 | Done | — | |
+
+### Order 2 — M07 Reporting, Analytics & Platform UI  ·  P0
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 2.1 | M07-F09 | Design System & Theme Foundation | P0 | Done | — | |
+| 2.2 | M07-F07 | UI Shell | P0 | Planned | — (F09 ✓) | ★ |
+| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Planned | M07-F07 | |
+| 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | |
+| 2.5 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
+| 2.6 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
+| 2.7 | M07-F03 | Financial Reports | P2 | Planned | M04/M05 | |
+| 2.8 | M07-F04 | Export & Automation | P2 | Planned | F01–F03 + M11-F06 | |
+| 2.9 | M07-F06 | Consolidated All-Stations View | P2 | Planned | F01/F05 | |
+
+### Order 3 — M11 Subscription & Billing  ·  P0
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 3.1 | M11-F01 | Subscription Plans | P0 | Done | — | |
+| 3.2 | M11-F02 | Trial Period | P0 | Done | — | |
+| 3.3 | M11-F06 | Feature Gating | P0 | In Progress | — (plans ✓) | ★ |
+| 3.4 | M11-F08 | Plan Comparison & Pricing Page | P0 | Planned | — (plans ✓) | |
+| 3.5 | M11-F03 | Payment & Verification | P1 | Planned | — | |
+| 3.6 | M11-F04 | Expiry & Grace Period | P1 | Planned | M11-F03 | |
+| 3.7 | M11-F05 | Plan Changes (Upgrade / Downgrade) | P1 | Planned | M11-F03 | |
+| 3.8 | M11-F07 | Billing History | P2 | Planned | M11-F03 | |
+
+### Order 4 — M01 User & Access Management  ·  P0
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 4.1 | M01-F01 | Self-Service Registration | P0 | Done | — | |
+| 4.2 | M01-F02 | Email Verification | P0 | Done | — | |
+| 4.3 | M01-F03 | Login & Session | P0 | Done | — | |
+| 4.4 | M01-F09 | Phone-First Authentication | P0 | Done | — | |
+| 4.5 | M01-F04 | Password Recovery | P0 | Done | — | |
+| 4.6 | M01-F05 | Roles & Hierarchy | P0 | In Progress | — (auth ✓) | ★ |
+| 4.7 | M01-F06 | Granular Permissions | P0 | Planned | M01-F05 | |
+| 4.8 | M01-F07 | Multi-Station Access | P1 | In Progress | M07 dashboards (R04/R05) | |
+| 4.9 | M01-F08 | Audit Trail | P1 | Planned | — (consumes events from M01-F09/M06/M13) | |
+
+### Order 5 — M12 Onboarding & First-Run  ·  P0
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 5.1 | M12-F01 | Onboarding Wizard | P0 | In Progress | M02-F04 dip-conv (R18) | ★ |
+| 5.2 | M12-F02 | Onboarding Dev Bypass | P0 | Done | — | |
+
+### Order 6 — M08 Settings & Configuration  ·  P1
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 6.1 | M08-F01 | Station Profile | P1 | Done | — | |
+| 6.2 | M08-F02 | Tank Configuration | P1 | In Progress | — | |
+| 6.3 | M08-F03 | Nozzle Configuration | P1 | In Progress | — | |
+| 6.4 | M08-F05 | System Preferences | P1 | Planned | — (i18n foundation ✓; R05 sweep) | ★ |
+| 6.5 | M08-F04 | Dip Chart Management | P1 | Planned | M02-F04 | |
+| 6.6 | M08-F06 | Backup & Data | P2 | Planned | — | |
+
+### Order 7 — M06 Pricing & Rate Management  ·  P1
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 7.1 | M06-F01 | Price Configuration | P1 | Planned | — (fuel types ✓) | ★ |
+| 7.2 | M06-F02 | Price Change Workflow | P1 | Planned | M06-F01 (+ M10 for R03) | |
+| 7.3 | M06-F04 | Margins & Discounts | P1 | Planned | M06-F01 | |
+| 7.4 | M06-F06 | Promotional Pricing | P2 | Planned | M06-F01 | |
+| 7.5 | M06-F05 | Customer Special Rates | P2 | Planned | M06-F01 + M05-F01 | |
+| 7.6 | M06-F03 | Mid-Shift Price Handling | P2 | Planned | M06-F01 + M04 shifts | |
+
+### Order 8 — M02 Fuel Inventory & Tank Control  ·  P1
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 8.1 | M02-F01 | Fuel Products | P1 | Done | — | |
+| 8.2 | M02-F03 | Underground Tank Management | P1 | In Progress | — | ★ |
+| 8.3 | M02-F02 | Supplier Tracking | P1 | Planned | — | |
+| 8.4 | M02-F04 | Dip Chart Management | P1 | Planned | M02-F03 | |
+| 8.5 | M02-F06 | Fuel Receiving (Tanker Delivery) | P1 | Planned | M02-F03/F04 | |
+| 8.6 | M02-F05 | Dip Readings & Stock Variance | P2 | Planned | M02-F04 + M04 shifts | |
+
+### Order 9 — M03 Pump & Nozzle Operations  ·  P1
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 9.1 | M03-F01 | Nozzle Setup | P1 | In Progress | — | ★ |
+| 9.2 | M03-F02 | Meter Reading Entry | P1 | Planned | M03-F01 + M04 shifts | |
+| 9.3 | M03-F03 | Sales Calculation | P1 | Planned | M06-F01 + M03-F02 | |
+| 9.4 | M03-F04 | Shortage & Excess Tracking | P2 | Planned | M03-F03 + M04-F05 | |
+
+### Order 10 — M05 Finance & Accounts  ·  P1
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 10.1 | M05-F03 | Daily Expenses | P1 | Planned | — | ★ |
+| 10.2 | M05-F04 | Bank Accounts | P1 | Planned | — (entity seeded by M12 ✓) | |
+| 10.3 | M05-F02 | Supplier Payments (Payables) | P1 | Planned | — | |
+| 10.4 | M05-F01 | Credit Customers (Udhaar / Receivables) | P1 | Planned | R01 enforce ← M03 sales | |
+
+### Order 11 — M04 Shift Management  ·  P1
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 11.1 | M04-F01 | Shift Configuration | P1 | Planned | — | ★ |
+| 11.2 | M04-F02 | Nozzleman Assignment | P1 | Planned | M04-F01 | |
+| 11.3 | M04-F03 | Open Shift | P1 | Planned | M02-F04 dip + M03-F01 + M06-F01 | |
+| 11.4 | M04-F04 | Close Shift | P1 | Planned | M04-F03 + readings | |
+| 11.5 | M04-F05 | Sales & Shortage Settlement | P1 | Planned | M03-F03 + M04-F04 | |
+| 11.6 | M04-F06 | Cash Collection | P1 | Planned | M04-F04 | |
+
+### Order 12 — M10 SMS / Notifications  ·  P2
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 12.1 | M10-F03 | Notification Channels | P2 | Planned | — (R04 SMS sender is independent infra) | ★ |
+| 12.2 | M10-F01 | Notification Events | P2 | Planned | event sources (M02/M03/M04/M06) | |
+| 12.3 | M10-F02 | Recipients & Targeting | P2 | Planned | M10-F01 | |
+| 12.4 | M10-F05 | Summary Reports | P2 | Planned | M10-F01 + reports | |
+| 12.5 | M10-F04 | Notification Behavior | P2 | Planned | M10-F01 | |
+
+### Order 13 — M13 Staff & Payroll  ·  P3
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 13.1 | M13-F01 | Employee Records | P3 | Planned | M11-F06-R07 (max_employees) | ★ |
+| 13.2 | M13-F03 | Advances & Loans | P3 | Planned | M13-F01 | |
+| 13.3 | M13-F04 | Attendance & Leaves | P3 | Planned | M13-F01 + M04-F02 | |
+| 13.4 | M13-F02 | Salary Management | P3 | Planned | M13-F01/F03/F04 + M04-F05 | |
+
+### Order 14 — M09 Lubricants / Oil Shop  ·  P3
+
+| Order | ID | Feature | Tier | Status | Depends on | ★ |
+|---|---|---|---|---|---|---|
+| 14.1 | M09-F01 | Product Inventory | P3 | Planned | — (M11 gates to Professional+) | ★ |
+| 14.2 | M09-F02 | Lubricant Sales | P3 | Planned | M09-F01 (+ M05-F01 ledger) | |
+| 14.3 | M09-F03 | Stock Management | P3 | Planned | M09-F01 | |
+| 14.4 | M09-F04 | Lubricant Reporting | P3 | Planned | M09-F01/F02 | |
+
+> **79 features** total. Tier/Order are a ranking ordinal layered on the stable
+> IDs — they never renumber an ID (Maintenance Convention 6). When a feature's
+> status or dependencies change, update its row here and, if it shifts the module
+> ranking, the [Priority & Implementation Order](#priority--implementation-order)
+> and [Current Priorities](#current-priorities) tables.
 
 ---
 

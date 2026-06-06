@@ -20,9 +20,15 @@ This skill assumes the Fuel Flow repo conventions in the root `CLAUDE.md`
 Read `docs/MODULES.md`. The user either names an item (e.g. "plan M04-F03")
 or asks what to work on. If they ask:
 
-- Show the **Current Priorities** section first — that is the intended order.
-- Otherwise list features/requirements whose status is `Planned` (not `Done`,
-  `In Progress`, or `Out of Scope`), grouped by module.
+- Show the **Current Priorities** section — the **Top 5 modules** in priority/
+  implementation order (from the `Priority & Implementation Order` section), each
+  with its **single next actionable `MXX-FXX[-RXX]` item** (the ★ row for that
+  module in `Appendix C — Priority Matrix`). Present these five first — that is
+  the intended order.
+- If the user wants something outside the Top 5, fall back to the full ranked
+  backlog in `Priority & Implementation Order` (modules in `Order` sequence) and,
+  within a chosen module, its `Planned` / `In Progress` features from
+  `Appendix C` — skip `Done` and `Out of Scope`.
 
 Do not proceed until the user picks a specific `MXX-FXX` or `MXX-FXX-RXX`.
 
