@@ -1079,7 +1079,7 @@ The cross-cutting layout that wraps every authenticated page: sidebar, top nav, 
 
 ---
 
-### M07-F08 — Progressive Web App (PWA)   [Status: Planned]
+### M07-F08 — Progressive Web App (PWA)   [Status: In Progress]
 
 Make the app installable and offline-capable for shift operations on shared station tablets.
 
@@ -1087,9 +1087,9 @@ Make the app installable and offline-capable for shift operations on shared stat
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F08-R01 | Service worker caches the app shell for offline launch | — | Planned |
-| M07-F08-R02 | Web app manifest with icons + name supports "Add to Home Screen" | — | Planned |
-| M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | Planned |
+| M07-F08-R01 | Service worker caches the app shell for offline launch | — | In Progress |
+| M07-F08-R02 | Web app manifest with icons + name supports "Add to Home Screen" | — | In Progress |
+| M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | In Progress |
 | M07-F08-R04 | Web push notifications | — | Out of Scope (v2) |
 
 ---
@@ -2015,7 +2015,7 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 |---|---|---|---|---|---|---|
 | 2.1 | M07-F09 | Design System & Theme Foundation | P0 | Done | — | |
 | 2.2 | M07-F07 | UI Shell | P0 | Done | — (F09 ✓) | |
-| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Planned | M07-F07 ✓ | ★ |
+| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | In Progress | M07-F07 ✓ | ★ |
 | 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | |
 | 2.5 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
 | 2.6 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
