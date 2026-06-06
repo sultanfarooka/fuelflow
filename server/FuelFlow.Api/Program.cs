@@ -180,5 +180,9 @@ app.UseAuthentication();  // Validates JWT token
 app.UseAuthorization();   // Checks [Authorize] attributes
 app.MapControllers();
 
+// Liveness probe — anonymous, no DB hit. Used by the docker-compose healthcheck so
+// dependent services (nginx) wait until the API is actually serving.
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
 Log.Information("Fuel Flow API starting on {Urls}", app.Urls);
 app.Run();

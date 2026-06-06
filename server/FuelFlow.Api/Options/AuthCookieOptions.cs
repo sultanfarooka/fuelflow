@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace FuelFlow.Api.Options;
 
@@ -27,7 +28,7 @@ public class AuthCookieOptions
         return new CookieOptions
         {
             HttpOnly = true,
-            Secure = !_environment.IsDevelopment(),
+            Secure = ResolveSecure(),
             SameSite = SameSiteMode.Lax,
             Path = "/",
             MaxAge = TimeSpan.FromMinutes(expiresInMinutes),
@@ -42,10 +43,19 @@ public class AuthCookieOptions
         return new CookieOptions
         {
             HttpOnly = true,
-            Secure = !_environment.IsDevelopment(),
+            Secure = ResolveSecure(),
             SameSite = SameSiteMode.Lax,
             Path = "/",
             MaxAge = TimeSpan.FromDays(7),
         };
     }
+
+    /// <summary>
+    /// Cookie Secure flag. Defaults to "secure outside Development", but can be
+    /// explicitly overridden via the <c>Auth:CookieSecure</c> config key — needed when
+    /// running in Production over plain HTTP (e.g. the local docker-compose stack), where
+    /// a Secure cookie would be dropped by the browser and silently break login.
+    /// </summary>
+    private bool ResolveSecure()
+        => _configuration.GetValue<bool?>("Auth:CookieSecure") ?? !_environment.IsDevelopment();
 }
