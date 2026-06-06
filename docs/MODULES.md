@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-06 (M07-F07 UI Shell — Done)
+**Last Updated:** 2026-06-07 (M07-F08 Progressive Web App — Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -94,13 +94,13 @@ below is **independent** (its prerequisites are all `Done`).
 
 | # | Module | Next actionable item | Area |
 |---|---|---|---|
-| 1 | [M07](#m07--reporting--analytics) (order 2) | [M07-F08](#m07-f08--progressive-web-app-pwa) — PWA (offline app shell, installable); [M07-F07](#m07-f07--ui-shell) UI shell now ✓ | Frontend |
-| 2 | [M11](#m11--subscription--billing) (order 3) | [M11-F06](#m11-f06--feature-gating) — feature gating (API-level); then [M11-F08](#m11-f08--plan-comparison--pricing-page) pricing page | Backend + Frontend |
-| 3 | [M01](#m01--user--access-management) (order 4) | [M01-F05-R02](#m01-f05--roles--hierarchy)/[R03](#m01-f05--roles--hierarchy) + [M01-F06](#m01-f06--granular-permissions) — Owner→Manager→Custom users + granular permissions | Backend |
-| 4 | [M12](#m12--onboarding--first-run-experience) (order 5) | [M12-F01-R18](#m12-f01--onboarding-wizard)/[R19](#m12-f01--onboarding-wizard) — opening dip + opening meter readings in the wizard | Frontend + Backend |
-| 5 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
+| 1 | [M11](#m11--subscription--billing) (order 3) | [M11-F06](#m11-f06--feature-gating) — feature gating (API-level); then [M11-F08](#m11-f08--plan-comparison--pricing-page) pricing page | Backend + Frontend |
+| 2 | [M01](#m01--user--access-management) (order 4) | [M01-F05-R02](#m01-f05--roles--hierarchy)/[R03](#m01-f05--roles--hierarchy) + [M01-F06](#m01-f06--granular-permissions) — Owner→Manager→Custom users + granular permissions | Backend |
+| 3 | [M12](#m12--onboarding--first-run-experience) (order 5) | [M12-F01-R18](#m12-f01--onboarding-wizard)/[R19](#m12-f01--onboarding-wizard) — opening dip + opening meter readings in the wizard | Frontend + Backend |
+| 4 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
+| 5 | [M06](#m06--pricing--rate-management) (order 7) | [M06-F01](#m06-f01--price-configuration) — price configuration (one active price per fuel type per station) | Backend + Frontend |
 
-> First below the fold: [M06](#m06--pricing--rate-management) (order 7) → [M06-F01](#m06-f01--price-configuration) price configuration. For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
+> First below the fold: [M02](#m02--fuel-inventory--tank-control) (order 8) → [M02-F03](#m02-f03--underground-tank-management) underground tank management (visual stock display, reassignment). [M07](#m07--reporting--analytics) leaves the Top-5 now that [M07-F08](#m07-f08--progressive-web-app-pwa) (PWA) has shipped — its remaining reporting features (F01–F06) are all blocked on shift/sales data (M03/M04). For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
 >
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -1079,7 +1079,7 @@ The cross-cutting layout that wraps every authenticated page: sidebar, top nav, 
 
 ---
 
-### M07-F08 — Progressive Web App (PWA)   [Status: In Progress]
+### M07-F08 — Progressive Web App (PWA)   [Status: Done]
 
 Make the app installable and offline-capable for shift operations on shared station tablets.
 
@@ -1087,9 +1087,9 @@ Make the app installable and offline-capable for shift operations on shared stat
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F08-R01 | Service worker caches the app shell for offline launch | — | In Progress |
-| M07-F08-R02 | Web app manifest with icons + name supports "Add to Home Screen" | — | In Progress |
-| M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | In Progress |
+| M07-F08-R01 | Service worker caches the app shell for offline launch | — | Done |
+| M07-F08-R02 | Web app manifest with icons + name supports "Add to Home Screen" | — | Done |
+| M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | Done |
 | M07-F08-R04 | Web push notifications | — | Out of Scope (v2) |
 
 **Acceptance Criteria:**
@@ -2021,8 +2021,8 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 |---|---|---|---|---|---|---|
 | 2.1 | M07-F09 | Design System & Theme Foundation | P0 | Done | — | |
 | 2.2 | M07-F07 | UI Shell | P0 | Done | — (F09 ✓) | |
-| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | In Progress | M07-F07 ✓ | ★ |
-| 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | |
+| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Done | M07-F07 ✓ | |
+| 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | ★ |
 | 2.5 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
 | 2.6 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
 | 2.7 | M07-F03 | Financial Reports | P2 | Planned | M04/M05 | |
