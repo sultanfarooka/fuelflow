@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-06 (M07-F07 UI Shell — In Progress)
+**Last Updated:** 2026-06-06 (M07-F07 UI Shell — Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -94,7 +94,7 @@ below is **independent** (its prerequisites are all `Done`).
 
 | # | Module | Next actionable item | Area |
 |---|---|---|---|
-| 1 | [M07](#m07--reporting--analytics) (order 2) | [M07-F07](#m07-f07--ui-shell) — UI shell (layout, sidebar, navigation); builds on shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
+| 1 | [M07](#m07--reporting--analytics) (order 2) | [M07-F08](#m07-f08--progressive-web-app-pwa) — PWA (offline app shell, installable); [M07-F07](#m07-f07--ui-shell) UI shell now ✓ | Frontend |
 | 2 | [M11](#m11--subscription--billing) (order 3) | [M11-F06](#m11-f06--feature-gating) — feature gating (API-level); then [M11-F08](#m11-f08--plan-comparison--pricing-page) pricing page | Backend + Frontend |
 | 3 | [M01](#m01--user--access-management) (order 4) | [M01-F05-R02](#m01-f05--roles--hierarchy)/[R03](#m01-f05--roles--hierarchy) + [M01-F06](#m01-f06--granular-permissions) — Owner→Manager→Custom users + granular permissions | Backend |
 | 4 | [M12](#m12--onboarding--first-run-experience) (order 5) | [M12-F01-R18](#m12-f01--onboarding-wizard)/[R19](#m12-f01--onboarding-wizard) — opening dip + opening meter readings in the wizard | Frontend + Backend |
@@ -1058,7 +1058,7 @@ Owner-only cross-station aggregation.
 
 ---
 
-### M07-F07 — UI Shell   [Status: In Progress]
+### M07-F07 — UI Shell   [Status: Done]
 
 The cross-cutting layout that wraps every authenticated page: sidebar, top nav, content area, and route-guard composition. Provides the chrome that the per-module pages (M07-F01..F06, M05, M06, …) plug into. Built on top of the design system from [M07-F09](#m07-f09--design-system--theme-foundation).
 
@@ -1066,11 +1066,11 @@ The cross-cutting layout that wraps every authenticated page: sidebar, top nav, 
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | In Progress |
-| M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | In Progress |
-| M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | In Progress |
-| M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | In Progress |
-| M07-F07-R05 | Active-route highlighting in sidebar | — | In Progress |
+| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Done |
+| M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | Done |
+| M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | Done |
+| M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | Done |
+| M07-F07-R05 | Active-route highlighting in sidebar | — | Done |
 
 **Acceptance Criteria:**
 - **AC1** Given a Nozzleman, When they open the dashboard, Then the sidebar shows only shift-related links (no Finance, Reports, Settings).
@@ -2014,8 +2014,8 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | Order | ID | Feature | Tier | Status | Depends on | ★ |
 |---|---|---|---|---|---|---|
 | 2.1 | M07-F09 | Design System & Theme Foundation | P0 | Done | — | |
-| 2.2 | M07-F07 | UI Shell | P0 | In Progress | — (F09 ✓) | ★ |
-| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Planned | M07-F07 | |
+| 2.2 | M07-F07 | UI Shell | P0 | Done | — (F09 ✓) | |
+| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Planned | M07-F07 ✓ | ★ |
 | 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | |
 | 2.5 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
 | 2.6 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
