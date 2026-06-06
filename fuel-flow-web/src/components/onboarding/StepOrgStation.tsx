@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Building2, Fuel, MapPin, UploadCloud } from "lucide-react"
 import { useForm } from "@tanstack/react-form"
 import { useMutation, useQuery } from "@tanstack/react-query"
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ProvisioningOverlay } from "@/components/onboarding/ProvisioningOverlay"
 import { completeOnboarding, type OnboardingRequest } from "@/lib/api/auth"
 import { getOMCs, type OMC } from "@/lib/api/omcs"
 import { onboardingSchema, type OnboardingFormData } from "@/lib/validators/auth"
@@ -85,8 +86,20 @@ export function StepOrgStation({ onNext }: Props) {
 
   const isSubmitting = form.state.isSubmitting || mutation.isPending
 
+  useEffect(() => {
+    if (!mutation.isPending) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      return ""
+    }
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [mutation.isPending])
+
   return (
-    <div className="grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+    <>
+      {mutation.isPending && <ProvisioningOverlay />}
+      <div className="grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <section className="flex flex-col justify-between gap-8">
         <div className="space-y-4">
           <div className="space-y-3">
@@ -274,5 +287,6 @@ export function StepOrgStation({ onNext }: Props) {
         </form>
       </section>
     </div>
+    </>
   )
 }

@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-04
+**Last Updated:** 2026-06-06 (M14 complete — all F01–F06 Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -57,7 +57,7 @@
 | [M11](#m11--subscription--billing) | Subscription & Billing | In Progress | SUB-*, FG-* |
 | [M12](#m12--onboarding--first-run-experience) | Onboarding & First-Run Experience | In Progress | — |
 | [M13](#m13--staff--payroll) | Staff & Payroll | Planned | — |
-| [M14](#m14--per-tenant-database-architecture) | Per-Tenant Database Architecture | Planned | — |
+| [M14](#m14--per-tenant-database-architecture) | Per-Tenant Database Architecture | Done | — |
 
 ---
 
@@ -67,12 +67,11 @@ The next pieces of work, in order. Each row references the `MXX-FXX-RXX` ID that
 
 | # | ID | Title | Area |
 |---|---|---|---|
-| 1 | [M14-F04](#m14-f04--onboarding-flow-adaptation) | Onboarding Flow Adaptation — wizard "Provisioning your workspace…" state, handle provisioning latency in the frontend, step-2+ routing to tenant DB via new JWT | Frontend + Backend |
-| 2 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
-| 3 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
-| 4 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
-| 5 | [M08-F05-R05](#m08-f05--system-preferences) | i18n content sweep — wire `useTranslation` across all shipped auth / dashboard / onboarding screens (foundation already in place per M07-F09-R04) | Frontend |
-| 6 | [M13](#m13--staff--payroll) | Staff & Payroll — employee records, salary/payroll, advances & loans, attendance with shift-derived attendance (M04) and shortage-deduction integration (M04-F05) | Backend + Frontend |
+| 1 | [M07-F07](#m07-f07--ui-shell) | Basic UI shell (layout, sidebar, navigation) — builds on now-shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
+| 2 | [M01-F05-R02](#m01-f05--roles--hierarchy), [M01-F05-R03](#m01-f05--roles--hierarchy), [M01-F06](#m01-f06--granular-permissions) | User management — Owner creates Managers; Managers create Custom Users with granular permissions | Backend |
+| 3 | [M11-F08](#m11-f08--plan-comparison--pricing-page) | Pricing page (plan comparison, monthly/yearly toggle) | Frontend |
+| 4 | [M08-F05-R05](#m08-f05--system-preferences) | i18n content sweep — wire `useTranslation` across all shipped auth / dashboard / onboarding screens (foundation already in place per M07-F09-R04) | Frontend |
+| 5 | [M13](#m13--staff--payroll) | Staff & Payroll — employee records, salary/payroll, advances & loans, attendance with shift-derived attendance (M04) and shortage-deduction integration (M04-F05) | Backend + Frontend |
 
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -1486,27 +1485,58 @@ Scoped `TenantDbContextAccessor` wraps `IDbContextFactory<AppDbContext>` and res
 
 ---
 
-### M14-F04 — Onboarding Flow Adaptation   [Status: Planned]
+### M14-F04 — Onboarding Flow Adaptation   [Status: Done]
 
-`POST /onboarding` step 1 now creates the control-plane `Tenant` row (status `Provisioning`), calls `ITenantProvisioningService`, re-issues the JWT with the `org_id` claim, and returns. Steps 2–9 of the wizard route by `stationId` and naturally hit the new tenant DB via the resolver. Wizard chrome shows a "Provisioning your workspace…" state during step 1 (~5–30s).
+`POST /onboarding` step 1 now creates the control-plane `Tenant` row (status `Provisioning`), calls `ITenantProvisioningService`, re-issues the JWT with the `org_id` claim, and returns. Steps 2–9 of the wizard route by `stationId` and naturally hit the new tenant DB via the resolver. Wizard chrome shows a "Provisioning your workspace…" state during step 1 (~5–30s). Purely frontend — M14-F02/F03 completed the backend provisioning.
 
-Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F04 via its own `/feature-planning` run.
+| ID | Requirement | Notes | Status |
+|---|---|---|---|
+| M14-F04-R01 | During step 1 provisioning (mutation in flight), the wizard UI is replaced by a full-screen overlay ("Setting up your workspace…" + spinner + ~30s note); all wizard interaction is blocked; a `beforeunload` listener warns if the user tries to navigate away. | New `ProvisioningOverlay` component rendered in `StepOrgStation` | Done |
+| M14-F04-R02 | If step 1 returns HTTP 500, the overlay is dismissed, the form re-enables, a Sonner error toast fires, and the inline `<Alert variant="destructive">` shows the server error; user can retry without a page reload. | Extension of existing `submitError` + `isSubmitting` state | Done |
+| M14-F04-R03 | Playwright E2E spec `fuel-flow-web/e2e-tests/M14-F04.spec.ts` walks the full journey: registration → phone OTP → login → onboarding (all 9 steps, provisioning overlay observed during step 1) → station/tank/nozzle CRUD → logout → re-login. | Covers M14-F02/F03-AC7 deferred from that PR | Done |
+
+**Acceptance criteria:**
+
+- **AC1** — After step 1 submission the full-screen overlay replaces the wizard content; no wizard interaction is possible while it is visible; pressing the browser Back button triggers a `beforeunload` warning.
+- **AC2** — When `POST /onboarding` succeeds, the overlay disappears and the wizard advances to step 2; the auth store is updated with the new JWT carrying `org_id`.
+- **AC3** — When `POST /onboarding` returns HTTP 500, the overlay is dismissed, the form re-enables, a Sonner error toast fires, and the inline `<Alert>` shows the error; the user can retry without a page reload.
+- **AC4** — Playwright spec `M14-F04.spec.ts` passes end-to-end: registration → phone OTP → login → onboarding (provisioning overlay observed) → wizard completion → station/tank/nozzle CRUD.
 
 ---
 
-### M14-F05 — Identity & Auth Adaptation   [Status: Planned]
+### M14-F05 — Identity & Auth Adaptation   [Status: Done]
 
-Pre-org-creation flows (registration, phone OTP, login by phone, password recovery) hit only the control plane — no tenant context needed. After login, JWT carries `org_id`; subsequent requests are tenant-routed. `UserStation` cross-DB link enforced at app layer (no FK). Phone uniqueness enforced via index on control-plane `AspNetUsers`.
+Pre-org-creation flows (registration, phone OTP, login by phone, password recovery) hit only the control plane — no tenant context needed. After login, JWT carries `org_id`; subsequent requests are tenant-routed. `UserStation` cross-DB link enforced at app layer (no FK). Phone uniqueness enforced via index on control-plane `AspNetUsers`. Purely backend — no frontend changes.
 
-Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F05 via its own `/feature-planning` run.
+| ID | Requirement | Notes | Status |
+|---|---|---|---|
+| M14-F05-R01 | Add a unique index on `AspNetUsers.PhoneNumber` in the ControlPlane DB via a new EF Core migration and `AppUserConfiguration` update. PostgreSQL UNIQUE indexes natively allow multiple NULLs, so a standard (non-partial) unique index on the nullable column is correct. The existing app-level check in `RegisterCommandHandler` remains as an earlier-exit guard. | ControlPlane migration + configuration | Done |
+| M14-F05-R02 | Verify that all pre-org-creation handlers (`RegisterCommandHandler`, `LoginCommandHandler`, `VerifyPhoneCommandHandler`, `ForgotPasswordCommandHandler`, `ResetPasswordCommandHandler`, `RefreshTokenCommandHandler`, `GetCurrentUserQueryHandler`) touch only `ControlPlaneDbContext`; no `TenantDbContextAccessor` is accessed for users without `org_id`. Document the M14 multi-tenancy contract in each handler's class-level summary. | Verification pass + doc comments; `LoginCommandHandler` guard already correct at line 118 | Done |
+| M14-F05-R03 | `UserStation` cross-DB link: document in code that `UserStation.UserId` is a plain `Guid` column (no FK) and that handlers inserting `UserStation` rows must verify user existence via `UserManager.FindByIdAsync` before insert. Note deferred handlers (e.g. `CreateShiftAssignmentCommandHandler`) as `TODO M01-F05` in a code comment. | Code comments only; ShiftAssignment user-existence check deferred to M01-F05 | Done |
+
+**Acceptance criteria:**
+
+- **AC1** — Attempting to register two users with the same phone number results in HTTP 400 for the second attempt, enforced at the DB level (not just application code).
+- **AC2** — A freshly-registered user (no `OrganizationId`) can log in, refresh tokens, and call `GET /auth/me` without any 503 or 500 from the tenant-DB stack; the response omits `organization`, `stations`, and `subscription`.
+- **AC3** — An onboarded user (JWT carries `org_id`) can log in and receive `organization`, `stations`, and `subscription` populated from the tenant DB.
 
 ---
 
-### M14-F06 — Migration Tooling & Dev/Ops   [Status: Planned]
+### M14-F06 — Migration Tooling & Dev/Ops   [Status: Done]
 
-`server/db-migration-add.ps1` and `db-update.ps1` extended to take a `-Context` parameter (`ControlPlane` or `Tenant`). Startup task scans control-plane `Tenants` and applies pending tenant migrations to each tenant DB on app boot. `scripts/dev.ps1` extended with `--reset-all` (drops control plane + every tenant DB; rebuilds). Documentation updated across all scoped CLAUDE.md files; root `CLAUDE.md` "Multi-Tenancy Model" section rewritten.
+`server/db-migration-add.ps1` and `db-update.ps1` already have `-Context` support (shipped with M14-F01). Remaining work: startup task that applies pending tenant migrations to every active tenant DB on app boot; `scripts/dev.ps1 --reset-all` to wipe and rebuild all DBs for local dev; documentation sweep to rewrite the root `CLAUDE.md` Multi-Tenancy Model section and audit all stale M14 references across scoped CLAUDE.md files.
 
-Detailed requirements (R-rows + acceptance criteria) will be defined when the team picks up M14-F06 via its own `/feature-planning` run.
+| ID | Requirement | Notes | Status |
+|---|---|---|---|
+| M14-F06-R01 | On app boot, scan `Tenants` where `Status == Active`, resolve each tenant's connection string via `ITenantConnectionResolver`, and call `AppDbContext.Database.MigrateAsync()` on each. Implemented as an `IHostedService`. On per-tenant failure: log the error and continue — the app starts and serves other tenants; the failing tenant's row is not modified (manual investigation required). | Infrastructure — new `TenantMigrationHostedService` | Done |
+| M14-F06-R02 | Extend `scripts/dev.ps1` with a `-ResetAll` switch. When set: (1) drop the control plane DB + all tenant DBs (databases matching the `tenant_*` naming convention via `psql`/docker exec); (2) run `db-update.ps1 -Context ControlPlane` to rebuild; (3) exit. Does not start the app — tenant DBs are provisioned fresh on first onboarding. | Scripts — PowerShell | Done |
+| M14-F06-R03 | Documentation sweep: rewrite the root `CLAUDE.md` "Multi-Tenancy Model" section to reflect the current live architecture (per-tenant DBs via `ITenantConnectionResolver`, M14-F01–F05 all Done). Audit `server/CLAUDE.md`, `server/FuelFlow.Infrastructure/CLAUDE.md`, `server/FuelFlow.Api/CLAUDE.md`, `server/FuelFlow.Application/CLAUDE.md`, `server/FuelFlow.Domain/CLAUDE.md`, `fuel-flow-web/CLAUDE.md` for any stale forward-references to M14-F01/F02/F03 as future work and update them. | Docs only — no code changes | Done |
+
+**Acceptance criteria:**
+
+- **AC1** — Fresh `dotnet run` on a DB with 2+ active `Tenant` records applies any pending tenant migrations to each tenant DB before requests are served; if one tenant's migration fails, the error is logged, the app starts, and other tenants are unaffected.
+- **AC2** — `./scripts/dev.ps1 -ResetAll` drops the control plane DB and all `tenant_*` databases, runs `db-update.ps1 -Context ControlPlane` successfully, and exits (no server start).
+- **AC3** — Root `CLAUDE.md` Multi-Tenancy Model section and all scoped `CLAUDE.md` files contain no stale forward-references to M14 features as future work; the current architecture is accurately described.
 
 ---
 

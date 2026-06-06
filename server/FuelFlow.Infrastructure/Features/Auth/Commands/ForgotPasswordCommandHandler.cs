@@ -21,6 +21,7 @@ namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 /// If exactly one channel is eligible, auto-dispatches via it; if the caller
 /// chose an eligible channel, dispatches via that. Never leaks account
 /// existence — unknown identifiers get the same generic success shape.
+/// M14 contract: ControlPlane only — no TenantDbContextAccessor used [M14-F05-R02].
 /// </summary>
 public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, Result<ForgotPasswordResponse>>
 {

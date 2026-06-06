@@ -21,6 +21,7 @@ namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 /// be unique. SMS OTP is dispatched immediately so the user can verify the phone
 /// and unblock login ([M01-F09-R03]). When email is supplied, the existing email
 /// verification email is also sent.
+/// M14 contract: ControlPlane only — no TenantDbContextAccessor used [M14-F05-R02].
 /// </summary>
 public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<RegisterResponse>>
 {
