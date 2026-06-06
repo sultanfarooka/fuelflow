@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] - 2026-06-06
+
+Documentation / process — **priority & implementation-order system** added to [`MODULES.md`](MODULES.md). Every module and feature now carries a priority tier and a global implementation order, so "what to build next" is an explicit, auditable ranking instead of a hand-curated list.
+
+### Added
+- **MODULES.md — "Priority & order" reading guide** — defines the tier scheme (P0 Critical / P1 High / P2 Medium / P3 Low, P0 = highest, each pinned to a criterion) and the ranking rule (business value first; within a tier, fewest unmet dependencies wins).
+- **MODULES.md — Module Index** gains `Order` (1–14) and `Priority` columns.
+- **MODULES.md — `Priority & Implementation Order` section** — the full 14-module ranking with an explicit `Depends on (unmet)` column.
+- **MODULES.md — `Appendix C — Priority Matrix`** — all 79 features numbered (`<moduleOrder>.<n>`) with tier, status, dependencies, and a ★ "next to pick up" marker per module.
+
+### Changed
+- **MODULES.md — `Current Priorities`** reformatted from a flat 5-item list to the **Top-5 modules, each with its single next actionable `MXX-FXX[-RXX]` item** (the form the `/feature-planning` skill consumes).
+- **`feature-planning` skill (Step 1)** now presents the Top-5 modules + next actionable feature when the user asks what to work on (was: flat Current Priorities list). The "pick a specific ID before proceeding" gate is unchanged.
+
+### Technical Decisions
+- **Priority is a separate ordinal, never a rename of IDs** — Maintenance Convention 6 forbids renumbering, and ~40 cross-references resolve against feature `###` heading anchors. So tier/order live in tables/columns; no feature heading was edited (anchors preserved).
+- **Least-dependency as a primary ranking driver** — independent items (prerequisites all `Done`) lead their tier; the most-blocked core module (M04 Shift Management) sorts last in the operational tier despite being High value.
+- **Ranking lens = business value first** — monetization & access (M07 UI shell, M11 billing, M01 access) lead, ahead of deep operational features.
+
+### Status (MODULES.md)
+- No feature status changed; this is a ranking/metadata overlay only.
+
+---
+
 ## [2.2.0] - 2026-05-26
 
 [M12-F01](MODULES.md#m12-f01--onboarding-wizard) — 9-step onboarding wizard. Replaces the single-step `/onboarding` form with a production-grade first-run wizard that takes a newly registered Owner from org creation to a fully operational station. Dashboard access is blocked via route guard until `Station.IsSetupComplete = true`.
