@@ -822,7 +822,7 @@ Entry point for recording non-fuel, non-shift income. Writes one `FinancialEntri
 
 ---
 
-### M05-F11 — Financial Ledger (Unified Entry Table)   [Status: Planned]
+### M05-F11 — Financial Ledger (Unified Entry Table)   [Status: In Progress]
 
 > _Discovery (2026-06-01): design decision — rather than separate transaction tables per feature (Cash Book, Daily Expenses, Other Income, Customer Ledger, Supplier Payments), a single `FinancialEntries` table becomes the authoritative record of every rupee in and out; all other M05 / M15 features are structured reads or writes on this table · outcome = P&L, Cash Book, Bank Balance, Customer Balance, and any future report all query one source; no cross-table joins to reconstruct financial state · cost-of-not-building: each feature creates its own table and the P&L must stitch them together; Customer Balance and Cash Position require queries across four modules_
 
