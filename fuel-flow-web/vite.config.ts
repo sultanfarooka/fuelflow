@@ -34,6 +34,16 @@ export default defineConfig({
           { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
+      // App-shell-only precache (interview decision): cache the static build
+      // output + fonts/icons for offline launch, fall back to index.html for SPA
+      // navigations. No runtimeCaching — API responses are never cached; offline
+      // data calls surface the global retry banner instead (R03).
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+        cleanupOutdatedCaches: true,
+      },
       // Service worker is disabled on the dev server; flip locally only to debug.
       // Verify PWA behaviour against `npm run build && npm run preview`.
       devOptions: {
