@@ -1,6 +1,6 @@
 ---
 name: feature-discovery
-description: Intake step for a new module / feature / requirement before /feature-planning, plus a rediscovery mode that re-critiques an already-discovered feature for flow gaps, AC holes, missing tags, and ripple coverage. Loads docs/MODULES.md and docs/ProjectOverView.md, then either (a) takes a one-paragraph idea card and collaboratively refines it (who asked, measurable outcome, motivation link, subscription tier, domain tags) or (b) re-opens a recently discovered feature, walks a lifecycle/AC/tag/dependency critique matrix, and proposes additions. Decides whether to skip the registry (existing item, cross-cutting tooling) or write changes. Picks granularity (R / F / M), detects ripple effects, confirms with the user, then edits docs/MODULES.md and — when warranted — docs/ProjectOverView.md. Invoke with /feature-discovery (new) or /feature-discovery rediscover [id]. Hands back the new or modified ID(s) for /feature-planning.
+description: Intake step for a new module / feature / requirement before /feature-planning, plus a rediscovery mode that re-critiques an already-discovered feature for flow gaps, AC holes, missing tags, and ripple coverage. Loads docs/MODULES.md and docs/ProjectOverView.md, then either (a) takes a one-paragraph idea card and collaboratively refines it (who asked, measurable outcome, motivation link, subscription tier, domain tags) or (b) re-opens a recently discovered feature, walks a lifecycle/AC/tag/dependency critique matrix, and proposes additions. Decides whether to skip the registry (existing item, cross-cutting tooling) or write changes. Picks granularity (R / F / M), detects ripple effects, gauges and assigns the priority tier (P0–P3), implementation order, and dependencies — writing the Appendix C Priority Matrix row and updating the module ranking / Current Priorities when warranted — confirms with the user, then edits docs/MODULES.md and — when warranted — docs/ProjectOverView.md. Invoke with /feature-discovery (new) or /feature-discovery rediscover [id]. Hands back the new or modified ID(s) for /feature-planning.
 disable-model-invocation: true
 ---
 
@@ -67,13 +67,23 @@ narrative (title, business rule, AC text).
 At the start of every run, read in full:
 
 - `docs/MODULES.md` — the registry. Every existing `MXX-FXX-RXX`,
-  every status, every Maintenance Convention.
+  every status, every Maintenance Convention. **Including the ranking
+  layer**, which this skill must keep current when it writes:
+  - the **"Priority & order"** reading guide (tier P0–P3 criteria +
+    the least-dependency ranking rule),
+  - the **Module Index** `Order` / `Priority` columns,
+  - the **`Priority & Implementation Order`** section (module ranking +
+    `Depends on`),
+  - **`Appendix C — Priority Matrix`** (every feature's `Order`, tier,
+    status, `Depends on`, ★ next-to-pick-up marker),
+  - **`Current Priorities`** (the Top-5 modules + ★ next item that
+    `/feature-planning` consumes).
 - `docs/ProjectOverView.md` — narrative source of truth for module
   descriptions, user stories, business model, subscription tiers,
   Pakistan-market context.
 
 These are reread on every invocation so the skill is always aware of
-the current state of the registry and the product story.
+the current state of the registry, the ranking, and the product story.
 
 ### Step 1 — Idea card
 
@@ -249,6 +259,61 @@ that may be affected, ask the user — do not auto-decide:
 List each affected ID with a one-line `<id>: <what changes>` note.
 Empty list is fine.
 
+**5c. Gauge priority, order & dependencies.** Every new entry must land
+in the ranking layer, not just the registry. Tier and order are a
+**re-rankable ordinal layered on top of the stable IDs** — they never
+renumber an `MXX/FXX/RXX` (Maintenance Convention #6). Reuse what you
+already collected (step 4a cost-of-not-building, step 4c tags, step 5b
+precursors) — do not re-interview.
+
+**Dependencies (`Depends on`).** From the step 5b precursor list, keep
+the prerequisites that are **not yet `Done`**. If all prerequisites are
+`Done` (or there are none), the item is **independent** → `—`.
+
+**Tier (P0–P3, P0 = highest).** Propose from the signals below, then
+confirm with one `AskUserQuestion` (4 options = P0/P1/P2/P3, each
+labelled with its `MODULES.md` criterion). Derivation:
+
+- **P0 Critical** — independent **and** in an access / billing /
+  platform-foundation domain that blocks revenue or other modules.
+- **P1 High** — core operational loop: `shift-lifecycle-touch ≠ none`,
+  or `money-touch ∈ {prices, credit, margins}`, or inventory / nozzle /
+  pricing / finance surface.
+- **P2 Medium** — needs operational data to already exist:
+  reporting / analytics, or `notification-trigger = yes`.
+- **P3 Low** — gated / optional add-on: `tier ∈ {Professional,
+  Enterprise}`, or a staff / lubricants-style standalone module.
+
+Most discoveries are P1–P3; reserve P0 for independent
+foundation/revenue/access work.
+
+**Order, by granularity:**
+
+- **R (requirement)** — no new order (Appendix C is per-feature).
+  Re-evaluate the **parent feature's** Appendix C row: a new `Planned`
+  R rolls the feature header up (so its Appendix C `Status` may move
+  `Done`→`In Progress`), and may change its `Depends on` and its ★.
+- **F (feature)** — new Appendix C row in the parent module's block.
+  `Order = <moduleOrder>.<n>`, inserted by dependency (independent →
+  earlier in the block; blocked → later) and **renumber only that
+  module's `.n` suffixes**. Module-level `Order`/`Priority` are
+  unchanged unless the user says the new feature changes the module's
+  standing.
+- **M (module)** — gauge the module `Order` by tier + least-dependency
+  rule (independent leads its tier; the most-blocked sinks), then
+  **re-rank**: insert at that slot and shift every later module's
+  `Order` +1 in the **Module Index** and the **`Priority &
+  Implementation Order`** table, add a new **Appendix C** block, and
+  re-prefix the `Order N.n` of every shifted block. Rare — already
+  gated by step 4b's M-level confirm. Stable `MXX` IDs never change.
+
+**★ next-to-pick-up & `Current Priorities`.** Decide whether the new
+item becomes its module's ★ (continue-if-`In Progress`, else the
+module's highest-priority independent `Planned` item). If the item's
+module is in the Top-5 by `Order` and the item becomes that module's ★,
+propose the matching `Current Priorities` edit and confirm with the
+user — never auto-move (same rule as step 5b).
+
 ### Step 6 — Decide on `ProjectOverView.md`
 
 Apply this default; let the user override:
@@ -299,17 +364,42 @@ money-touch=<…>; shift-lifecycle-touch=<…>
 - **AC1** Given … When … Then …
 ```
 
-New requirement-only entries get the row + any new AC bullets. The
-`Discovery` and `Tags` lines are written **only on the parent
-feature/module**, not on individual `RXX` rows (R-level inherits
-tags by convention).
+A new **F** also gets its **Appendix C** row in the parent module's
+block (tier + order from step 5c):
+
+```
+| <moduleOrder>.<n> | MXX-FXX | <title> | <Pn> | Planned | <deps or —> | <★ if module's next> |
+```
+
+New requirement-only entries get the row + any new AC bullets, plus the
+parent feature's Appendix C row delta (step 5c). The `Discovery` and
+`Tags` lines are written **only on the parent feature/module**, not on
+individual `RXX` rows (R-level inherits tags — and its parent feature's
+tier — by convention).
+
+**Ranking-layer edits (from step 5c)** — always part of the diff:
+
+- **Appendix C — Priority Matrix** row(s):
+  - **F** → the new row in the parent module's block:
+    `| <moduleOrder>.<n> | MXX-FXX | <title> | <Pn> | Planned | <deps or —> | <★ or blank> |`,
+    plus the renumbered `.n` of any rows pushed down in that block.
+  - **R** → the parent feature's row delta (`Status` roll-up, `Depends
+    on`, ★) — no new row.
+  - **M** → the new Appendix C block (header `### Order N — MXX … · Pn`
+    + its feature rows) and the re-prefixed `Order N.n` of every shifted
+    block.
+- **Module Index** `Order` + `Priority` row (new **M** only) and the
+  `+1` re-rank of every shifted module row.
+- **`Priority & Implementation Order`** row (new **M** only) + the same
+  re-rank deltas, with the `Depends on (unmet)` value.
+- `**Last Updated:** YYYY-MM-DD` bump at the top of `MODULES.md`.
+- **`Current Priorities`** changes if step 5c said the item becomes a
+  Top-5 module's ★.
 
 Also include in the diff:
 
 - Row(s) being modified elsewhere (step 5b ripple effects), with
   old → new values.
-- `**Last Updated:** YYYY-MM-DD` bump at the top of `MODULES.md`.
-- New entries in `Current Priorities` if step 5b said so.
 
 **For `docs/ProjectOverView.md`** (only when step 6 said yes): the
 new section / paragraph / bullet, placed at the right location,
@@ -426,6 +516,12 @@ on a feature that obviously touches auth or money).
 - `Done` items the feature modifies — refinement, extension, or
   supersession (see R-Step 6 below for status-suffix classification).
 - Downstream features this enables that should now link back.
+- **Ranking drift** — does the feature's **Appendix C** row still hold
+  after these findings? Check the tier (still matches its P0–P3
+  criterion?), the `Depends on` value (a newly-found precursor may make
+  a once-independent item blocked, or a now-`Done` precursor may free
+  it), the ★ marker, and whether `Current Priorities` should move. Flag
+  each as a finding; the fix lands in R-Step 5.
 
 **3e. `ProjectOverView.md` alignment.** Does the narrative still
 match the registry after this feature? Are there passages that
@@ -465,6 +561,12 @@ Group accepted findings by the edit they imply:
   scoped wording add, no behavior change.
 - **Tag edits** on the `**Tags:**` line — add missing tags or
   correct a clearly wrong value.
+- **Ranking-layer edits** (step 5c logic) — update the feature's
+  **Appendix C** row when a finding changes its tier, `Depends on`, or
+  ★; a new `Planned` `RXX` rolls the feature header up so its Appendix C
+  `Status` may move `Done`→`In Progress`. A new `FXX` from rediscovery
+  gets a full new Appendix C row (tier + `<moduleOrder>.<n>` order).
+  Propose any `Current Priorities` shift and confirm — never auto-move.
 
 If an accepted finding involves a `Done` item, apply the **Status
 rule for Done items** (next section). If it would affect
@@ -491,6 +593,11 @@ requirement text. The same schema is canonicalised in
 | Existing `Done` row that is *extended* (new branches / options added by `[RYY]`; original rule still holds) | `Done · extended by [MXX-FXX-RYY](#…)` | Counts as **Done**. Header stays Done. |
 | Existing `Done` row that is *superseded* (original behavior replaced; row is reference-only) | `Done · superseded by [MXX-FXX-RYY](#…)` | Counts as **In Progress**. Header rolls up. |
 | New `RYY` row added through rediscovery | Status `Planned` (full new row) | Counts as **Planned**. Header rolls up. |
+
+Whenever a header rolls up (a new `Planned` row under a `Done` feature),
+**sync the feature's Appendix C `Status`** to the rolled-up value
+(`Done`→`In Progress`) and re-check its ★ — the matrix must agree with
+the header.
 
 **The decision test — refine/extended vs superseded.** Ask, for the
 finding at hand:
@@ -561,6 +668,15 @@ sound and exit cleanly.
 - Never adds a row for cross-cutting tooling — ships as
   `feat-tooling-<name>` with no registry edit.
 - Never reuses or renumbers a retired ID (Maintenance Convention #6).
+  Tier and `Order` are a separate **re-rankable** ordinal layered on
+  top of the IDs — re-ranking the `Order` sequence (e.g. when inserting
+  a new module) is allowed and expected; renaming an `MXX/FXX/RXX` is
+  not.
+- Never edits a feature `###` heading. Priority/tier/order live in the
+  **Module Index**, the **`Priority & Implementation Order`** section,
+  and **`Appendix C`** — never appended to a heading (that would break
+  the cross-reference anchors). The skill must keep these ranking tables
+  in sync with every row it adds.
 - Never flips status of existing items as a side effect of new-idea
   intake — discovery is intake, not lifecycle. The status changes
   this skill is allowed to write are (a) appending a `· refined by`
@@ -593,6 +709,7 @@ sound and exit cleanly.
 
 - ID format: `MXX-FXX-RXX`, three-tier hierarchical, append-only.
 - Status legend: `Planned` / `In Progress` / `Done` / `Done · refined by [ID]` / `Done · extended by [ID]` / `Done · superseded by [ID]` / `Out of Scope` — full schema and roll-up rule in [`docs/MODULES.md`](../../../docs/MODULES.md) Status Legend.
+- Priority/order ranking: tiers `P0 Critical` / `P1 High` / `P2 Medium` / `P3 Low` (P0 = highest), the module `Order`, the `<moduleOrder>.<n>` feature order, the `Depends on` independence rule, and the ★ next-to-pick-up marker — all defined in [`docs/MODULES.md`](../../../docs/MODULES.md) "Priority & order" guide, `Priority & Implementation Order`, and `Appendix C — Priority Matrix`. This skill assigns them; it never redefines them here.
 - Acceptance criteria are the test plan (Maintenance Convention #5),
   shape: `- **AC1** Given… When… Then…`.
 - Status flip ships in the same PR as the code (root Rule 2).
