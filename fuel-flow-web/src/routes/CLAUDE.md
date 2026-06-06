@@ -18,11 +18,11 @@ Authoritative mapping of routes to the role(s) allowed to see them. Reference [`
 | Dashboard | `/dashboard` | All authenticated | [M07-F05](../../../docs/MODULES.md#m07-f05--dashboard-widgets) |
 | Station detail | `/dashboard/station/:stationId` | Owner, Manager | — |
 | Station setup wizard | `/dashboard/station/:stationId/setup` | Owner, Manager | [M08-F02](../../../docs/MODULES.md#m08-f02--tank-configuration), [M08-F03](../../../docs/MODULES.md#m08-f03--nozzle-configuration) |
-| Shifts | `/dashboard/station/:stationId/shifts` (planned) | Manager, Nozzleman | [M04](../../../docs/MODULES.md#m04--shift-management) |
-| Inventory | `/dashboard/station/:stationId/inventory` (planned) | Manager | [M02](../../../docs/MODULES.md#m02--fuel-inventory--tank-control) |
-| Finance | `/dashboard/station/:stationId/finance` (planned) | Manager | [M05](../../../docs/MODULES.md#m05--finance--accounts) |
-| Reports | `/dashboard/station/:stationId/reports` (planned) | Owner, Manager | [M07-F01..F03](../../../docs/MODULES.md#m07--reporting-analytics--platform-ui) |
-| Settings | `/settings` (planned) | Owner | [M08](../../../docs/MODULES.md#m08--settings--configuration) |
+| Shifts | `/dashboard/station/:stationId/shifts` (stub) | Owner, Manager, Nozzleman | [M04](../../../docs/MODULES.md#m04--shift-management) |
+| Inventory | `/dashboard/station/:stationId/inventory` (stub) | Owner, Manager | [M02](../../../docs/MODULES.md#m02--fuel-inventory--tank-control) |
+| Finance | `/dashboard/station/:stationId/finance` (stub) | Owner, Manager, Accountant | [M05](../../../docs/MODULES.md#m05--finance--accounts) |
+| Reports | `/dashboard/station/:stationId/reports` (stub) | Owner, Manager, Accountant | [M07-F01..F03](../../../docs/MODULES.md#m07--reporting-analytics--platform-ui) |
+| Settings | `/settings` (stub) | Owner | [M08](../../../docs/MODULES.md#m08--settings--configuration) |
 | Subscription | `/settings/subscription` (planned) | Owner | [M11-F01..F07](../../../docs/MODULES.md#m11--subscription--billing) |
 | Audit log viewer | `/settings/audit` (planned) | Owner | [M01-F08-R06](../../../docs/MODULES.md#m01-f08--audit-trail) |
 | Admin: Payment verification | `/admin/payments` (planned) | SuperAdmin | [M11-F03](../../../docs/MODULES.md#m11-f03--payment--verification) |
@@ -72,14 +72,32 @@ routes/
 │   ├── reset-password-success.tsx   # /auth/reset-password-success
 │   └── check-email-reset.tsx        # /auth/check-email-reset
 ├── dashboard/
-│   ├── route.tsx                    # Dashboard layout (header + sidebar + auth guard)
+│   ├── route.tsx                    # Renders <AppShell /> (M07-F07) + auth/onboarding guard
 │   ├── index.tsx                    # /dashboard (org overview)
 │   ├── station.$stationId.tsx       # /dashboard/station/:stationId
-│   └── station.$stationId.setup.tsx # /dashboard/station/:stationId/setup (wizard)
+│   ├── station.$stationId.setup.tsx # /dashboard/station/:stationId/setup (wizard)
+│   ├── station.$stationId.shifts.tsx     # M04 stub (role-guarded ComingSoon)
+│   ├── station.$stationId.inventory.tsx  # M02 stub
+│   ├── station.$stationId.finance.tsx    # M05 stub
+│   └── station.$stationId.reports.tsx    # M07-F01..F03 stub
+├── settings/
+│   ├── route.tsx                    # Renders <AppShell /> (M07-F07), Owner-only guard
+│   └── index.tsx                    # /settings (M08 stub)
 └── onboarding/
     ├── route.tsx                    # Onboarding layout (header + branding)
     └── index.tsx                    # /onboarding (first-time org/station creation)
 ```
+
+## App Shell (M07-F07)
+
+Authenticated routes render the shared `<AppShell />` (`components/layout/app-shell.tsx`)
+as their route `component`, while the route's `beforeLoad` keeps the guard. The shell
+provides the role-aware sidebar, top bar (station switcher, user menu, language + theme
+toggles), and `<Outlet />`. Adding a module page = add the route file (with a
+`requireRoles` guard from `lib/route-guards.ts`) + a `nav-config.ts` entry; it mounts
+inside the shell automatically. The **active station** (selected via the top-bar
+switcher, persisted in `stores/ui-store.ts`) scopes the station-level nav links;
+"All Stations" (`null`) returns to `/dashboard` and hides station-scoped items.
 
 ## Layout Pattern (Composite: Nested Layouts via Outlet)
 

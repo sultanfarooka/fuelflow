@@ -10,10 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as OnboardingRouteRouteImport } from './routes/onboarding/route'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as AuthVerifyPhoneRouteImport } from './routes/auth/verify-phone'
@@ -28,11 +30,20 @@ import { Route as AuthCheckEmailResetRouteImport } from './routes/auth/check-ema
 import { Route as AuthCheckEmailRegisterRouteImport } from './routes/auth/check-email-register'
 import { Route as DashboardStationStationIdRouteImport } from './routes/dashboard/station.$stationId'
 import { Route as DashboardAccountPhoneRouteImport } from './routes/dashboard/account.phone'
+import { Route as DashboardStationStationIdShiftsRouteImport } from './routes/dashboard/station.$stationId.shifts'
 import { Route as DashboardStationStationIdSetupRouteImport } from './routes/dashboard/station.$stationId.setup'
+import { Route as DashboardStationStationIdReportsRouteImport } from './routes/dashboard/station.$stationId.reports'
+import { Route as DashboardStationStationIdInventoryRouteImport } from './routes/dashboard/station.$stationId.inventory'
+import { Route as DashboardStationStationIdFinanceRouteImport } from './routes/dashboard/station.$stationId.finance'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRouteRoute = SettingsRouteRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRouteRoute = OnboardingRouteRouteImport.update({
@@ -54,6 +65,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRouteRoute,
 } as any)
 const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
   id: '/',
@@ -127,10 +143,34 @@ const DashboardAccountPhoneRoute = DashboardAccountPhoneRouteImport.update({
   path: '/account/phone',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardStationStationIdShiftsRoute =
+  DashboardStationStationIdShiftsRouteImport.update({
+    id: '/shifts',
+    path: '/shifts',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
 const DashboardStationStationIdSetupRoute =
   DashboardStationStationIdSetupRouteImport.update({
     id: '/setup',
     path: '/setup',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
+const DashboardStationStationIdReportsRoute =
+  DashboardStationStationIdReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
+const DashboardStationStationIdInventoryRoute =
+  DashboardStationStationIdInventoryRouteImport.update({
+    id: '/inventory',
+    path: '/inventory',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
+const DashboardStationStationIdFinanceRoute =
+  DashboardStationStationIdFinanceRouteImport.update({
+    id: '/finance',
+    path: '/finance',
     getParentRoute: () => DashboardStationStationIdRoute,
   } as any)
 
@@ -139,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/onboarding': typeof OnboardingRouteRouteWithChildren
+  '/settings': typeof SettingsRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
@@ -152,9 +193,14 @@ export interface FileRoutesByFullPath {
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
+  '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
+  '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
+  '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -172,9 +218,14 @@ export interface FileRoutesByTo {
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
   '/dashboard': typeof DashboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/settings': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
+  '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
+  '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
+  '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -182,6 +233,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/onboarding': typeof OnboardingRouteRouteWithChildren
+  '/settings': typeof SettingsRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
@@ -195,9 +247,14 @@ export interface FileRoutesById {
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
+  '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
+  '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
+  '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -206,6 +263,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/onboarding'
+    | '/settings'
     | '/about'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
@@ -219,9 +277,14 @@ export interface FileRouteTypes {
     | '/auth/verify-phone'
     | '/dashboard/'
     | '/onboarding/'
+    | '/settings/'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/finance'
+    | '/dashboard/station/$stationId/inventory'
+    | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
+    | '/dashboard/station/$stationId/shifts'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -239,15 +302,21 @@ export interface FileRouteTypes {
     | '/auth/verify-phone'
     | '/dashboard'
     | '/onboarding'
+    | '/settings'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/finance'
+    | '/dashboard/station/$stationId/inventory'
+    | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
+    | '/dashboard/station/$stationId/shifts'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/dashboard'
     | '/onboarding'
+    | '/settings'
     | '/about'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
@@ -261,9 +330,14 @@ export interface FileRouteTypes {
     | '/auth/verify-phone'
     | '/dashboard/'
     | '/onboarding/'
+    | '/settings/'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/finance'
+    | '/dashboard/station/$stationId/inventory'
+    | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
+    | '/dashboard/station/$stationId/shifts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -271,6 +345,7 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
+  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
 }
 
@@ -281,6 +356,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -310,6 +392,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRouteRoute
     }
     '/onboarding/': {
       id: '/onboarding/'
@@ -409,11 +498,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAccountPhoneRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/station/$stationId/shifts': {
+      id: '/dashboard/station/$stationId/shifts'
+      path: '/shifts'
+      fullPath: '/dashboard/station/$stationId/shifts'
+      preLoaderRoute: typeof DashboardStationStationIdShiftsRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
     '/dashboard/station/$stationId/setup': {
       id: '/dashboard/station/$stationId/setup'
       path: '/setup'
       fullPath: '/dashboard/station/$stationId/setup'
       preLoaderRoute: typeof DashboardStationStationIdSetupRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
+    '/dashboard/station/$stationId/reports': {
+      id: '/dashboard/station/$stationId/reports'
+      path: '/reports'
+      fullPath: '/dashboard/station/$stationId/reports'
+      preLoaderRoute: typeof DashboardStationStationIdReportsRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
+    '/dashboard/station/$stationId/inventory': {
+      id: '/dashboard/station/$stationId/inventory'
+      path: '/inventory'
+      fullPath: '/dashboard/station/$stationId/inventory'
+      preLoaderRoute: typeof DashboardStationStationIdInventoryRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
+    '/dashboard/station/$stationId/finance': {
+      id: '/dashboard/station/$stationId/finance'
+      path: '/finance'
+      fullPath: '/dashboard/station/$stationId/finance'
+      preLoaderRoute: typeof DashboardStationStationIdFinanceRouteImport
       parentRoute: typeof DashboardStationStationIdRoute
     }
   }
@@ -450,12 +567,23 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface DashboardStationStationIdRouteChildren {
+  DashboardStationStationIdFinanceRoute: typeof DashboardStationStationIdFinanceRoute
+  DashboardStationStationIdInventoryRoute: typeof DashboardStationStationIdInventoryRoute
+  DashboardStationStationIdReportsRoute: typeof DashboardStationStationIdReportsRoute
   DashboardStationStationIdSetupRoute: typeof DashboardStationStationIdSetupRoute
+  DashboardStationStationIdShiftsRoute: typeof DashboardStationStationIdShiftsRoute
 }
 
 const DashboardStationStationIdRouteChildren: DashboardStationStationIdRouteChildren =
   {
+    DashboardStationStationIdFinanceRoute:
+      DashboardStationStationIdFinanceRoute,
+    DashboardStationStationIdInventoryRoute:
+      DashboardStationStationIdInventoryRoute,
+    DashboardStationStationIdReportsRoute:
+      DashboardStationStationIdReportsRoute,
     DashboardStationStationIdSetupRoute: DashboardStationStationIdSetupRoute,
+    DashboardStationStationIdShiftsRoute: DashboardStationStationIdShiftsRoute,
   }
 
 const DashboardStationStationIdRouteWithChildren =
@@ -491,11 +619,24 @@ const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
   OnboardingRouteRouteChildren,
 )
 
+interface SettingsRouteRouteChildren {
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
+  SettingsRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
+  SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AboutRoute: AboutRoute,
 }
 export const routeTree = rootRouteImport
