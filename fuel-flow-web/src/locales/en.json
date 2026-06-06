@@ -9,6 +9,12 @@
     "search": "Search",
     "filter": "Filter"
   },
+  "offline": {
+    "title": "You're offline",
+    "unreachable": "Can't reach the server",
+    "body": "Changes won't load or save until you're back online.",
+    "retry": "Retry"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "stations": "Stations",
