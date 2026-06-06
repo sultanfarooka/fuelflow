@@ -1092,6 +1092,12 @@ Make the app installable and offline-capable for shift operations on shared stat
 | M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | In Progress |
 | M07-F08-R04 | Web push notifications | — | Out of Scope (v2) |
 
+**Acceptance Criteria:**
+- **AC1 (R02)** Given a production build served by the preview server, When the app loads in Chromium, Then a valid `manifest.webmanifest` is served with `name = "Fuel Flow"`, `display = "standalone"`, a `theme_color`, and icons including 192px, 512px, and a `purpose: "maskable"` entry; the manifest parses with no errors and meets the browser's installability criteria.
+- **AC2 (R01)** Given the app has loaded once (service worker installed, shell precached), When the network is offline and the user reloads/relaunches, Then the app shell renders (no browser "you're offline" error page).
+- **AC3 (R03)** Given the app is running, When the network goes offline (or an API call fails with a network error), Then a single global offline retry banner appears on the current screen and data requests fail gracefully with no crash; When connectivity returns, Then the banner auto-dismisses.
+- **AC4 (R01)** Given a new build is deployed (new precache revision), When an installed client next reloads/navigates, Then the new service worker takes over and the client runs the new version without a manual cache clear (`registerType: autoUpdate`).
+
 ---
 
 ### M07-F09 — Design System & Theme Foundation   [Status: Done]
