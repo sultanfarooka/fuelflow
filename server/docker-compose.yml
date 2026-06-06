@@ -17,7 +17,11 @@ services:
     container_name: fuelflow-db
     #restart: unless-stopped
     ports:
-      - "5432:5432"          # host:container
+      # Host 5433 (not 5432) on purpose: a native PostgreSQL install commonly
+      # owns 5432 and would shadow this container. Keep host=5433 so the dev
+      # stack coexists with a local Postgres. Must match Port= in
+      # appsettings.Development.json. Do not "fix" back to 5432.
+      - "5433:5432"          # host:container
     environment:
       POSTGRES_USER: fuelflow
       POSTGRES_PASSWORD: fuelflow123
