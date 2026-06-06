@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-06 (priority & implementation-order system added)
+**Last Updated:** 2026-06-06 (M07-F07 UI Shell — In Progress)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -1058,7 +1058,7 @@ Owner-only cross-station aggregation.
 
 ---
 
-### M07-F07 — UI Shell   [Status: Planned]
+### M07-F07 — UI Shell   [Status: In Progress]
 
 The cross-cutting layout that wraps every authenticated page: sidebar, top nav, content area, and route-guard composition. Provides the chrome that the per-module pages (M07-F01..F06, M05, M06, …) plug into. Built on top of the design system from [M07-F09](#m07-f09--design-system--theme-foundation).
 
@@ -1066,11 +1066,11 @@ The cross-cutting layout that wraps every authenticated page: sidebar, top nav, 
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Planned |
-| M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | Planned |
-| M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | Planned |
-| M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | Planned |
-| M07-F07-R05 | Active-route highlighting in sidebar | — | Planned |
+| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | In Progress |
+| M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | In Progress |
+| M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | In Progress |
+| M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | In Progress |
+| M07-F07-R05 | Active-route highlighting in sidebar | — | In Progress |
 
 **Acceptance Criteria:**
 - **AC1** Given a Nozzleman, When they open the dashboard, Then the sidebar shows only shift-related links (no Finance, Reports, Settings).
@@ -2014,7 +2014,7 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | Order | ID | Feature | Tier | Status | Depends on | ★ |
 |---|---|---|---|---|---|---|
 | 2.1 | M07-F09 | Design System & Theme Foundation | P0 | Done | — | |
-| 2.2 | M07-F07 | UI Shell | P0 | Planned | — (F09 ✓) | ★ |
+| 2.2 | M07-F07 | UI Shell | P0 | In Progress | — (F09 ✓) | ★ |
 | 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Planned | M07-F07 | |
 | 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | |
 | 2.5 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
