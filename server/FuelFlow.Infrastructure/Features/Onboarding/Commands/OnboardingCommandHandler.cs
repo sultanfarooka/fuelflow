@@ -148,6 +148,24 @@ public class OnboardingCommandHandler : IRequestHandler<OnboardingCommand, Resul
             };
             tenantCtx.Stations.Add(station);
             await tenantCtx.SaveChangesAsync(cancellationToken);
+
+            // --- Step 4b: Seed default expense account heads (M05-F09-R03) ---
+            // Seeded inline into the just-provisioned tenant DB because the current
+            // request's JWT has no org_id yet, so TenantDbContextAccessor cannot
+            // resolve the tenant connection. Best-effort: a seeding failure must not
+            // fail an otherwise-successful onboarding.
+            try
+            {
+                var heads = AccountHeadSeeder.DefaultExpenseHeadNames
+                    .Select(name => AccountHeadSeeder.BuildExpenseHead(orgId, name))
+                    .ToList();
+                await tenantCtx.AccountHeads.AddRangeAsync(heads, cancellationToken);
+                await tenantCtx.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to seed default expense account heads for org {OrgId}", orgId);
+            }
         }
         catch (Exception ex)
         {

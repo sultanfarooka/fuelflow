@@ -1,4 +1,7 @@
 ﻿using FuelFlow.Domain.Entities;
+using FuelFlow.Domain.Enums;
+using FuelFlow.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,9 +29,11 @@ public class DataSeeder : IHostedService
     {
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ControlPlaneDbContext>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
 
         try
         {
+            await SeedRolesAsync(roleManager, cancellationToken);
             await SeedOmcsAsync(db, cancellationToken);
             await SeedSubscriptionPlansAsync(db, cancellationToken);
             await SeedOmcFuelTypesAsync(db, cancellationToken);
@@ -41,6 +46,15 @@ public class DataSeeder : IHostedService
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private static async Task SeedRolesAsync(RoleManager<AppRole> roleManager, CancellationToken ct)
+    {
+        foreach (var role in Enum.GetNames<UserRole>())
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new AppRole { Name = role });
+        }
+    }
 
     private static async Task SeedOmcsAsync(ControlPlaneDbContext db, CancellationToken ct)
     {

@@ -43,7 +43,10 @@ over from there.
    reflects this feature's code, then commit the `graphify-out/` diff **with
    the feature** — fold it into the pre-PR commit that flips `MODULES.md` to
    `Done` and ticks any remaining boxes, scoped by ID. Skip it if
-   `graphify-out/graph.json` does not exist.
+   `graphify-out/graph.json` does not exist. Also, if the item created or
+   modified any dev-ops script (`scripts/*.ps1`, `server/*.ps1`), **update that
+   script's What/When/How entry in `scripts/README.md`** (and `scripts/CLAUDE.md`
+   if a new convention/gotcha was introduced) in the same PR.
 
 6. **Return to the orchestrating skill.** It invokes `/feature-e2e-testing`
    (which spawns the `feature-e2e-tester` subagent) for E2E verification,
@@ -65,6 +68,9 @@ over from there.
   item, even if convenient.
 - Follow root `CLAUDE.md` Rules 1–9 exactly — branch naming, conventional
   commits scoped by ID, the PR template, the same-PR `MODULES.md` flip.
+- If you create or modify a dev-ops script (`scripts/*.ps1`, `server/*.ps1`),
+  update its How/When entry in `scripts/README.md` in the same PR — a script
+  change with a stale README does not ship.
 - Do not merge the PR. Do not push to `main`.
 - Do not run E2E verification yourself — that is the `feature-e2e-tester`
   subagent's job. You don't have Playwright MCP tools and you should not

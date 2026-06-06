@@ -10,18 +10,12 @@ namespace FuelFlow.Infrastructure.Migrations.Tenant
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_fuel_prices_fuel_types_fuel_type_id",
-                table: "fuel_prices");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_fuel_tanks_fuel_types_fuel_type_id",
-                table: "fuel_tanks");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_stations_omcs_omc_id",
-                table: "stations");
-
+            // The cross-context FK constraints (stations->omcs, fuel_tanks->fuel_types,
+            // fuel_prices->fuel_types) are no longer created by the Initial migration —
+            // tenant DBs are physically separate (M14) and don't contain the
+            // control-plane omcs/fuel_types tables, so there is nothing to drop here.
+            // Only the now-unwanted omc_id auto-index (still created by Initial) is
+            // dropped so the schema matches the model.
             migrationBuilder.DropIndex(
                 name: "IX_stations_omc_id",
                 table: "stations");
@@ -30,34 +24,12 @@ namespace FuelFlow.Infrastructure.Migrations.Tenant
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Mirror of Up: only the omc_id index is recreated. The cross-context FKs
+            // are intentionally not re-added (they are never created in tenant DBs).
             migrationBuilder.CreateIndex(
                 name: "IX_stations_omc_id",
                 table: "stations",
                 column: "omc_id");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_fuel_prices_fuel_types_fuel_type_id",
-                table: "fuel_prices",
-                column: "fuel_type_id",
-                principalTable: "fuel_types",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_fuel_tanks_fuel_types_fuel_type_id",
-                table: "fuel_tanks",
-                column: "fuel_type_id",
-                principalTable: "fuel_types",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_stations_omcs_omc_id",
-                table: "stations",
-                column: "omc_id",
-                principalTable: "omcs",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
         }
     }
 }

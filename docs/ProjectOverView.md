@@ -262,27 +262,9 @@
 
 ## Module 5: Finance & Accounts
 
-### 5.1 Credit Customers (Receivables / Udhaar)
+### 5.1 Accounts Receivable (AR) Summary
 
-**Customer Types:**
-
-- Individual (personal udhaar)
-- Fleet/Corporate (trucking companies, schools, factories)
-- Government (police, military vehicles)
-
-**Identification Methods (Initial Phase):**
-
-- Physical slip/chit (signed by authorized person)
-- Driver's name and signature
-
-**Future Options:** Plastic cards, vehicle registration lookup
-
-| Feature           | Specification                                       |
-| :---------------- | :-------------------------------------------------- |
-| Credit Limit      | Configurable per customer                           |
-| Billing Cycle     | Configurable (weekly, fortnightly, monthly, custom) |
-| Partial Payments  | Yes – track payments and carry forward balance      |
-| Interest/Late Fee | No                                                  |
+Financial aggregate of all credit customer balances. Total AR outstanding and aging buckets (current / 30d / 60d / 90d+) feed the P&L and Receivables Aging reports. Detailed credit customer management — customer profiles, vehicle lists, party ledgers, payments, and statements — lives in **Module 15: Credit Customer Management**.
 
 ### 5.2 Supplier Payments (Payables)
 
@@ -321,6 +303,36 @@
 
 - Track deposits to **multiple bank accounts**
 - Assign accounts for specific purposes (e.g., OMC payments, salaries)
+- Running balance per account updated by deposit and withdrawal entries
+- Bank reconciliation: match system entries against official bank statement periodically
+
+### 5.5 Cash Book & Daily Cash Position
+
+A running ledger of physical cash at each station. Updated automatically on shift close,
+cash expense payment, and bank deposit. Gives the Owner a real-time "cash-in-hand"
+figure per station and a consolidated view across all stations. Supports both
+daily-deposit and safe-storage operating models.
+
+### 5.6 Supplier Invoice & Purchase Bill Entry
+
+Full AP cycle: invoices are recorded when received (before payment). Fuel tanker
+deliveries auto-draft an OMC invoice; other bills (utilities, lubricants) entered manually.
+Payments (§5.2) are allocated to invoices, enabling accurate outstanding AP tracking
+and due-date aging.
+
+### 5.7 Bank Reconciliation
+
+Periodic matching of system bank entries against the bank's official statement.
+Surfaces deposits in transit, outstanding cheques, and unrecorded bank charges.
+Owner-only finalization produces a reconciled closing balance that carries forward to
+the next session.
+
+### 5.8 Opening / Migration Balances
+
+One-time data entry for owners migrating from manual records. Sets the initial AR
+balance per credit customer, AP balance per supplier, cash-in-hand per station, and
+bank balance per account as of a chosen cutover date. Amendable within 30 days;
+locked thereafter (requires adjusting entries).
 
 ---
 
@@ -658,6 +670,60 @@ A consistent shadcn-based design system underpins every screen in the applicatio
 | Leave types | Annual, Sick, Casual — configurable annual allocation per type |
 | Leave request | Manager submits on behalf of employee; Owner/Manager approves |
 | Leave without pay | Applied when balance exhausted; auto-deducted in next payroll run |
+
+---
+
+## Module 15: Credit Customer Management
+
+### 15.1 Customer Master
+
+| Attribute | Description |
+| :--- | :--- |
+| Customer Types | Individual, Fleet/Corporate, Government |
+| Profile | Name, phone, address, contact person, credit limit, billing cycle |
+| Auto-Ledger | Creating a customer automatically opens their party account (Rs. 0 balance) |
+| Status | Active / Suspended — suspended customers cannot take further credit |
+
+### 15.2 Fleet Vehicle Tracking
+
+- **Fleet/Corporate/Government** customers have a registered vehicle list: registration number, driver name, vehicle type
+- **Individual** customers may optionally add one vehicle
+- Vehicle registration is **mandatory** on each credit sale for fleet accounts, enabling per-vehicle fuel consumption reports
+- Fraud check: manager can verify the vehicle is on the customer's authorized list before fuelling
+
+### 15.3 Credit Sales Ledger (Party Account)
+
+Each customer has a running ledger showing every credit sale and payment:
+
+```
+DATE       VEHICLE    DESCRIPTION           DEBIT    CREDIT   BALANCE
+01 Jun     —          Opening balance                          10,000
+03 Jun     LEA-4521   50L HSD @ Rs.280      14,000            24,000
+05 Jun     —          Payment received               15,000    9,000
+07 Jun     LEA-4521   40L PMG @ Rs.270      10,800            19,800
+```
+
+- Running balance always computed from transactions — never stored, always accurate
+- At shift close, Manager allocates the shift's total credit amount to individual customers
+- Credit sale blocked if balance would reach or exceed the customer's credit limit
+
+### 15.4 Payment Recording
+
+| Method | What happens |
+| :--- | :--- |
+| Cash | Customer balance reduces; Cash Book receipt created automatically |
+| Bank Transfer | Customer balance reduces; Bank Account deposit entry created automatically |
+| Cheque | Same as bank transfer with reference number |
+
+Partial payments fully supported. A printable receipt can be generated for the customer.
+
+### 15.5 Statements & Reports
+
+- **Party ledger view** — all transactions for a customer with running balance
+- **Statement of account** — printable PDF for a date range (hand or WhatsApp to customer)
+- **Per-vehicle report** — total liters and amount per vehicle per period (for fleet operators)
+- **Overdue accounts** — customers past their billing cycle with outstanding balance
+- **AR aging** — current / 30d / 60d / 90d+ summary across all customers
 
 ---
 

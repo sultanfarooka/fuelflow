@@ -10,7 +10,7 @@ In development these are stored as **.NET user-secrets** (`dotnet user-secrets s
 
 | Key | Used in | Required | Exposure | Notes |
 |---|---|---|---|---|
-| `ConnectionStrings:DefaultConnection` | [`server/FuelFlow.Infrastructure/DependencyInjection.cs`](../server/FuelFlow.Infrastructure/DependencyInjection.cs) | **Yes** | Server only | PostgreSQL connection string. Dev format: `Host=localhost;Port=5432;Database=fuelflow_dev;Username=fuelflow;Password=…` |
+| `ConnectionStrings:DefaultConnection` | [`server/FuelFlow.Infrastructure/DependencyInjection.cs`](../server/FuelFlow.Infrastructure/DependencyInjection.cs) | **Yes** | Server only | PostgreSQL connection string. Dev format: `Host=localhost;Port=5433;Database=fuelflow_dev;Username=fuelflow;Password=…` (host 5433 — the container's published port; native Postgres often owns 5432). Supplied locally via user-secret or a gitignored `appsettings.Development.json`; must use 5433. |
 | `Jwt:Secret` | [`server/FuelFlow.Api/Program.cs`](../server/FuelFlow.Api/Program.cs), `JwtTokenService.cs` | **Yes** | Server only | Minimum 32 characters — used to sign access + refresh tokens (HS256) |
 | `Jwt:Issuer` | `Program.cs`, `JwtTokenService.cs` | **Yes** | Server only | Currently `FuelFlow` |
 | `Jwt:Audience` | `Program.cs`, `JwtTokenService.cs` | **Yes** | Server only | Currently `FuelFlow` |
@@ -43,7 +43,7 @@ In development these are stored as **.NET user-secrets** (`dotnet user-secrets s
 
 ```powershell
 cd server/FuelFlow.Api
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=fuelflow_dev;Username=fuelflow;Password=fuelflow123"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5433;Database=fuelflow_dev;Username=fuelflow;Password=fuelflow123"
 dotnet user-secrets set "Jwt:Secret" "your-secret-key-at-least-32-characters-long"
 dotnet user-secrets set "Jwt:Issuer" "FuelFlow"
 dotnet user-secrets set "Jwt:Audience" "FuelFlow"

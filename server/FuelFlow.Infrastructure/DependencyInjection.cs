@@ -105,10 +105,16 @@ public static class DependencyInjection
         services.AddScoped<IPhoneVerificationRepository, PhoneVerificationRepository>();
         services.AddScoped<IStationShiftConfigRepository, StationShiftConfigRepository>();
         services.AddScoped<IBankAccountRepository, BankAccountRepository>();
+        services.AddScoped<IAccountHeadRepository, AccountHeadRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // 4. Register services
         services.AddScoped<IEmailSender, SmtpEmailSender>();
+
+        // M05-F09 account heads: seeder (called from onboarding) + usage-checker stub
+        // (returns false until M05-F11 financial ledger ships).
+        services.AddScoped<IAccountHeadSeeder, AccountHeadSeeder>();
+        services.AddScoped<IAccountHeadUsageChecker, AccountHeadUsageCheckerStub>();
 
         // 4a. SMS sender — Sms:Provider picks between the self-hosted capcom6/sms-gateway
         // (production / staging) and a dev-only log-to-console sender. Defaults to
