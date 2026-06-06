@@ -1,0 +1,22 @@
+# Build artifacts — never copy host builds into the image
+**/bin/
+**/obj/
+
+# Local dev / IDE
+**/*.user
+.vs/
+*.suo
+
+# Secrets & local config (image is configured via compose env vars)
+**/appsettings.Development.json
+**/appsettings.*.local.json
+
+# Docker / compose files (not needed inside the image)
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Misc
+**/*.md
+sms-gateway/config.yml
+sms-gateway/fcm-credentials.json
