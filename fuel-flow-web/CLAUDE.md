@@ -240,15 +240,17 @@ Trial banner reads from the auth store's `subscription.status === 'trial'` and `
 
 ## PWA Features
 
-Configured via `vite-plugin-pwa`. See [M07-F08](../docs/MODULES.md#m07-f08--progressive-web-app-pwa) for the spec.
+Configured via `vite-plugin-pwa` in [`vite.config.ts`](vite.config.ts) (`registerType: 'autoUpdate'`). See [M07-F08](../docs/MODULES.md#m07-f08--progressive-web-app-pwa) for the spec.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Offline app shell | Planned | Service worker pre-caches routes + assets; failed API calls show a retry banner (no offline queue). |
-| Add to Home Screen | Planned | Web app manifest with icons (192/512) + name + theme color. Triggers install prompt on supported browsers. |
+| Offline app shell | Done | Workbox precaches the static build output + fonts/icons; `navigateFallback: index.html` for SPA routes. **No API/data caching** — offline data calls surface the global banner instead (no offline queue). |
+| Add to Home Screen | Done | `manifest` (name "Fuel Flow", `display: standalone`, `theme_color #ca3500`, `background_color #ffffff`) + 192/512/maskable icons generated from `public/app-icon.svg`. Browser-native install (no custom in-app prompt in v1). |
+| Offline retry banner | Done | `components/common/offline-banner.tsx` (global, mounted in `main.tsx`) driven by `hooks/use-online-status.ts` + an Axios network-error signal (`lib/network-status.ts`). Auto-hides when back online; **Retry** refetches active queries. |
+| Service-worker updates | Done | `registerType: 'autoUpdate'` — a new SW activates silently on next navigation/reload; no update prompt UI. |
 | Push notifications | Out of Scope (v2) | Web Push API for stock/price/shortage alerts later — falls back to in-app + SMS in v1. |
 
-When making any change touching the service worker or manifest, bump the build to invalidate the SW cache for already-installed users.
+When making any change touching the service worker or manifest, bump the build to invalidate the SW cache for already-installed users. Service workers are **disabled on the dev server** (`devOptions.enabled: false`) — verify PWA behaviour against `npm run build && npm run preview` (this is also why the PWA e2e spec uses a preview-based Playwright config, not the dev-server one).
 
 ## Theme & Styling
 

@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fuel Flow">
+  <!-- Placeholder Fuel Flow app icon: brand-orange tile + white "FF" monogram.
+       Full-bleed background so platform maskable shapes stay on-brand; monogram
+       kept inside the maskable safe zone (central ~60%). Swap for final brand art. -->
+  <rect width="512" height="512" fill="#ca3500"/>
+  <g fill="#ffffff">
+    <!-- First F -->
+    <rect x="148" y="176" width="34" height="160" rx="6"/>
+    <rect x="148" y="176" width="92" height="34" rx="6"/>
+    <rect x="148" y="246" width="70" height="30" rx="6"/>
+    <!-- Second F -->
+    <rect x="272" y="176" width="34" height="160" rx="6"/>
+    <rect x="272" y="176" width="92" height="34" rx="6"/>
+    <rect x="272" y="246" width="70" height="30" rx="6"/>
+  </g>
+</svg>

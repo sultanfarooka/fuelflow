@@ -12,6 +12,8 @@
 
 import axios, { type AxiosInstance } from 'axios'
 
+import { emitNetworkError, emitNetworkOk } from '@/lib/network-status'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5035/api/v1'
 
 // Endpoints where 401 should be returned to the component instead of triggering redirect
@@ -53,10 +55,26 @@ const notifyTokenRefreshSubscribers = (error?: Error) => {
   refreshSubscribers = []
 }
 
+// M07-F08 — track transient network failures (no server response) so the global
+// offline banner can react. Does not alter the 401-refresh / redirect flow.
+let networkErrored = false
+
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (networkErrored) {
+      networkErrored = false
+      emitNetworkOk()
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
+
+    // No response → offline or server unreachable (exclude user cancellations).
+    if (!error.response && !axios.isCancel(error)) {
+      networkErrored = true
+      emitNetworkError()
+    }
 
     const url: string = originalRequest?.url ?? ''
     const isRefreshRequest = url.includes('/auth/refreshToken')
