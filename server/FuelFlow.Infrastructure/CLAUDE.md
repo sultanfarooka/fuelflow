@@ -219,7 +219,7 @@ These invariants are enforced at the data-access layer (configurations, reposito
 | Refresh tokens | Rotation on refresh: each refresh issues a new token, revokes the old; reuse ⇒ revoke chain | `RefreshTokenService.RefreshAsync` |
 | Refresh tokens | 7-day default expiry; session metadata (`ip_address`, `user_agent`, `device_id`) per row | Captured by `RequestContextService` |
 | Multi-tenancy | Two-context split: control plane vs per-tenant (M14-F01). See "Control Plane vs PerTenant Context" below. | `ControlPlaneDbContext` + `AppDbContext` registered side by side in `DependencyInjection.cs` with separate `MigrationsHistoryTable` names |
-| Cross-context refs | Plain `Guid` columns only — no FK constraints between DbContexts. App-layer enforces existence via the correctly-routed repo before insert/update. | `Organization.OwnerId`, `UserStation.UserId`, `Subscription.UserId` (intra-CP), plus F01 shims for FuelTank.FuelTypeId / Station.OMCId / FuelPrices.FuelTypeId (TODO M14-F03) |
+| Cross-context refs | Plain `Guid` columns only — no FK constraints between DbContexts. App-layer enforces existence via the correctly-routed repo before insert/update. | `Organization.OwnerId`, `UserStation.UserId`, `Subscription.UserId` (intra-CP); F01 shims for FuelTank.FuelTypeId / Station.OMCId / FuelPrices.FuelTypeId kept in AppDbContext via `ExcludeFromMigrations()` |
 | Subscriptions | Exactly one **active** subscription per organisation | Unique partial index on `Subscription(organizationId)` where `status = 'active'` (control plane) |
 | Pricing | Exactly one active `FuelPrices` per `(stationId, fuelTypeId)` at any time | Application-level check in handler + index on `(stationId, fuelTypeId, effectiveFrom)` (per-tenant) |
 | Shifts | At most one open `StationShift` per `stationId` | Application-level check in `OpenShiftCommandHandler` |
@@ -227,9 +227,9 @@ These invariants are enforced at the data-access layer (configurations, reposito
 
 > Cross-reference: every rule above is also tracked in [`docs/MODULES.md`](../../docs/MODULES.md) with its `MXX-FXX-RXX` ID, status, and acceptance criteria. Use the module file for *what should exist*; use this file for *how it's enforced in EF Core*.
 
-## Control Plane vs PerTenant Context (Multi-Tenancy — M14-F01)
+## Control Plane vs PerTenant Context (Multi-Tenancy — M14 complete)
 
-Tenant isolation is enforced by **physical context separation**: each entity belongs to exactly one `DbContext` and the application-layer routing ensures a query for tenant data only ever travels through `AppDbContext`. There are no EF Core global query filters in M14-F01 (the previous aspirational filter pattern documented here was never implemented; M14-F01 supersedes it with a stronger guarantee).
+Tenant isolation is enforced by **physical database separation**: each organization gets its own PostgreSQL database (`tenant_<org_id>`), provisioned at onboarding by `TenantProvisioningService`. `ITenantConnectionResolver` routes every `AppDbContext` instance to the correct tenant DB via the JWT `org_id` claim. `TenantMigrationHostedService` applies pending migrations to all active tenant DBs at boot. Each entity belongs to exactly one `DbContext` — there are no EF Core global query filters (a stronger guarantee than filters).
 
 ### Two contexts, side by side
 
@@ -237,16 +237,19 @@ Tenant isolation is enforced by **physical context separation**: each entity bel
 // server/FuelFlow.Infrastructure/DependencyInjection.cs
 var connStr = configuration.GetConnectionString("DefaultConnection");
 
+// Control plane always uses the shared DB
 services.AddDbContext<ControlPlaneDbContext>(options =>
     options.UseNpgsql(connStr,
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory_ControlPlane")));
 
-services.AddDbContext<AppDbContext>(options =>
+// AppDbContext registered as a factory; TenantDbContextAccessor creates instances
+// with per-tenant connection strings at request time (M14-F02)
+services.AddDbContextFactory<AppDbContext>(options =>
     options.UseNpgsql(connStr,
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory_AppDb")));
 
 services.AddIdentity<AppUser, AppRole>(/* … */)
-    .AddEntityFrameworkStores<ControlPlaneDbContext>()   // Identity now lives in control plane
+    .AddEntityFrameworkStores<ControlPlaneDbContext>()   // Identity lives in control plane
     .AddDefaultTokenProviders();
 ```
 
@@ -257,14 +260,14 @@ services.AddIdentity<AppUser, AppRole>(/* … */)
 
 Each context's `OnModelCreating` filters `ApplyConfigurationsFromAssembly` by namespace so configurations land in exactly one model.
 
-### M14-F01 shim — same physical DB, dual model registration
+### M14-F01 shim — cross-context nav properties kept via ExcludeFromMigrations
 
-Three navs survive M14-F01 as cross-context shims so existing `.Include(...)` calls continue to work:
+Three nav properties were kept as shims from M14-F01 so existing `.Include(...)` calls continue to compile:
 - `FuelTank.FuelType`
 - `Station.OMC`
 - `FuelPrices.FuelType`
 
-AppDbContext applies the FuelType/OMC/OMCFuelType configurations explicitly and marks the tables `ExcludeFromMigrations`. ControlPlaneDbContext owns the migrations for those tables; AppDbContext just reads from them at query time:
+AppDbContext registers the FuelType/OMC/OMCFuelType configurations with `ExcludeFromMigrations()` — these tables are owned by ControlPlaneDbContext and exist only in the control-plane DB. Handlers that need these values should query via the control-plane repositories (`IFuelTypeRepository`, `IOMCRepository`) rather than via navigation properties.
 
 ```csharp
 // AppDbContext.OnModelCreating
@@ -272,7 +275,8 @@ modelBuilder.ApplyConfigurationsFromAssembly(
     typeof(AppDbContext).Assembly,
     t => t.Namespace == "FuelFlow.Infrastructure.Data.Configurations.PerTenant");
 
-// TODO M14-F03: drop these once tenant DBs split (handlers will do lookups via IFuelTypeRepository / IOMCRepository instead).
+// Shims from M14-F01 — kept for backwards compatibility with existing handlers.
+// Do not add new cross-context Includes; use control-plane repos for new lookups.
 modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.FuelTypeConfiguration());
 modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.OMCConfiguration());
 modelBuilder.ApplyConfiguration(new Configurations.ControlPlane.OMCFuelTypeConfiguration());
@@ -315,39 +319,34 @@ Migration tooling:
 
 Handlers inject repos by interface and never see which `DbContext` is doing the work. To add a new repository: pick the entity's context, inject the matching `DbContext` in the constructor, register the repo as `Scoped` in `DependencyInjection.cs`.
 
-### `UnitOfWork` manages both contexts (with an F01 caveat)
+### `UnitOfWork` manages both contexts
 
 ```csharp
 // SaveChangesAsync flushes AppDbContext first (so any newly-created Organization
 // is visible to subsequent control-plane writes like AppUser.OrganizationId),
-// then ControlPlaneDbContext.
+// then ControlPlaneDbContext. AppDbContext is skipped when TenantDbContextAccessor
+// has not been initialised (pre-onboarding auth flows).
 public async Task SaveChangesAsync()
 {
-    await _appDbContext.SaveChangesAsync();
+    if (_tenantAccessor.IsInitialized)
+        await _appDbContext.SaveChangesAsync();
     await _controlPlaneDbContext.SaveChangesAsync();
 }
 
-// BeginTransactionAsync still opens on AppDbContext only — F01 limitation.
-// Both contexts share the same physical Postgres database, so cross-context
-// reads see committed AppDbContext changes; cross-context writes commit
-// independently. TODO M14-F03: replace with an explicit saga + compensation
-// when each tenant has its own physical DB and a single transaction can no
-// longer span both.
+// BeginTransactionAsync opens on AppDbContext only. With per-tenant physical DBs,
+// a single distributed transaction spanning both contexts is not possible — use the
+// saga pattern (TenantProvisioningService is the canonical example) for operations
+// that must write to both contexts atomically.
 public async Task BeginTransactionAsync()
 {
     _transaction = await _appDbContext.Database.BeginTransactionAsync();
 }
 ```
 
-### What's coming in M14-F02 / M14-F03
-
-- **M14-F02** introduces `ITenantConnectionResolver` + `AddDbContextFactory<AppDbContext>` so `AppDbContext`'s connection string is resolved per-request from the JWT `org_id` claim. 18 repos refactor to inject `IDbContextFactory<AppDbContext>`. `UnitOfWork` redesigns for factory-created contexts.
-- **M14-F03** introduces `ITenantProvisioningService` (`CREATE DATABASE tenant_<org_id>` + run tenant migrations) and removes the F01 shims documented above. At that point the cross-context FuelType/OMC navs become impossible (no shared physical DB) — handlers do explicit lookups via control-plane repos.
-
 ### Rules
 
 - **One context per entity.** Don't put an entity's DbSet in both contexts unless it's a deliberate cross-context shim (only the three M14-F01 shims qualify, all marked `ExcludeFromMigrations` on the AppDbContext side).
-- **Cross-context refs are plain `Guid` columns, not FK navigation properties.** Use the control-plane repo's `ExistsAsync(userId)` (or similar) in handlers before inserting per-tenant rows that reference a control-plane row.
-- **No `.Include(...)` across DbContexts.** The shim works for `FuelTank.FuelType` etc. in F01 only because of the shared physical DB. Don't add new cross-context Includes — they will break in M14-F03.
-- **MigrationsHistoryTable names must stay separate** (`__EFMigrationsHistory_ControlPlane` vs `__EFMigrationsHistory_AppDb`). If two contexts ever share the same history table they will tramp each other's migration records.
+- **Cross-context refs are plain `Guid` columns, not FK navigation properties.** Use the control-plane repo's lookup method in handlers before inserting per-tenant rows that reference a control-plane row.
+- **No new `.Include(...)` across DbContexts.** The three F01 shims are kept for backwards compatibility; do not add more. For new lookups, use the appropriate control-plane repository.
+- **MigrationsHistoryTable names must stay separate** (`__EFMigrationsHistory_ControlPlane` vs `__EFMigrationsHistory_AppDb`). If two contexts ever share the same history table they will overwrite each other's migration records.
 - **`dotnet ef migrations add` requires `--context`.** Always pass `-Context ControlPlane` or `-Context Tenant` to the wrapper script. The script enforces this; raw `dotnet ef` defaults to the first context alphabetically (which is wrong half the time).

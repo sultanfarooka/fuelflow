@@ -35,15 +35,12 @@ public static class DependencyInjection
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        // 1. Register PostgreSQL + EF Core (M14-F01: two DbContexts)
+        // 1. Register PostgreSQL + EF Core (M14: two DbContexts, per-tenant physical DBs live)
         //
-        // Both contexts target the same physical Postgres database in M14-F01;
-        // separate MigrationsHistoryTable names prevent the contexts' migration
-        // records from colliding on the shared __EFMigrationsHistory table.
-        // M14-F02 will diverge AppDbContext's connection string per tenant via
-        // ITenantConnectionResolver — at that point each tenant DB gets its own
-        // history table named "__EFMigrationsHistory_AppDb" and the control
-        // plane keeps its own.
+        // ControlPlaneDbContext always connects to the shared control-plane DB (DefaultConnection).
+        // AppDbContext is registered as a factory; TenantDbContextAccessor creates instances with
+        // per-tenant connection strings resolved from the JWT org_id claim at request time (M14-F02).
+        // Separate MigrationsHistoryTable names keep each context's migration history independent.
         var connStr = configuration.GetConnectionString("DefaultConnection");
 
         services.AddDbContext<ControlPlaneDbContext>(options =>
@@ -183,6 +180,10 @@ public static class DependencyInjection
 
         // 6. Data seeder (runs on startup, idempotent — seeds OMCs, OMCFuelTypes, SubscriptionPlans if not present)
         services.AddHostedService<DataSeeder>();
+
+        // 7. Tenant migration (runs after DataSeeder — applies pending AppDbContext migrations
+        //    to every Active tenant DB on boot; per-tenant failures are logged and skipped) [M14-F06-R01]
+        services.AddHostedService<TenantMigrationHostedService>();
 
         return services;
     }

@@ -52,14 +52,14 @@ cd fuel-flow-web && npm install && npm run dev
 
 ## Multi-Tenancy Model
 
-Two EF Core DbContexts split by concern (as of M14-F01):
+Two EF Core DbContexts split by concern (M14 — all features Done):
 
 - **`ControlPlaneDbContext`** holds Identity (`AspNetUsers`, `AspNetRoles`, …), the `Tenants` registry, `Subscription`/`SubscriptionPlans`, the OMC/FuelType reference data, `PhoneVerification`, and `RefreshToken`. Reachable before tenant context exists (login by phone happens here).
 - **`AppDbContext`** holds `Organization` + every per-tenant operational table (`Stations`, `FuelTanks`, `FuelNozzles`, `FuelPrices`, `StationShifts`, `ShiftAssignments`, `NozzleReadings`, `FuelTankReadings`, `DipCharts`, `StationShiftConfigs`, `BankAccounts`, `UserStations`).
 
-Cross-context references (`Organization.OwnerId`, `UserStation.UserId`, plus the M14-F01 shims for `FuelTank.FuelType` / `Station.OMC` / `FuelPrices.FuelType`) are plain `Guid` columns — **no foreign-key constraints cross DbContexts**. Handlers enforce existence by calling the correctly-routed repository before insert/update.
+Each tenant gets its own physical PostgreSQL database (`tenant_<org_id>`), provisioned by `TenantProvisioningService` during onboarding step 1. `ITenantConnectionResolver` reads the JWT `org_id` claim, looks up the matching `Tenants` row, and routes `AppDbContext` to that database for every request. `TenantMigrationHostedService` applies any pending `AppDbContext` migrations to all active tenant DBs at app boot.
 
-In M14-F01 both contexts target the same physical PostgreSQL database with separate `__EFMigrationsHistory_ControlPlane` / `__EFMigrationsHistory_AppDb` tables. **M14-F03 introduces physical database-per-Organization isolation** via `ITenantConnectionResolver` — at that point each tenant gets its own provisioned PostgreSQL database. See [M14 in MODULES.md](docs/MODULES.md#m14--per-tenant-database-architecture) for the full roadmap.
+Cross-context references (`Organization.OwnerId`, `UserStation.UserId`) are plain `Guid` columns — **no foreign-key constraints cross DbContexts**. Handlers enforce existence by calling the correctly-routed repository before insert/update. Migration histories are kept separate: `__EFMigrationsHistory_ControlPlane` (control plane DB) and `__EFMigrationsHistory_AppDb` (each tenant DB).
 
 The Owner role still bypasses station filters at the application layer for consolidated cross-station views *within* an organization (intra-tenant). Cross-tenant queries are not supported by `AppDbContext` and never will be — that's the point of the split.
 

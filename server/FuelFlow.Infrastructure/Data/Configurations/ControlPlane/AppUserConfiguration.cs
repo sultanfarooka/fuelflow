@@ -52,5 +52,11 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         // 3. Indexes
         // Index for fast lookups by organization — still useful even without a FK.
         builder.HasIndex(u => u.OrganizationId);
+
+        // M14-F05-R01: DB-level uniqueness for PhoneNumber.
+        // PostgreSQL natively allows multiple NULLs in a standard unique index,
+        // so no partial filter is needed — users without a phone don't block each other.
+        builder.HasIndex(u => u.PhoneNumber)
+               .IsUnique();
     }
 }

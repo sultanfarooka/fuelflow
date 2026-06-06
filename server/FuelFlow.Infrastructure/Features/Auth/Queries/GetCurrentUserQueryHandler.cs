@@ -17,6 +17,7 @@ namespace FuelFlow.Infrastructure.Features.Auth.Queries;
 /// Loads user by ID from the request (set by auth middleware), then returns the same
 /// <see cref="AuthResponse"/> shape as login: tokens (new access + new refresh), UserInfo,
 /// and when onboarded: Organization, Stations, Subscription. Used to refresh client state after login.
+/// M14 contract: ControlPlane for user row; tenant repos for org/stations only when user.OrganizationId.HasValue [M14-F05-R02].
 /// </summary>
 public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, Result<AuthResponse>>
 {

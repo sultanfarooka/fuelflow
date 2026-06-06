@@ -18,6 +18,7 @@ namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 /// Issues a new refresh token (rotation), loads org/stations/subscription when user is onboarded,
 /// and returns <see cref="AuthResponse"/> (tokens, UserInfo, optional Org/Stations/Subscription).
 /// Pre-onboarding users get tokens and user info only (no org/stations/subscription).
+/// M14 contract: ControlPlane for pre-onboarding users (!user.OrganizationId.HasValue guard); tenant repos only when org_id is present [M14-F05-R02].
 /// </summary>
 public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
 {

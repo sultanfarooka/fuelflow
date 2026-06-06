@@ -18,6 +18,7 @@ namespace FuelFlow.Infrastructure.Features.Auth.Commands;
 /// CQRS Handler: verify a phone OTP issued during signup ([M01-F09-R03], [R04]).
 /// Returns a generic "expired or exhausted" message for missing user / no active OTP
 /// / expired / too-many-attempts so unsuccessful probing can't enumerate phone numbers.
+/// M14 contract: ControlPlane only — no TenantDbContextAccessor used [M14-F05-R02].
 /// </summary>
 public class VerifyPhoneCommandHandler : IRequestHandler<VerifyPhoneCommand, Result<VerifyPhoneResponse>>
 {
