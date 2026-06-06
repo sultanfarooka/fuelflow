@@ -12,11 +12,25 @@
   "nav": {
     "dashboard": "Dashboard",
     "stations": "Stations",
+    "organization": "Organization",
+    "station": "Station",
     "shifts": "Shifts",
     "inventory": "Inventory",
     "finance": "Finance",
     "reports": "Reports",
-    "settings": "Settings"
+    "setup": "Setup",
+    "settings": "Settings",
+    "userMenu": "User menu",
+    "logout": "Log out"
+  },
+  "stationSwitcher": {
+    "label": "Switch station",
+    "allStations": "All Stations"
+  },
+  "comingSoon": {
+    "title": "Coming soon",
+    "body": "This module is not yet available.",
+    "detail": "We're building this feature. It will appear here once it ships."
   },
   "dashboard": {
     "devBypass": {

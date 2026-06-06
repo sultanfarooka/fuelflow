@@ -12,11 +12,25 @@
   "nav": {
     "dashboard": "ڈیش بورڈ",
     "stations": "اسٹیشنز",
+    "organization": "تنظیم",
+    "station": "اسٹیشن",
     "shifts": "شفٹیں",
     "inventory": "انوینٹری",
     "finance": "مالیات",
     "reports": "رپورٹس",
-    "settings": "ترتیبات"
+    "setup": "سیٹ اپ",
+    "settings": "ترتیبات",
+    "userMenu": "صارف مینو",
+    "logout": "لاگ آؤٹ"
+  },
+  "stationSwitcher": {
+    "label": "اسٹیشن تبدیل کریں",
+    "allStations": "تمام اسٹیشنز"
+  },
+  "comingSoon": {
+    "title": "جلد آ رہا ہے",
+    "body": "یہ ماڈیول ابھی دستیاب نہیں ہے۔",
+    "detail": "ہم یہ فیچر بنا رہے ہیں۔ تیار ہونے پر یہ یہاں ظاہر ہوگا۔"
   },
   "dashboard": {
     "devBypass": {
