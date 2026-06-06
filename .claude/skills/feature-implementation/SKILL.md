@@ -120,6 +120,12 @@ Before opening the PR (Rule 8):
   fold it into the pre-PR commit that flips `MODULES.md` to `Done` and ticks
   any remaining boxes, scoped by ID. If `graphify-out/graph.json` does not
   exist, skip this step. The PR ships a current graph.
+- **Keep `scripts/README.md` current.** If this item created or modified any
+  dev-ops script (`scripts/*.ps1`, `server/*.ps1`), update that script's
+  **What / When / How** entry in `scripts/README.md` in the **same PR** (and
+  the rules in `scripts/CLAUDE.md` if the change introduces a new convention or
+  gotcha). The README is the SSOT for how/when the scripts run — a script
+  change with a stale README does not ship.
 
 ### 4.5. E2E verification (delegated to `/feature-e2e-testing`)
 
@@ -189,6 +195,10 @@ own dependencies. When unsure, serialize.
 - **The committed graphify graph stays current.** Step 4 runs
   `graphify update .` (when `graphify-out/graph.json` exists) and the
   `graphify-out/` diff ships in the same feature PR — never a follow-up.
+- **`scripts/README.md` stays current with the scripts.** Any item that creates
+  or modifies a dev-ops script (`scripts/*.ps1`, `server/*.ps1`) updates that
+  script's How/When entry in `scripts/README.md` in the same PR (Step 4) —
+  never a follow-up.
 - If reality diverges from the plan, stop and raise it with the user rather
   than improvising.
 - **E2E verification runs before the PR is opened** for any item that
