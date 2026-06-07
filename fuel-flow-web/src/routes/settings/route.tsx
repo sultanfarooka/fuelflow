@@ -15,7 +15,7 @@ export const Route = createFileRoute("/settings")({
     if (!isAuthenticated) {
       throw redirect({ to: "/auth/login", search: { redirect: "/settings" } })
     }
-    if (!hasAnyRole(user?.roles, [ROLES.Owner])) {
+    if (!hasAnyRole(user?.roles, [ROLES.Owner, ROLES.Manager])) {
       throw redirect({ to: "/dashboard" })
     }
   },
