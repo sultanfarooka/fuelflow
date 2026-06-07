@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as AuthVerifyPhoneRouteImport } from './routes/auth/verify-phone'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth/verify-email'
 import { Route as AuthResetPasswordSuccessRouteImport } from './routes/auth/reset-password-success'
@@ -28,6 +29,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthCheckEmailResetRouteImport } from './routes/auth/check-email-reset'
 import { Route as AuthCheckEmailRegisterRouteImport } from './routes/auth/check-email-register'
+import { Route as AuthActivateRouteImport } from './routes/auth/activate'
 import { Route as DashboardStationStationIdRouteImport } from './routes/dashboard/station.$stationId'
 import { Route as DashboardAccountPhoneRouteImport } from './routes/dashboard/account.phone'
 import { Route as DashboardStationStationIdShiftsRouteImport } from './routes/dashboard/station.$stationId.shifts'
@@ -81,6 +83,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const SettingsUsersRoute = SettingsUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const AuthVerifyPhoneRoute = AuthVerifyPhoneRouteImport.update({
   id: '/verify-phone',
   path: '/verify-phone',
@@ -132,6 +139,11 @@ const AuthCheckEmailRegisterRoute = AuthCheckEmailRegisterRouteImport.update({
   path: '/check-email-register',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthActivateRoute = AuthActivateRouteImport.update({
+  id: '/activate',
+  path: '/activate',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const DashboardStationStationIdRoute =
   DashboardStationStationIdRouteImport.update({
     id: '/station/$stationId',
@@ -181,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/auth/activate': typeof AuthActivateRoute
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -191,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -206,6 +220,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/auth/activate': typeof AuthActivateRoute
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -216,6 +231,7 @@ export interface FileRoutesByTo {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/dashboard': typeof DashboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/settings': typeof SettingsIndexRoute
@@ -235,6 +251,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/auth/activate': typeof AuthActivateRoute
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -245,6 +262,7 @@ export interface FileRoutesById {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/settings/users': typeof SettingsUsersRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -265,6 +283,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/about'
+    | '/auth/activate'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
     | '/auth/forgot-password'
@@ -275,6 +294,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/settings/users'
     | '/dashboard/'
     | '/onboarding/'
     | '/settings/'
@@ -290,6 +310,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/about'
+    | '/auth/activate'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
     | '/auth/forgot-password'
@@ -300,6 +321,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/settings/users'
     | '/dashboard'
     | '/onboarding'
     | '/settings'
@@ -318,6 +340,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/about'
+    | '/auth/activate'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
     | '/auth/forgot-password'
@@ -328,6 +351,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/settings/users'
     | '/dashboard/'
     | '/onboarding/'
     | '/settings/'
@@ -414,6 +438,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/settings/users': {
+      id: '/settings/users'
+      path: '/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof SettingsUsersRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/auth/verify-phone': {
       id: '/auth/verify-phone'
       path: '/verify-phone'
@@ -484,6 +515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCheckEmailRegisterRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/auth/activate': {
+      id: '/auth/activate'
+      path: '/activate'
+      fullPath: '/auth/activate'
+      preLoaderRoute: typeof AuthActivateRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/dashboard/station/$stationId': {
       id: '/dashboard/station/$stationId'
       path: '/station/$stationId'
@@ -537,6 +575,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthRouteRouteChildren {
+  AuthActivateRoute: typeof AuthActivateRoute
   AuthCheckEmailRegisterRoute: typeof AuthCheckEmailRegisterRoute
   AuthCheckEmailResetRoute: typeof AuthCheckEmailResetRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
@@ -550,6 +589,7 @@ interface AuthRouteRouteChildren {
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthActivateRoute: AuthActivateRoute,
   AuthCheckEmailRegisterRoute: AuthCheckEmailRegisterRoute,
   AuthCheckEmailResetRoute: AuthCheckEmailResetRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
@@ -620,10 +660,12 @@ const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
 )
 
 interface SettingsRouteRouteChildren {
+  SettingsUsersRoute: typeof SettingsUsersRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
+  SettingsUsersRoute: SettingsUsersRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 

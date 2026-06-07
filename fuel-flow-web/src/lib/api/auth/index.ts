@@ -29,6 +29,7 @@ export {
   type VerifyPhoneApiResponse,
 } from './verifyPhone'
 export { resendOtp, type ResendOtpRequest } from './resendOtp'
+export { activateAccount, type ActivateAccountRequest } from './activate'
 export {
   requestPhoneChange,
   type RequestPhoneChangeRequest,

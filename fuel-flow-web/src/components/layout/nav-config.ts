@@ -21,6 +21,7 @@ import {
   IconClockHour4,
   IconGasStation,
   IconSettings,
+  IconUsers,
   IconWallet,
   type Icon,
 } from "@tabler/icons-react"
@@ -107,6 +108,14 @@ const NAV_CATALOGUE: readonly NavItemConfig[] = [
     to: "/dashboard/station/$stationId/setup",
     roles: [ROLES.Owner, ROLES.Manager],
     scope: "station",
+  },
+  {
+    key: "users",
+    labelKey: "nav.users",
+    icon: IconUsers,
+    to: "/settings/users",
+    roles: [ROLES.Owner],
+    scope: "org",
   },
   {
     key: "settings",
