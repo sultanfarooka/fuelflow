@@ -9,19 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { createShiftConfig } from "@/lib/api/stations/shift-config"
-import { updatePaymentMethods, ALLOWED_PAYMENT_METHODS } from "@/lib/api/stations/payment-methods"
 import { cn } from "@/lib/utils"
 
 interface Props {
   stationId: string
   onNext: () => void
   onBack: () => void
+  onSkip: () => void
 }
 
 const DEFAULT_NAMES_2 = ["Morning", "Evening"]
 const DEFAULT_NAMES_3 = ["Morning", "Evening", "Night"]
 
-export function StepOperations({ stationId, onNext, onBack }: Props) {
+export function StepOperations({ stationId, onNext, onBack, onSkip }: Props) {
   const { t } = useTranslation()
   const [shiftCount, setShiftCount] = useState<2 | 3>(2)
   const [shift1Name, setShift1Name] = useState("Morning")
@@ -30,7 +30,6 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
   const [shift2Time, setShift2Time] = useState("14:00")
   const [shift3Name, setShift3Name] = useState("Night")
   const [shift3Time, setShift3Time] = useState("22:00")
-  const [methods, setMethods] = useState<string[]>(["Cash"])
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const shiftMutation = useMutation({
@@ -46,10 +45,6 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
       }),
   })
 
-  const paymentMutation = useMutation({
-    mutationFn: () => updatePaymentMethods(stationId, methods),
-  })
-
   const handleShiftCountChange = (count: 2 | 3) => {
     setShiftCount(count)
     const names = count === 2 ? DEFAULT_NAMES_2 : DEFAULT_NAMES_3
@@ -58,26 +53,15 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
     if (count === 3) setShift3Name(names[2])
   }
 
-  const toggleMethod = (method: string) => {
-    if (method === "Cash") return // Cash is non-removable
-    setMethods((prev) =>
-      prev.includes(method) ? prev.filter((m) => m !== method) : [...prev, method]
-    )
-  }
-
-  const canProceed =
-    shift1Name.trim() && shift1Time && shift2Name.trim() && shift2Time &&
-    (shiftCount === 2 || (shift3Name.trim() && shift3Time))
-
   const handleNext = async () => {
-    if (!canProceed) {
+    if (!shift1Name.trim() || !shift1Time || !shift2Name.trim() || !shift2Time ||
+        (shiftCount === 3 && (!shift3Name.trim() || !shift3Time))) {
       setSubmitError(t("onboarding.step6.validationError"))
       return
     }
     setSubmitError(null)
     try {
       await shiftMutation.mutateAsync()
-      await paymentMutation.mutateAsync()
       onNext()
     } catch {
       setSubmitError(t("onboarding.step6.saveError"))
@@ -85,7 +69,7 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
     }
   }
 
-  const isPending = shiftMutation.isPending || paymentMutation.isPending
+  const isPending = shiftMutation.isPending
 
   return (
     <div className="space-y-6">
@@ -120,6 +104,7 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
                 <FieldLabel htmlFor="s1-name">{t("onboarding.step6.shift1Name")}</FieldLabel>
                 <Input
                   id="s1-name"
+                  size="lg"
                   value={shift1Name}
                   onChange={(e) => setShift1Name(e.target.value)}
                 />
@@ -128,6 +113,7 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
                 <FieldLabel htmlFor="s1-time">{t("onboarding.step6.startTime")}</FieldLabel>
                 <Input
                   id="s1-time"
+                  size="lg"
                   type="time"
                   value={shift1Time}
                   onChange={(e) => setShift1Time(e.target.value)}
@@ -141,6 +127,7 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
                 <FieldLabel htmlFor="s2-name">{t("onboarding.step6.shift2Name")}</FieldLabel>
                 <Input
                   id="s2-name"
+                  size="lg"
                   value={shift2Name}
                   onChange={(e) => setShift2Name(e.target.value)}
                 />
@@ -149,6 +136,7 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
                 <FieldLabel htmlFor="s2-time">{t("onboarding.step6.startTime")}</FieldLabel>
                 <Input
                   id="s2-time"
+                  size="lg"
                   type="time"
                   value={shift2Time}
                   onChange={(e) => setShift2Time(e.target.value)}
@@ -163,6 +151,7 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
                   <FieldLabel htmlFor="s3-name">{t("onboarding.step6.shift3Name")}</FieldLabel>
                   <Input
                     id="s3-name"
+                    size="lg"
                     value={shift3Name}
                     onChange={(e) => setShift3Name(e.target.value)}
                   />
@@ -171,6 +160,7 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
                   <FieldLabel htmlFor="s3-time">{t("onboarding.step6.startTime")}</FieldLabel>
                   <Input
                     id="s3-time"
+                    size="lg"
                     type="time"
                     value={shift3Time}
                     onChange={(e) => setShift3Time(e.target.value)}
@@ -182,40 +172,6 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
         </CardContent>
       </Card>
 
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle>{t("onboarding.step6.paymentTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {ALLOWED_PAYMENT_METHODS.map((method) => {
-              const isSelected = methods.includes(method)
-              const isCash = method === "Cash"
-              return (
-                <button
-                  key={method}
-                  type="button"
-                  onClick={() => toggleMethod(method)}
-                  disabled={isCash}
-                  className={cn(
-                    "flex min-h-11 items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                    isSelected
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-background text-foreground hover:bg-muted/60",
-                    isCash && "cursor-default opacity-80"
-                  )}
-                >
-                  {method}
-                  {isCash && (
-                    <span className="ms-1 text-xs text-muted-foreground">{t("onboarding.step6.cashRequired")}</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
       {submitError && (
         <Alert variant="destructive">
           <AlertDescription>{submitError}</AlertDescription>
@@ -223,11 +179,14 @@ export function StepOperations({ stationId, onNext, onBack }: Props) {
       )}
 
       <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" onClick={onBack} disabled={isPending} className="h-10 px-4 text-sm">
+        <Button type="button" variant="outline" size="lg" onClick={onBack} disabled={isPending}>
           {t("onboarding.actions.back")}
         </Button>
-        <Button type="button" onClick={handleNext} disabled={isPending} className="h-10 px-4 text-sm">
+        <Button type="button" size="lg" onClick={handleNext} disabled={isPending}>
           {isPending ? t("onboarding.actions.saving") : t("onboarding.actions.continue")}
+        </Button>
+        <Button type="button" variant="ghost" size="lg" onClick={onSkip} disabled={isPending}>
+          {t("onboarding.actions.skip")}
         </Button>
       </div>
     </div>

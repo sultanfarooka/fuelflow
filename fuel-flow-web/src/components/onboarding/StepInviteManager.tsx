@@ -57,10 +57,10 @@ export function StepInviteManager({ onBack, onSkip }: Props) {
       </Card>
 
       <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" onClick={onBack} className="h-10 px-4 text-sm">
+        <Button type="button" variant="outline" size="lg" onClick={onBack}>
           {t("onboarding.actions.back")}
         </Button>
-        <Button type="button" variant="ghost" onClick={onSkip} className="h-10 px-4 text-sm">
+        <Button type="button" variant="ghost" size="lg" onClick={onSkip}>
           {t("onboarding.actions.skip")}
         </Button>
       </div>

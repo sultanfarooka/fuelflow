@@ -13,4 +13,11 @@ public interface ITenantConnectionResolver
     /// <c>org_id</c> is present but no <c>Tenants</c> row exists.
     /// </summary>
     Task<string?> ResolveAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Resolves the connection string by an explicit <paramref name="orgId"/> without
+    /// requiring a JWT claim — for use in login flows where the token has not yet been issued.
+    /// Throws <see cref="TenantNotFoundException"/> when no <c>Tenants</c> row exists.
+    /// </summary>
+    Task<string> ResolveForOrgAsync(Guid orgId, CancellationToken ct = default);
 }

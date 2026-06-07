@@ -10,22 +10,16 @@ import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
 import { FormTextField } from "@/components/forms/form-text-field"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { FormSelectField } from "@/components/forms/form-select-field"
+import { SelectItem } from "@/components/ui/select"
 import { ProvisioningOverlay } from "@/components/onboarding/ProvisioningOverlay"
 import { completeOnboarding, type OnboardingRequest } from "@/lib/api/auth"
 import { getOMCs, type OMC } from "@/lib/api/omcs"
-import { onboardingSchema, type OnboardingFormData } from "@/lib/validators/auth"
+import { normalizePhone, onboardingSchema, type OnboardingFormData } from "@/lib/validators/auth"
 import { useAuthStore } from "@/stores/auth-store"
 
 interface Props {
@@ -159,6 +153,7 @@ export function StepOrgStation({ onNext }: Props) {
                 <FormTextField
                   field={field}
                   label={t("onboarding.step1.orgName")}
+                  size="lg"
                   placeholder="e.g. Fuel Flow Petroleum (Pvt) Ltd"
                   autoComplete="organization"
                 />
@@ -172,6 +167,7 @@ export function StepOrgStation({ onNext }: Props) {
                   <FormTextField
                     field={field}
                     label={t("onboarding.step1.stationName")}
+                    size="lg"
                     placeholder="e.g. FF Johar Town"
                     autoComplete="off"
                   />
@@ -180,46 +176,21 @@ export function StepOrgStation({ onNext }: Props) {
 
               <form.Field
                 name="omcId"
-                children={(field) => {
-                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
-                  const errorId = `${field.name}-error`
-                  const descId = `${field.name}-desc`
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>{t("onboarding.step1.omc")}</FieldLabel>
-                      <Select
-                        value={field.state.value}
-                        onValueChange={(v) => field.handleChange(v)}
-                        disabled={isLoadingOmcs || isSubmitting}
-                      >
-                        <SelectTrigger
-                          id={field.name}
-                          onBlur={field.handleBlur}
-                          aria-invalid={isInvalid}
-                          aria-describedby={isInvalid ? errorId : descId}
-                          className="w-full"
-                        >
-                          <SelectValue
-                            placeholder={isLoadingOmcs ? t("onboarding.step1.omcLoading") : t("onboarding.step1.omcPlaceholder")}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {omcs.map((omc) => (
-                            <SelectItem key={omc.id} value={omc.id}>
-                              {omc.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FieldDescription id={descId}>
-                        {t("onboarding.step1.omcDesc")}
-                      </FieldDescription>
-                      {isInvalid && (
-                        <FieldError id={errorId} errors={field.state.meta.errors} />
-                      )}
-                    </Field>
-                  )
-                }}
+                children={(field) => (
+                  <FormSelectField
+                    field={field}
+                    label={t("onboarding.step1.omc")}
+                    placeholder={isLoadingOmcs ? t("onboarding.step1.omcLoading") : t("onboarding.step1.omcPlaceholder")}
+                    description={t("onboarding.step1.omcDesc")}
+                    disabled={isLoadingOmcs || isSubmitting}
+                  >
+                    {omcs.map((omc) => (
+                      <SelectItem key={omc.id} value={omc.id}>
+                        {omc.name}
+                      </SelectItem>
+                    ))}
+                  </FormSelectField>
+                )}
               />
             </div>
 
@@ -230,6 +201,7 @@ export function StepOrgStation({ onNext }: Props) {
                   <FormTextField
                     field={field}
                     label={t("onboarding.step1.address")}
+                    size="lg"
                     placeholder="Street, area, city"
                     autoComplete="street-address"
                   />
@@ -242,9 +214,11 @@ export function StepOrgStation({ onNext }: Props) {
                     field={field}
                     label={t("onboarding.step1.phone")}
                     type="tel"
+                    size="lg"
                     inputMode="tel"
-                    placeholder="+92XXXXXXXXXX"
+                    placeholder="03XXXXXXXXXX or +92XXXXXXXXXX"
                     autoComplete="tel"
+                    onNormalize={normalizePhone}
                   />
                 )}
               />
@@ -256,12 +230,12 @@ export function StepOrgStation({ onNext }: Props) {
                 <Field>
                   <FieldLabel htmlFor={field.name}>{t("onboarding.step1.logoUrl")}</FieldLabel>
                   <div className="flex items-center gap-2">
-                    <FormTextField field={field} label="" placeholder="https://…/logo.png" />
+                    <FormTextField field={field} label="" size="lg" placeholder="https://…/logo.png" />
                     <Button
                       type="button"
                       variant="outline"
-                      size="icon"
                       disabled
+                      className="size-10 shrink-0"
                       aria-label="Upload logo (coming soon)"
                     >
                       <UploadCloud className="size-4" />
@@ -280,7 +254,7 @@ export function StepOrgStation({ onNext }: Props) {
               </Alert>
             )}
 
-            <Button type="submit" className="h-10 w-full px-4 text-sm sm:w-auto" disabled={isSubmitting || isLoadingOmcs}>
+            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting || isLoadingOmcs}>
               {isSubmitting ? t("onboarding.actions.creating") : t("onboarding.actions.continue")}
             </Button>
           </FieldGroup>

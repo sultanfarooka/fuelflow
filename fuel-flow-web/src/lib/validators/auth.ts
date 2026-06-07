@@ -1,6 +1,26 @@
 import { z } from 'zod'
 
 /**
+ * Normalises a Pakistani phone number to international format.
+ * Converts 03XXXXXXXXX → +923XXXXXXXXX; leaves +923XXXXXXXXX unchanged.
+ */
+export const normalizePhone = (v: string): string => {
+  const trimmed = v.trim()
+  return /^0\d{10}$/.test(trimmed) ? '+92' + trimmed.slice(1) : trimmed
+}
+
+/** Zod refinement that accepts 03XXXXXXXXX or +923XXXXXXXXX after normalisation. */
+const phoneField = (required = true) => {
+  const base = z
+    .string()
+    .transform(normalizePhone)
+    .pipe(z.string().regex(/^\+92\d{10}$/, 'Enter a Pakistani phone: 03XXXXXXXXXX or +92XXXXXXXXXX'))
+  return required
+    ? z.string().min(1, 'Phone number is required').transform(normalizePhone).pipe(z.string().regex(/^\+92\d{10}$/, 'Enter a Pakistani phone: 03XXXXXXXXXX or +92XXXXXXXXXX'))
+    : base
+}
+
+/**
  * Registration form schema — mirrors backend RegisterRequestValidator.
  * Phone-first per [M01-F09]: phone is required, email is optional.
  *
@@ -14,10 +34,7 @@ export const registerSchema = z.object({
     .string()
     .email('Invalid email format')
     .or(z.literal('')),
-  phone: z
-    .string()
-    .min(1, 'Phone number is required')
-    .regex(/^\+92\d{10}$/, 'Phone must be in Pakistani format: +92XXXXXXXXXX'),
+  phone: phoneField(),
   password: z
     .string()
     .min(1, 'Password is required')
@@ -43,10 +60,7 @@ export type VerifyPhoneFormData = z.infer<typeof verifyPhoneSchema>
 
 /** Phone change step 1 — request OTP for new phone ([M01-F09-R11]). */
 export const requestPhoneChangeSchema = z.object({
-  newPhone: z
-    .string()
-    .min(1, 'New phone number is required')
-    .regex(/^\+92\d{10}$/, 'Phone must be in Pakistani format: +92XXXXXXXXXX'),
+  newPhone: phoneField(),
 })
 
 export type RequestPhoneChangeFormData = z.infer<typeof requestPhoneChangeSchema>
@@ -63,7 +77,7 @@ export type ConfirmPhoneChangeFormData = z.infer<typeof confirmPhoneChangeSchema
 
 /**
  * Login form schema — phone-or-email identifier per [M01-F09-R05].
- * Accepts either a Pakistani phone (+92XXXXXXXXXX) or an email address.
+ * Accepts a Pakistani phone (03XXXXXXXXX or +92XXXXXXXXXX) or an email address.
  */
 const phoneRegex = /^\+92\d{10}$/
 const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -72,9 +86,12 @@ export const loginSchema = z.object({
   identifier: z
     .string()
     .min(1, 'Phone or email is required')
-    .refine((v) => phoneRegex.test(v) || emailRegex.test(v), {
-      message: 'Enter your +92 phone number or email address',
-    }),
+    .transform(normalizePhone)
+    .pipe(
+      z.string().refine((v) => phoneRegex.test(v) || emailRegex.test(v), {
+        message: 'Enter your phone (03XXXXXXXXXX or +92XXXXXXXXXX) or email address',
+      }),
+    ),
   password: z.string().min(1, 'Password is required'),
 })
 
@@ -88,9 +105,12 @@ export const forgotPasswordSchema = z.object({
   identifier: z
     .string()
     .min(1, 'Phone or email is required')
-    .refine((v) => phoneRegex.test(v) || emailRegex.test(v), {
-      message: 'Enter your +92 phone number or email address',
-    }),
+    .transform(normalizePhone)
+    .pipe(
+      z.string().refine((v) => phoneRegex.test(v) || emailRegex.test(v), {
+        message: 'Enter your phone (03XXXXXXXXXX or +92XXXXXXXXXX) or email address',
+      }),
+    ),
 })
 
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
@@ -156,8 +176,10 @@ export const onboardingSchema = z.object({
     .or(z.literal('')),
   phone: z
     .string()
-    .regex(/^\+92\d{10}$/, 'Phone must be in Pakistani format: +92XXXXXXXXXX')
-    .or(z.literal('')),
+    .transform(normalizePhone)
+    .pipe(
+      z.string().regex(/^\+92\d{10}$/, 'Enter a Pakistani phone: 03XXXXXXXXXX or +92XXXXXXXXXX').or(z.literal('')),
+    ),
   logoUrl: z
     .string()
     .url('Logo URL must be a valid URL')

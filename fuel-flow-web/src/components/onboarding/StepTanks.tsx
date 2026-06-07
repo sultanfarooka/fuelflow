@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { AlertCircle, ChevronDown, Plus, Trash2, Upload } from "lucide-react"
+import { AlertCircle, CheckCircle2, ChevronDown, Plus, Trash2, Upload, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
@@ -38,9 +38,6 @@ import {
 import { getFuelTypesByStation } from "@/lib/api/stations/fuel-types"
 import { getDipChart, uploadDipChart, type UploadDipChartEntry } from "@/lib/api/stations/dip-chart"
 
-const formFieldClass = "h-10 text-sm"
-const formLabelClass = "text-sm"
-const formSelectClass = "h-10 w-full text-sm"
 
 interface Props {
   stationId: string
@@ -121,6 +118,7 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
   const [fuelTypeId, setFuelTypeId] = useState("")
   const [tankName, setTankName] = useState("")
   const [capacity, setCapacity] = useState("")
+  const [csvFileName, setCsvFileName] = useState<string | null>(null)
   const [csvError, setCsvError] = useState<string | null>(null)
   const [addError, setAddError] = useState<string | null>(null)
   const [pendingEntries, setPendingEntries] = useState<UploadDipChartEntry[] | null>(null)
@@ -180,6 +178,7 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
     setTankName("")
     setCapacity("")
     setPendingEntries(null)
+    setCsvFileName(null)
     setCsvError(null)
     setAddError(null)
     if (fileRef.current) fileRef.current.value = ""
@@ -194,13 +193,23 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
       const entries = parseCsv(text)
       if (!entries) {
         setCsvError(t("onboarding.step4.csvError"))
+        setCsvFileName(null)
         setPendingEntries(null)
       } else {
         setCsvError(null)
+        setCsvFileName(file.name)
         setPendingEntries(entries)
+        setAddError(null)
       }
     }
     reader.readAsText(file)
+  }
+
+  const handleRemoveCsv = () => {
+    setPendingEntries(null)
+    setCsvFileName(null)
+    setCsvError(null)
+    if (fileRef.current) fileRef.current.value = ""
   }
 
   const fuelTypeNameById = (id: string) =>
@@ -213,13 +222,23 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
     fuelTypes.length > 0 && fuelTypes.every((ft) => tanks.some((t) => t.fuelTypeId === ft.id))
   const isBusy = createMutation.isPending || deleteMutation.isPending
 
-  const canAdd =
-    selectedFuelTypeId &&
-    tankName.trim() &&
-    capacity &&
-    !isNaN(parseFloat(capacity)) &&
-    parseFloat(capacity) > 0 &&
-    pendingEntries
+  const handleAddTank = () => {
+    if (!tankName.trim()) {
+      setAddError(t("onboarding.step4.errorNameRequired"))
+      return
+    }
+    const cap = parseFloat(capacity)
+    if (!capacity || isNaN(cap) || cap <= 0) {
+      setAddError(t("onboarding.step4.errorCapacityRequired"))
+      return
+    }
+    if (!pendingEntries) {
+      setAddError(t("onboarding.step4.errorCsvRequired"))
+      return
+    }
+    setAddError(null)
+    createMutation.mutate()
+  }
 
   const handleOpenAddForm = () => {
     setAddError(null)
@@ -275,7 +294,6 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
                     variant="ghost"
                     className="h-auto w-full justify-start gap-2 px-0 text-primary hover:bg-transparent hover:text-primary/90"
                     onClick={handleOpenAddForm}
-                    disabled={fuelTypes.length === 0}
                   >
                     <Plus className="size-4" />
                     {t("onboarding.step4.addTankAction")}
@@ -286,11 +304,11 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
                     <p className="font-medium">{t("onboarding.step4.addTankFormTitle")}</p>
                     <FieldGroup>
                       <Field>
-                        <FieldLabel htmlFor="tank-fuel-type" className={formLabelClass}>
+                        <FieldLabel htmlFor="tank-fuel-type">
                           {t("onboarding.step4.fuelType")}
                         </FieldLabel>
                         <Select value={selectedFuelTypeId} onValueChange={setFuelTypeId}>
-                          <SelectTrigger id="tank-fuel-type" className={formSelectClass}>
+                          <SelectTrigger id="tank-fuel-type">
                             <SelectValue placeholder={t("onboarding.step4.selectFuelType")} />
                           </SelectTrigger>
                           <SelectContent>
@@ -305,28 +323,28 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <Field>
-                          <FieldLabel htmlFor="tank-name" className={formLabelClass}>
+                          <FieldLabel htmlFor="tank-name">
                             {t("onboarding.step4.tankName")}
                           </FieldLabel>
                           <Input
                             id="tank-name"
-                            className={formFieldClass}
+                            size="lg"
                             value={tankName}
-                            onChange={(e) => setTankName(e.target.value)}
+                            onChange={(e) => { setTankName(e.target.value); setAddError(null) }}
                             placeholder="e.g. Tank 1"
                           />
                         </Field>
                         <Field>
-                          <FieldLabel htmlFor="tank-capacity" className={formLabelClass}>
+                          <FieldLabel htmlFor="tank-capacity">
                             {t("onboarding.step4.capacity")}
                           </FieldLabel>
                           <Input
                             id="tank-capacity"
-                            className={formFieldClass}
+                            size="lg"
                             type="number"
                             inputMode="numeric"
                             value={capacity}
-                            onChange={(e) => setCapacity(e.target.value)}
+                            onChange={(e) => { setCapacity(e.target.value); setAddError(null) }}
                             placeholder="e.g. 10000"
                             min={1}
                           />
@@ -334,7 +352,7 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
                       </div>
 
                       <Field>
-                        <FieldLabel htmlFor="dip-csv" className={formLabelClass}>
+                        <FieldLabel htmlFor="dip-csv">
                           {t("onboarding.step4.dipCsvLabel")}
                         </FieldLabel>
                         <div className="flex items-center gap-2">
@@ -346,17 +364,33 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
                             className="hidden"
                             onChange={handleFileChange}
                           />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className={formFieldClass}
-                            onClick={() => fileRef.current?.click()}
-                          >
-                            <Upload className="me-1.5 size-4" />
-                            {pendingEntries
-                              ? t("onboarding.step4.rowsLoaded", { count: pendingEntries.length })
-                              : t("onboarding.step4.uploadCsv")}
-                          </Button>
+                          {pendingEntries && csvFileName ? (
+                            <div className="flex h-10 flex-1 items-center gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm">
+                              <CheckCircle2 className="size-4 shrink-0 text-green-600" />
+                              <span className="min-w-0 flex-1 truncate text-foreground">{csvFileName}</span>
+                              <span className="shrink-0 text-xs text-muted-foreground">
+                                {t("onboarding.step4.rowsLoaded", { count: pendingEntries.length })}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleRemoveCsv}
+                                className="ms-1 shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                                aria-label="Remove CSV"
+                              >
+                                <X className="size-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="lg"
+                              onClick={() => fileRef.current?.click()}
+                            >
+                              <Upload className="me-1.5 size-4" />
+                              {t("onboarding.step4.uploadCsv")}
+                            </Button>
+                          )}
                         </div>
                         {csvError && (
                           <Alert variant="destructive" className="mt-2">
@@ -377,7 +411,8 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
                         <Button
                           type="button"
                           variant="outline"
-                          className={cn("flex-1", formFieldClass)}
+                          size="lg"
+                          className="flex-1"
                           onClick={() => {
                             setShowAddForm(false)
                             resetAddForm()
@@ -387,9 +422,10 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
                         </Button>
                         <Button
                           type="button"
-                          className={cn("flex-1", formFieldClass)}
-                          onClick={() => createMutation.mutate()}
-                          disabled={!canAdd || createMutation.isPending}
+                          size="lg"
+                          className="flex-1"
+                          onClick={handleAddTank}
+                          disabled={createMutation.isPending}
                         >
                           {createMutation.isPending
                             ? t("onboarding.step4.adding")
@@ -430,10 +466,10 @@ export function StepTanks({ stationId, onNext, onBack }: Props) {
       )}
 
       <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" onClick={onBack} className="h-10 px-4 text-sm">
+        <Button type="button" variant="outline" size="lg" onClick={onBack}>
           {t("onboarding.actions.back")}
         </Button>
-        <Button type="button" onClick={handleNext} disabled={isBusy} className="h-10 px-4 text-sm">
+        <Button type="button" size="lg" onClick={handleNext} disabled={isBusy}>
           {t("onboarding.actions.continue")}
         </Button>
       </div>

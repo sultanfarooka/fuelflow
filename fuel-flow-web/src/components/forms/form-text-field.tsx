@@ -30,6 +30,9 @@ export interface FormTextFieldProps {
   autoComplete?: string
   inputMode?: 'email' | 'tel' | 'numeric'
   description?: React.ReactNode
+  size?: 'default' | 'lg'
+  /** Called on blur before handleBlur. If it returns a different value, the field is updated first. */
+  onNormalize?: (value: string) => string
 }
 
 /**
@@ -44,11 +47,21 @@ export function FormTextField({
   autoComplete,
   inputMode,
   description,
+  size = 'default',
+  onNormalize,
 }: FormTextFieldProps) {
   const isInvalid =
     field.state.meta.isTouched && !field.state.meta.isValid
   const errorId = `${field.name}-error`
   const descriptionId = `${field.name}-description`
+
+  const handleBlur = () => {
+    if (onNormalize) {
+      const normalized = onNormalize(field.state.value)
+      if (normalized !== field.state.value) field.handleChange(normalized)
+    }
+    field.handleBlur()
+  }
 
   return (
     <Field data-invalid={isInvalid}>
@@ -57,9 +70,10 @@ export function FormTextField({
         id={field.name}
         name={field.name}
         type={type}
+        size={size}
         inputMode={inputMode}
         value={field.state.value}
-        onBlur={field.handleBlur}
+        onBlur={handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
         aria-invalid={isInvalid}
         aria-describedby={

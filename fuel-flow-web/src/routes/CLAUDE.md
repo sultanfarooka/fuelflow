@@ -15,8 +15,10 @@ Authoritative mapping of routes to the role(s) allowed to see them. Reference [`
 | Email verification | `/auth/verify-email`, `/auth/check-email-register` | Public | [M01-F02](../../../docs/MODULES.md#m01-f02--email-verification) |
 | Password reset | `/auth/forgot-password`, `/auth/reset-password`, `/auth/check-email-reset` | Public | [M01-F04](../../../docs/MODULES.md#m01-f04--password-recovery) |
 | Onboarding (org + first station) | `/onboarding` | Authenticated, no org | [M08-F01](../../../docs/MODULES.md#m08-f01--station-profile) |
-| Dashboard | `/dashboard` | All authenticated | [M07-F05](../../../docs/MODULES.md#m07-f05--dashboard-widgets) |
+| Org Dashboard | `/dashboard` | All authenticated | [M07-F06](../../../docs/MODULES.md#m07-f06--consolidated-all-stations-view) |
 | Station detail | `/dashboard/station/:stationId` | Owner, Manager | — |
+
+> **M07-F06 note:** Single-station orgs are auto-redirected to their station dashboard via `beforeLoad` in `dashboard/index.tsx`. Multi-station orgs see a station-card grid with no sidebar — just a minimal top bar (org name, user menu, language/theme toggles). The sidebar renders only for `/dashboard/station/*` routes.
 | Station setup wizard | `/dashboard/station/:stationId/setup` | Owner, Manager | [M08-F02](../../../docs/MODULES.md#m08-f02--tank-configuration), [M08-F03](../../../docs/MODULES.md#m08-f03--nozzle-configuration) |
 | Shifts | `/dashboard/station/:stationId/shifts` (stub) | Owner, Manager, Nozzleman | [M04](../../../docs/MODULES.md#m04--shift-management) |
 | Inventory | `/dashboard/station/:stationId/inventory` (stub) | Owner, Manager | [M02](../../../docs/MODULES.md#m02--fuel-inventory--tank-control) |
