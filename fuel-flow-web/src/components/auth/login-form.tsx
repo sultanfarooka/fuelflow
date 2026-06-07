@@ -21,7 +21,7 @@ import {
   type LoginRequest,
 } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth-store";
-import { loginSchema, type LoginFormData } from "@/lib/validators/auth";
+import { normalizePhone, loginSchema, type LoginFormData } from "@/lib/validators/auth";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 const PHONE_VERIFICATION_PREFIX = "phone_verification_required";
@@ -54,7 +54,10 @@ export function LoginForm() {
     onSubmit: async ({ value }) => {
       setLoginMutationError(null);
       setNeedsPhoneVerification(null);
-      await loginMutation.mutateAsync(value as LoginRequest);
+      await loginMutation.mutateAsync({
+        ...value,
+        identifier: normalizePhone(value.identifier),
+      } as LoginRequest);
     },
   });
 
@@ -117,9 +120,11 @@ export function LoginForm() {
               field={field}
               label="Phone or email"
               type="text"
-              placeholder="+92XXXXXXXXXX or m@example.com"
+              size="lg"
+              placeholder="03XXXXXXXXXX or m@example.com"
               autoComplete="username"
-              description="Use your +92 phone number, or a verified email address."
+              description="Pakistani phone (03XXXXXXXXXX or +92XXXXXXXXXX) or verified email."
+              onNormalize={normalizePhone}
             />
           )}
         />
@@ -131,6 +136,7 @@ export function LoginForm() {
                 field={field}
                 label="Password"
                 type="password"
+                size="lg"
                 placeholder=""
                 autoComplete="current-password"
               />
@@ -168,6 +174,7 @@ export function LoginForm() {
         <Field>
           <Button
             type="submit"
+            size="lg"
             disabled={form.state.isSubmitting || loginMutation.isPending}
           >
             {form.state.isSubmitting || loginMutation.isPending
@@ -179,6 +186,7 @@ export function LoginForm() {
         <Field>
           <Button
             type="button"
+            size="lg"
             variant="outline"
             disabled
             className="w-full justify-center"
@@ -188,6 +196,7 @@ export function LoginForm() {
           </Button>
           <Button
             type="button"
+            size="lg"
             variant="outline"
             disabled
             className="mt-2 w-full justify-center"

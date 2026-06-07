@@ -56,6 +56,25 @@ public sealed class TenantDbContextAccessor : IAsyncDisposable
                 "TenantDbContextAccessor.GetContextAsync called for a request with no org_id claim. " +
                 "Only inject the accessor in endpoints that require an authenticated tenant context.");
 
+        return CreateContext(connStr);
+    }
+
+    /// <summary>
+    /// Initialises the tenant context using an explicit <paramref name="orgId"/> instead of
+    /// reading the JWT claim — for use in login flows where the token has not yet been issued.
+    /// No-op when the context was already initialised in this request.
+    /// </summary>
+    public async Task InitializeForOrgAsync(Guid orgId, CancellationToken ct = default)
+    {
+        if (_context is not null)
+            return;
+
+        var connStr = await _resolver.ResolveForOrgAsync(orgId, ct);
+        CreateContext(connStr);
+    }
+
+    private AppDbContext CreateContext(string connStr)
+    {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(connStr, static npgsql =>
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory_AppDb"))

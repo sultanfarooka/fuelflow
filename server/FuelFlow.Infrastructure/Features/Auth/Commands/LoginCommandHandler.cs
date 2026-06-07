@@ -8,6 +8,7 @@ using FuelFlow.Application.Interfaces.Repositories;
 using FuelFlow.Application.Interfaces.Services;
 using FuelFlow.Domain.Entities;
 using StationEntity = FuelFlow.Domain.Entities.Station;
+using FuelFlow.Infrastructure.Data;
 using FuelFlow.Infrastructure.Identity;
 using FuelFlow.Infrastructure.Services;
 
@@ -32,6 +33,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
     private readonly JwtTokenService _jwtTokenService;
     private readonly IRequestContextService _requestContext;
     private readonly IOnboardingBypassFlagProvider _bypassFlagProvider;
+    private readonly TenantDbContextAccessor _tenantAccessor;
 
     public LoginCommandHandler(
         UserManager<AppUser> userManager,
@@ -43,7 +45,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         IUnitOfWork unitOfWork,
         JwtTokenService jwtTokenService,
         IRequestContextService requestContext,
-        IOnboardingBypassFlagProvider bypassFlagProvider)
+        IOnboardingBypassFlagProvider bypassFlagProvider,
+        TenantDbContextAccessor tenantAccessor)
     {
         _userManager = userManager;
         _organizationRepo = organizationRepo;
@@ -55,6 +58,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         _jwtTokenService = jwtTokenService;
         _requestContext = requestContext;
         _bypassFlagProvider = bypassFlagProvider;
+        _tenantAccessor = tenantAccessor;
     }
 
     /// <summary>
@@ -66,7 +70,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         CancellationToken cancellationToken)
     {
         var req = request.Request;
-        var identifier = req.Identifier?.Trim() ?? string.Empty;
+        var raw = req.Identifier?.Trim() ?? string.Empty;
+        // Normalise 03XXXXXXXXX → +923XXXXXXXXX so it matches stored +92 numbers.
+        var identifier = raw.Length == 11 && raw.StartsWith('0') ? "+92" + raw[1..] : raw;
         var isEmailIdentifier = identifier.Contains('@');
 
         // --- Step 1: Resolve user by phone (primary) or verified email (fallback per [M01-F09-R05]) ---
@@ -119,7 +125,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
         if (!user.OrganizationId.HasValue)
             return Result<AuthResponse>.Success(BuildAuthResponse(user, userRole, plainRefreshToken));
 
-        // User has org: load org (with stations) and resolve user's stations + active subscription
+        // User has org: seed the tenant context before any per-tenant repo call (no JWT claim yet at login time).
+        await _tenantAccessor.InitializeForOrgAsync(user.OrganizationId.Value, cancellationToken);
+
         var organization = await _organizationRepo.GetByIdWithStationsAsync(user.OrganizationId.Value, cancellationToken);
         if (organization == null)
             return Result<AuthResponse>.Failure("Organization not found.");

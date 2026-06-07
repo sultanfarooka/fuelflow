@@ -52,6 +52,23 @@ cd fuel-flow-web && npm install && npm run dev
 ./scripts/dev.ps1
 ```
 
+### Run the whole stack in Docker (one command)
+
+For a containerized run of Frontend + Backend + DB together (no local .NET/Node needed),
+use the root `docker-compose.yml`:
+
+```bash
+cp .env.example .env          # fill in POSTGRES_PASSWORD / JWT_SECRET / OTP_HASH_PEPPER
+docker compose up --build     # app at http://localhost
+```
+
+nginx serves the built SPA and reverse-proxies `/api` → the API (same-origin, so HTTP-only
+auth cookies work with no CORS). The API runs in `Production` mode but, for this local-HTTP
+profile, compose sets `Auth__CookieSecure=false` (cookies over plain HTTP) and
+`Database__MigrateOnStartup=true` (control-plane migrations applied on boot). With no SMS
+gateway, `Sms__Provider=console` prints signup OTPs to `docker compose logs api`. This is the
+full-stack runner; `server/docker-compose.yml` remains the DB-only dev DB used by `dev.ps1`.
+
 ## Multi-Tenancy Model
 
 Two EF Core DbContexts split by concern (M14 — all features Done):

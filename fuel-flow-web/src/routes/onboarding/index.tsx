@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { AlertCircle, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -126,9 +126,64 @@ function OnboardingWizard() {
     }
   }, [organization?.id])
 
+  // Browser back-button support: push synthetic history entries for each step so
+  // the back button goes to the previous step rather than leaving the wizard.
+  // From step 2 we skip past the original TanStack Router entry to the page before onboarding.
+  const currentStepRef = useRef(currentStep)
+  currentStepRef.current = currentStep
+  const isHandlingPopState = useRef(false)
+  const isSkippingThroughOnboarding = useRef(false)
+  const initialHistoryPushed = useRef(false)
+
+  useEffect(() => {
+    if (currentStep < 2) return
+
+    if (!initialHistoryPushed.current) {
+      // First time we know we're on step 2+: fill in all preceding entries so back
+      // works correctly even when resuming mid-wizard.
+      initialHistoryPushed.current = true
+      for (let s = 2; s <= currentStep; s++) {
+        window.history.pushState({ onboardingStep: s }, "")
+      }
+      return
+    }
+
+    if (isHandlingPopState.current) {
+      isHandlingPopState.current = false
+      return
+    }
+
+    window.history.pushState({ onboardingStep: currentStep }, "")
+  }, [currentStep])
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (isSkippingThroughOnboarding.current) {
+        isSkippingThroughOnboarding.current = false
+        return // let TanStack Router handle the URL change to the previous page
+      }
+
+      const step = currentStepRef.current
+      if (step > 2) {
+        isHandlingPopState.current = true
+        setCurrentStep((s) => s - 1)
+      } else if (step === 2) {
+        // We just popped to the original TanStack Router entry for /onboarding/.
+        // Go back one more so TanStack Router navigates to the actual previous page.
+        isSkippingThroughOnboarding.current = true
+        window.history.back()
+      }
+    }
+
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [])
+
   const goTo = (step: number) => setCurrentStep(step)
   const goNext = () => setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS))
-  const goBack = () => setCurrentStep((s) => Math.max(s - 1, 1))
+  // Step 1 creates the org — once it exists, back never returns there (it's already saved)
+  const minStep = organization ? 2 : 1
+  const goBack = () => setCurrentStep((s) => Math.max(s - 1, minStep))
 
   if (isResuming) {
     return (
@@ -239,11 +294,11 @@ function OnboardingWizard() {
           )}
 
           {currentStep === 6 && stationId && (
-            <StepOperations stationId={stationId} onNext={goNext} onBack={goBack} />
+            <StepOperations stationId={stationId} onNext={goNext} onBack={goBack} onSkip={goNext} />
           )}
 
-          {currentStep === 7 && (
-            <StepBankAccount onNext={goNext} onBack={goBack} onSkip={goNext} />
+          {currentStep === 7 && stationId && (
+            <StepBankAccount stationId={stationId} onNext={goNext} onBack={goBack} onSkip={goNext} />
           )}
 
           {currentStep === 8 && (
@@ -255,7 +310,7 @@ function OnboardingWizard() {
           )}
 
           {/* Fallback for missing stationId on steps 2-6, 9 */}
-          {(currentStep >= 2 && currentStep <= 6 && !stationId) ||
+          {(currentStep >= 2 && currentStep <= 7 && !stationId) ||
           (currentStep === 9 && !stationId) ? (
             <div className="rounded-xl border border-border p-6 text-center text-sm text-muted-foreground">
               {t("onboarding.stationNotFound")}

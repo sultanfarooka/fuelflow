@@ -178,6 +178,15 @@ public static class DependencyInjection
         // 5. Register MediatR (CQRS handlers from Infrastructure)
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(RegisterCommandHandler).Assembly));
 
+        // 5b. Control-plane boot migration (opt-in via Database:MigrateOnStartup — set by the
+        //     root docker-compose). Registered BEFORE DataSeeder so the control-plane schema
+        //     (Identity, Tenants, Subscriptions, reference data) exists before seeding and before
+        //     the tenant scan. Default off keeps the local `dotnet ef` workflow unchanged.
+        if (configuration.GetValue<bool>("Database:MigrateOnStartup"))
+        {
+            services.AddHostedService<ControlPlaneMigrationHostedService>();
+        }
+
         // 6. Data seeder (runs on startup, idempotent — seeds OMCs, OMCFuelTypes, SubscriptionPlans if not present)
         services.AddHostedService<DataSeeder>();
 

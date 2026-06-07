@@ -28,7 +28,7 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
 
         RuleFor(x => x.Phone)
             .NotEmpty().WithMessage("Phone number is required")
-            .Matches(@"^\+92\d{10}$").WithMessage("Phone must be in Pakistani format: +92XXXXXXXXXX");
+            .Matches(@"^(0\d{10}|\+92\d{10})$").WithMessage("Phone must be a Pakistani number: 03XXXXXXXXXX or +92XXXXXXXXXX");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password is required")

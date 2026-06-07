@@ -1,0 +1,80 @@
+# Full-stack runner: Frontend (nginx) + Backend (ASP.NET Core) + DB (PostgreSQL).
+#
+#   cp .env.example .env   # fill in the secrets
+#   docker compose up --build
+#   → app at http://localhost
+#
+# The DB-only dev compose at server/docker-compose.yml is unchanged and still used by
+# scripts/dev.ps1 for the local (non-container) workflow.
+name: fuelflow
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fuelflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: fuelflow_dev
+    # DB port is intentionally NOT published to the host: the API reaches it over the
+    # internal compose network (Host=db), and not publishing avoids clashing with the
+    # dev DB (server/docker-compose.yml) on 5433. To inspect from the host, either use
+    # `docker compose exec db psql -U fuelflow` or add `ports: ["5434:5432"]` here.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Grants the fuelflow role CREATEDB so TenantProvisioningService can CREATE DATABASE.
+      - ./server/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fuelflow -d fuelflow_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      # Tenant connection strings are derived from this by swapping the database name,
+      # keeping Host=db — so CREATE DATABASE and per-tenant routing stay on this server.
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=fuelflow_dev;Username=fuelflow;Password=${POSTGRES_PASSWORD}"
+      # Apply control-plane migrations on boot (no EF CLI in the runtime image).
+      Database__MigrateOnStartup: "true"
+      # Allow the auth cookie over plain HTTP (this profile has no TLS).
+      Auth__CookieSecure: "false"
+      Jwt__Secret: ${JWT_SECRET}
+      Jwt__Issuer: FuelFlow
+      Jwt__Audience: FuelFlow
+      # No real SMS gateway → OTPs are written to `docker compose logs api`.
+      Sms__Provider: console
+      Otp__HashPepper: ${OTP_HASH_PEPPER}
+      Features__OnboardingDevBypass: "false"
+      # Used in verification/reset email links.
+      FrontendUrl: http://localhost
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      # Give boot migrations + seeding time before failures count.
+      start_period: 40s
+
+  web:
+    build:
+      context: ./fuel-flow-web
+      args:
+        VITE_API_BASE_URL: /api/v1
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:

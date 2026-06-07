@@ -12,6 +12,6 @@ public class RequestPhoneChangeRequestValidator : AbstractValidator<RequestPhone
     {
         RuleFor(x => x.NewPhone)
             .NotEmpty().WithMessage("New phone number is required")
-            .Matches(@"^\+92\d{10}$").WithMessage("Phone must be in Pakistani format: +92XXXXXXXXXX");
+            .Matches(@"^(0\d{10}|\+92\d{10})$").WithMessage("Phone must be a Pakistani number: 03XXXXXXXXXX or +92XXXXXXXXXX");
     }
 }

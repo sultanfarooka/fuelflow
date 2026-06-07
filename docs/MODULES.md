@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-06 (priority & implementation-order system added)
+**Last Updated:** 2026-06-07 (M07-F08 Progressive Web App — Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -94,13 +94,13 @@ below is **independent** (its prerequisites are all `Done`).
 
 | # | Module | Next actionable item | Area |
 |---|---|---|---|
-| 1 | [M07](#m07--reporting--analytics) (order 2) | [M07-F07](#m07-f07--ui-shell) — UI shell (layout, sidebar, navigation); builds on shipped [M07-F09](#m07-f09--design-system--theme-foundation) | Frontend |
-| 2 | [M11](#m11--subscription--billing) (order 3) | [M11-F06](#m11-f06--feature-gating) — feature gating (API-level); then [M11-F08](#m11-f08--plan-comparison--pricing-page) pricing page | Backend + Frontend |
-| 3 | [M01](#m01--user--access-management) (order 4) | [M01-F05-R02](#m01-f05--roles--hierarchy)/[R03](#m01-f05--roles--hierarchy) + [M01-F06](#m01-f06--granular-permissions) — Owner→Manager→Custom users + granular permissions | Backend |
-| 4 | [M12](#m12--onboarding--first-run-experience) (order 5) | [M12-F01-R18](#m12-f01--onboarding-wizard)/[R19](#m12-f01--onboarding-wizard) — opening dip + opening meter readings in the wizard | Frontend + Backend |
-| 5 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
+| 1 | [M11](#m11--subscription--billing) (order 3) | [M11-F06](#m11-f06--feature-gating) — feature gating (API-level); then [M11-F08](#m11-f08--plan-comparison--pricing-page) pricing page | Backend + Frontend |
+| 2 | [M01](#m01--user--access-management) (order 4) | [M01-F05-R02](#m01-f05--roles--hierarchy)/[R03](#m01-f05--roles--hierarchy) + [M01-F06](#m01-f06--granular-permissions) — Owner→Manager→Custom users + granular permissions | Backend |
+| 3 | [M12](#m12--onboarding--first-run-experience) (order 5) | [M12-F01-R18](#m12-f01--onboarding-wizard)/[R19](#m12-f01--onboarding-wizard) — opening dip + opening meter readings in the wizard | Frontend + Backend |
+| 4 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
+| 5 | [M06](#m06--pricing--rate-management) (order 7) | [M06-F01](#m06-f01--price-configuration) — price configuration (one active price per fuel type per station) | Backend + Frontend |
 
-> First below the fold: [M06](#m06--pricing--rate-management) (order 7) → [M06-F01](#m06-f01--price-configuration) price configuration. For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
+> First below the fold: [M02](#m02--fuel-inventory--tank-control) (order 8) → [M02-F03](#m02-f03--underground-tank-management) underground tank management (visual stock display, reassignment). [M07](#m07--reporting--analytics) leaves the Top-5 now that [M07-F08](#m07-f08--progressive-web-app-pwa) (PWA) has shipped — its remaining reporting features (F01–F06) are all blocked on shift/sales data (M03/M04). For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
 >
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -1045,20 +1045,26 @@ At-a-glance summary widgets with comparison vs prior period.
 
 ---
 
-### M07-F06 — Consolidated All-Stations View   [Status: Planned]
+### M07-F06 — Consolidated All-Stations View   [Status: In Progress]
 
-Owner-only cross-station aggregation.
+Organization-level hub showing all stations as cards. Auto-redirects to the station dashboard when the org has exactly one station. No sidebar — minimal shell (top bar only). Multi-station users choose a station here before entering the sidebar-equipped station view.
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F06-R01 | Owner sees aggregated totals across all owned stations | — | Planned |
-| M07-F06-R02 | Drill-down from aggregate to individual station | — | Planned |
+| M07-F06-R01 | Single-station org auto-redirects to `/dashboard/station/:id` via `beforeLoad` | — | Done |
+| M07-F06-R02 | Multi-station org sees station-card grid with no sidebar | — | Done |
+| M07-F06-R03 | Aggregated totals across all owned stations (Owner analytics) | — | Planned |
+
+**Acceptance criteria:**
+- Single station + `isSetupComplete` → redirect to `/dashboard/station/:id` on `beforeLoad`
+- Multi-station → station-card grid, no sidebar, minimal top bar (org name + user menu + language/theme)
+- Card detail design deferred (currently shows name + placeholder description)
 
 ---
 
-### M07-F07 — UI Shell   [Status: Planned]
+### M07-F07 — UI Shell   [Status: Done]
 
 The cross-cutting layout that wraps every authenticated page: sidebar, top nav, content area, and route-guard composition. Provides the chrome that the per-module pages (M07-F01..F06, M05, M06, …) plug into. Built on top of the design system from [M07-F09](#m07-f09--design-system--theme-foundation).
 
@@ -1066,11 +1072,11 @@ The cross-cutting layout that wraps every authenticated page: sidebar, top nav, 
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Planned |
-| M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | Planned |
-| M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | Planned |
-| M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | Planned |
-| M07-F07-R05 | Active-route highlighting in sidebar | — | Planned |
+| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Done |
+| M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | Done |
+| M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | Done |
+| M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | Done |
+| M07-F07-R05 | Active-route highlighting in sidebar | — | Done |
 
 **Acceptance Criteria:**
 - **AC1** Given a Nozzleman, When they open the dashboard, Then the sidebar shows only shift-related links (no Finance, Reports, Settings).
@@ -1079,7 +1085,7 @@ The cross-cutting layout that wraps every authenticated page: sidebar, top nav, 
 
 ---
 
-### M07-F08 — Progressive Web App (PWA)   [Status: Planned]
+### M07-F08 — Progressive Web App (PWA)   [Status: Done]
 
 Make the app installable and offline-capable for shift operations on shared station tablets.
 
@@ -1087,10 +1093,16 @@ Make the app installable and offline-capable for shift operations on shared stat
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F08-R01 | Service worker caches the app shell for offline launch | — | Planned |
-| M07-F08-R02 | Web app manifest with icons + name supports "Add to Home Screen" | — | Planned |
-| M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | Planned |
+| M07-F08-R01 | Service worker caches the app shell for offline launch | — | Done |
+| M07-F08-R02 | Web app manifest with icons + name supports "Add to Home Screen" | — | Done |
+| M07-F08-R03 | API calls fail gracefully when offline (show retry banner, queue not required) | — | Done |
 | M07-F08-R04 | Web push notifications | — | Out of Scope (v2) |
+
+**Acceptance Criteria:**
+- **AC1 (R02)** Given a production build served by the preview server, When the app loads in Chromium, Then a valid `manifest.webmanifest` is served with `name = "Fuel Flow"`, `display = "standalone"`, a `theme_color`, and icons including 192px, 512px, and a `purpose: "maskable"` entry; the manifest parses with no errors and meets the browser's installability criteria.
+- **AC2 (R01)** Given the app has loaded once (service worker installed, shell precached), When the network is offline and the user reloads/relaunches, Then the app shell renders (no browser "you're offline" error page).
+- **AC3 (R03)** Given the app is running, When the network goes offline (or an API call fails with a network error), Then a single global offline retry banner appears on the current screen and data requests fail gracefully with no crash; When connectivity returns, Then the banner auto-dismisses.
+- **AC4 (R01)** Given a new build is deployed (new precache revision), When an installed client next reloads/navigates, Then the new service worker takes over and the client runs the new version without a manual cache clear (`registerType: autoUpdate`).
 
 ---
 
@@ -2014,14 +2026,14 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | Order | ID | Feature | Tier | Status | Depends on | ★ |
 |---|---|---|---|---|---|---|
 | 2.1 | M07-F09 | Design System & Theme Foundation | P0 | Done | — | |
-| 2.2 | M07-F07 | UI Shell | P0 | Planned | — (F09 ✓) | ★ |
-| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Planned | M07-F07 | |
-| 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | |
+| 2.2 | M07-F07 | UI Shell | P0 | Done | — (F09 ✓) | |
+| 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Done | M07-F07 ✓ | |
+| 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | ★ |
 | 2.5 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
 | 2.6 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
 | 2.7 | M07-F03 | Financial Reports | P2 | Planned | M04/M05 | |
 | 2.8 | M07-F04 | Export & Automation | P2 | Planned | F01–F03 + M11-F06 | |
-| 2.9 | M07-F06 | Consolidated All-Stations View | P2 | Planned | F01/F05 | |
+| 2.9 | M07-F06 | Consolidated All-Stations View | P2 | In Progress | F01/F05 | |
 
 ### Order 3 — M11 Subscription & Billing  ·  P0
 

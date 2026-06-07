@@ -17,12 +17,16 @@ components/
 │   ├── select.tsx         # Select / Trigger / Content / Item / Value / Label / Separator (Radix)
 │   ├── separator.tsx      # Horizontal / vertical divider
 │   ├── sheet.tsx          # Sheet / Trigger / Content (left/right/top/bottom) / Header / Title / Description / Footer / Close
+│   ├── sidebar.tsx        # shadcn Sidebar block (Provider/Sidebar/Inset/Trigger/Menu…) — vendored; collapse + mobile drawer + state persistence [M07-F07]
+│   ├── skeleton.tsx       # Loading skeleton (used by SidebarMenuSkeleton)
 │   ├── sonner.tsx         # Toaster wrapper for Sonner; passes design tokens via style={} (sanctioned exception — see below)
 │   ├── table.tsx          # Table / Header / Body / Footer / Row / Head / Cell / Caption
 │   ├── tabs.tsx           # Tabs / List / Trigger / Content (Radix)
 │   ├── tooltip.tsx        # Tooltip / TooltipTrigger / TooltipContent (requires TooltipProvider mounted in main.tsx)
 │   └── icons/
 │       └── google-icon.tsx  # OAuth-spec brand icon — sanctioned hex literals
+├── layout/               # [M07-F07] App shell: app-shell.tsx (SidebarProvider + top bar + Outlet), app-sidebar.tsx (role-aware nav + active highlight), station-switcher.tsx, nav-config.ts (pure getNavItems)
+├── common/               # Cross-feature components: coming-soon.tsx (stub-page placeholder)
 ├── auth/                  # Auth form components (TanStack Form + Zod)
 │   ├── login-form.tsx
 │   ├── register-form.tsx
@@ -49,7 +53,7 @@ components/
 **Decision flow:**
 
 1. **Does the primitive exist in `ui/`?** → Use it. Do not reinvent buttons, cards, inputs, dropdowns, dialogs, tables, tabs, tooltips, alerts, badges, etc.
-2. **Does shadcn publish it but we haven't installed it?** → `npx shadcn@latest add <name>` and use it.
+2. **Does shadcn publish it but we haven't installed it?** → `npx shadcn@latest add <name>` and use it. **Exception:** `select` — `components.json` is set to `style: "radix-mira"` so the CLI reinstalls the radix-mira variant (dark scoped popup, compact sizes). Our `ui/select.tsx` is a hand-maintained standard-shadcn implementation (theme-aware, `h-10` default, `popper` position, check on left). **Never run `npx shadcn add select` — it will overwrite it.**
 3. **Is it a composition of primitives?** → Build a feature component in the appropriate subfolder (`auth/`, `station-setup/`, etc.) that *uses* primitives. Examples: `<LoginForm />` (composes Field + Input + Button + Alert), `<Step3Tanks />` (composes Card + Form + Select + Button).
 4. **Is it genuinely novel UI not expressible via primitives?** → Build a one-off component co-located with the feature; still respect the theming rules below.
 
@@ -129,6 +133,7 @@ These are the **only** places the audit grep allows non-token colour / `style={}
 |---|---|---|
 | `ui/icons/google-icon.tsx` | 4 hex literals (`#4285F4`, `#34A853`, `#FBBC05`, `#EA4335`) | Google's brand guidelines mandate exact hex values for OAuth buttons. Replacing with tokens would violate brand spec. |
 | `ui/sonner.tsx` | `style={{ "--normal-bg": "var(--popover)", ... }}` | shadcn-canonical Sonner integration. The `style` prop passes design *tokens* into Sonner's CSS-variable theming API — not raw colours. |
+| `ui/sidebar.tsx` | physical `left/right` utilities keyed to `data-[side=left|right]` (e.g. `data-[side=left]:left-0`, `transition-[left,right,width]`) | Vendored shadcn Sidebar block (preset `b3lVLqquH`). Its desktop fixed-positioning is keyed to its own dual-side coordinate system and ships with `rtl:` overrides for transforms + logical utilities (`start`/`end`, `ms-`) elsewhere. We anchor a single sidebar at inline-start (`side="left"`, the default) and do not hand-rewrite the primitive. All *our* shell components (`layout/*`) use logical utilities. |
 | `assets/react.svg` | hex inside SVG | React's brand asset. Untouched. |
 
 Any new exception requires: (a) a comment in the file justifying it, (b) an entry added to this table, (c) reviewer sign-off.
@@ -184,6 +189,37 @@ const mutation = useMutation({
 - Other forms: `onBlur` / `onChange` validators are fine.
 - Server errors: display as toast **and** inline `<Alert variant="destructive">` (toasts disappear; alerts persist).
 - Always use `FormTextField` from `forms/` for text inputs — don't build custom wrappers.
+- Always use `FormSelectField` from `forms/` for Select fields — pass `<SelectItem>` children and it handles Field, label, error, description, and aria wiring identically to `FormTextField`. No `size` prop needed; the trigger is `h-10` by default which matches `FormTextField size="lg"` on onboarding forms and is appropriate for in-app forms too.
+
+## Form sizing convention
+
+This project uses a compact component scale by default (the radix-mira preset). `Button` and `Input` default to `h-7` (28 px) — correct for data-dense UIs like tables, toolbars, and sidebar controls. Auth and onboarding forms need more breathing room.
+
+| Context | Button size | FormTextField / FormSelectField size | When to use |
+|---|---|---|---|
+| **Auth / onboarding forms** | `size="lg"` | `size="lg"` | Full-page forms with a single focus: login, register, onboarding, reset-password |
+| **In-app forms** (dialogs, sheets, inline) | `size="default"` *(omit prop)* | `size="default"` *(omit prop)* | Data-entry inside the app shell: create station, set price, open shift |
+| **Toolbars / table actions** | `size="sm"` or `size="default"` | — | Compact controls inside a data-dense screen |
+
+**Rules:**
+- All buttons, `FormTextField`, and `FormSelectField` fields in `components/auth/` must use `size="lg"`. No exceptions.
+- In-app forms use the default compact size — do not add `size="lg"` inside dialogs or sheets.
+- Never mix sizes within a single form — pick one level and apply it to every field and button.
+- `Input` and `SelectTrigger` also support `size` (`"default"` | `"lg"`). When building a custom field that wraps either directly (not via the Form* wrappers), follow the same rule.
+
+```tsx
+// ✅ Auth form — full-page, single focus
+<FormTextField field={field} label="Phone" size="lg" ... />
+<Button type="submit" size="lg">Sign in</Button>
+
+// ✅ In-app form — dialog / sheet
+<FormTextField field={field} label="Station name" ... />  {/* default */}
+<Button type="submit">Save</Button>                       {/* default */}
+
+// ❌ Mixed sizes in one form — don't do this
+<FormTextField field={field} label="Name" size="lg" ... />
+<Button type="submit">Save</Button>   {/* default — inconsistent */}
+```
 
 ## Dialog / Sheet patterns
 
@@ -220,6 +256,30 @@ Charts must use the token CSS variables so dark mode works automatically:
 ```
 
 Chart colours `--chart-1` … `--chart-5` are defined in `index.css` for both themes. **Never hardcode hex values** in chart props.
+
+## App shell & navigation (M07-F07)
+
+The authenticated layout lives in `components/layout/`. Every authenticated route
+tree (`dashboard/route.tsx`, `settings/route.tsx`) renders `<AppShell />` as its
+`component`; the route's `beforeLoad` keeps the auth/onboarding/role guard.
+
+| Piece | Responsibility |
+|---|---|
+| `app-shell.tsx` | `SidebarProvider` + `<AppSidebar />` + top bar (`SidebarTrigger`, `StationSwitcher`, `LanguageSwitch`, `ModeToggle`, user menu) + `SidebarInset` with the dev-bypass banner slot and `<Outlet />`. Syncs the active station from the route `stationId` param. |
+| `app-sidebar.tsx` | Renders `getNavItems(...)` through the Sidebar primitive; active-route highlighting via `useRouterState().location.pathname`. Presentation only. |
+| `nav-config.ts` | **Pure** `getNavItems(roles, activeStationId)` — the single source of nav visibility. Role + scope filtering, no React. Unit-test this for role rules. |
+| `station-switcher.tsx` | Lists stations + "All Stations"; sets `activeStationId` (ui-store) and navigates. |
+
+**Rules:**
+- Add a nav link by editing `NAV_CATALOGUE` in `nav-config.ts` (icon, `labelKey`,
+  `to`, `roles`, `scope`) — never hard-code links in `app-sidebar.tsx`.
+- Role gating is UX only; the matching route still needs its own `beforeLoad`
+  role guard (`requireRoles` in `lib/route-guards.ts`) and the API enforces access.
+- Active station is **client UI state** in `stores/ui-store.ts` (not the auth
+  store, not a query). `null` = "All Stations" → station-scoped nav hidden.
+- New module pages mount inside the shell automatically — just add the route
+  file and its `nav-config` entry; replace the `<ComingSoon />` stub with content.
+- Icons: prefer Tabler (`@tabler/icons-react`, preset default) for new shell code.
 
 ## Subscription UI components (planned)
 

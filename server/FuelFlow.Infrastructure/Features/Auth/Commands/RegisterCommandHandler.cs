@@ -61,10 +61,13 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
         var req = request.Request;
         var hasEmail = !string.IsNullOrWhiteSpace(req.Email);
 
+        // Normalise phone to international format before any DB operation.
+        var phone = NormalizePhone(req.Phone);
+
         // --- Step 1: Phone uniqueness ([M01-F09-R02]) ---
         var phoneTaken = await _userManager.Users
             .AsNoTracking()
-            .AnyAsync(u => u.PhoneNumber == req.Phone, cancellationToken);
+            .AnyAsync(u => u.PhoneNumber == phone, cancellationToken);
         if (phoneTaken)
             return Result<RegisterResponse>.Failure("An account with this phone number already exists.");
 
@@ -81,9 +84,9 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
             // --- Step 3: Create AppUser. UserName = phone (always present); email optional ---
             var user = new AppUser
             {
-                UserName = req.Phone,
+                UserName = phone,
                 Email = hasEmail ? req.Email : null,
-                PhoneNumber = req.Phone,
+                PhoneNumber = phone,
                 PhoneNumberConfirmed = false,
                 FullName = req.FullName,
                 OrganizationId = null,
@@ -151,8 +154,14 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Registration failed for phone {Phone}", req.Phone);
+            _logger.LogError(ex, "Registration failed for phone {Phone}", phone);
             return Result<RegisterResponse>.Failure("An error occurred while creating your account. Please try again later.");
         }
+    }
+
+    private static string NormalizePhone(string phone)
+    {
+        var t = phone.Trim();
+        return t.Length == 11 && t.StartsWith('0') ? "+92" + t[1..] : t;
     }
 }

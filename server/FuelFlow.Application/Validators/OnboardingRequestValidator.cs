@@ -26,7 +26,7 @@ public class OnboardingRequestValidator : AbstractValidator<OnboardingRequest>
             .When(x => !string.IsNullOrWhiteSpace(x.Address));
 
         RuleFor(x => x.Phone)
-            .Matches(@"^\+92\d{10}$").WithMessage("Phone must be in Pakistani format: +92XXXXXXXXXX.")
+            .Matches(@"^(0\d{10}|\+92\d{10})$").WithMessage("Phone must be a Pakistani number: 03XXXXXXXXXX or +92XXXXXXXXXX.")
             .When(x => !string.IsNullOrWhiteSpace(x.Phone));
 
         RuleFor(x => x.LogoUrl)

@@ -4,6 +4,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "@/components/theme-provider";
+import { OfflineBanner } from "@/components/common/offline-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { setupAuthFailureHandler } from "@/lib/api/client";
@@ -50,6 +51,7 @@ if (!rootElement.innerHTML) {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider delayDuration={300}>
             <RouterProvider router={router} />
+            <OfflineBanner />
             <Toaster />
             <ReactQueryDevtools initialIsOpen={false} />
           </TooltipProvider>
