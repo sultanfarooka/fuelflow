@@ -284,6 +284,24 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// POST /api/v1/auth/activate
+    /// Public endpoint — one-step activation for an invited sub-user ([M01-F05-R02], [M01-F09-R07]):
+    /// verifies the signup OTP and sets the first password together. Resend the code via
+    /// /auth/resend-otp.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("activate")]
+    public async Task<IActionResult> Activate([FromBody] ActivateAccountRequest request)
+    {
+        var result = await _mediator.Send(new ActivateAccountCommand(request));
+
+        if (!result.IsSuccess)
+            return BadRequest(new { success = false, error = result.Error });
+
+        return Ok(new { success = true, data = result.Data });
+    }
+
+    /// <summary>
     /// POST /api/v1/auth/logout
     /// Public endpoint — revokes the refresh token (from cookie or body). Clears auth cookies.
     /// </summary>

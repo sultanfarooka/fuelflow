@@ -11,4 +11,18 @@ public interface IUserStationRepository
 
     /// <summary>User IDs assigned to the station (for station employees list).</summary>
     Task<List<Guid>> GetUserIdsByStationIdAsync(Guid stationId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Stage new user→station assignment rows ([M01-F05-R02]). Tuple signature keeps
+    /// Application free of the Infrastructure <c>UserStation</c> type. Does not call
+    /// SaveChanges — commit via <see cref="IUnitOfWork"/>. Calling this initializes the
+    /// tenant context so UnitOfWork flushes it.
+    /// </summary>
+    Task AddRangeAsync(IEnumerable<(Guid userId, Guid stationId)> rows, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Stage deletion of every assignment row for a user ([M01-F05-R02] compensation path).
+    /// Does not call SaveChanges — commit via <see cref="IUnitOfWork"/>.
+    /// </summary>
+    Task RemoveByUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }

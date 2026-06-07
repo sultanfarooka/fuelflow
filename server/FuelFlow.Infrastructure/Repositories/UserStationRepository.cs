@@ -30,4 +30,22 @@ public class UserStationRepository : IUserStationRepository
             .Select(us => us.UserId)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task AddRangeAsync(IEnumerable<(Guid userId, Guid stationId)> rows, CancellationToken cancellationToken = default)
+    {
+        // GetContextAsync pins the tenant accessor so UnitOfWork will flush these rows.
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        var entities = rows.Select(r => new UserStation { UserId = r.userId, StationId = r.stationId });
+        await ctx.UserStations.AddRangeAsync(entities, cancellationToken);
+    }
+
+    public async Task RemoveByUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        var existing = await ctx.UserStations
+            .Where(us => us.UserId == userId)
+            .ToListAsync(cancellationToken);
+        if (existing.Count > 0)
+            ctx.UserStations.RemoveRange(existing);
+    }
 }
