@@ -26,7 +26,7 @@ components/
 │   └── icons/
 │       └── google-icon.tsx  # OAuth-spec brand icon — sanctioned hex literals
 ├── layout/               # [M07-F07] App shell: app-shell.tsx (SidebarProvider + top bar + Outlet), app-sidebar.tsx (role-aware nav + active highlight), station-switcher.tsx, nav-config.ts (pure getNavItems)
-├── common/               # Cross-feature components: coming-soon.tsx (stub-page placeholder)
+├── common/               # Cross-feature components: coming-soon.tsx (M07-F07 stub), under-development.tsx (M07-F10 richer placeholder with moduleName/icon/description props)
 ├── auth/                  # Auth form components (TanStack Form + Zod)
 │   ├── login-form.tsx
 │   ├── register-form.tsx
@@ -287,12 +287,12 @@ Needed for [M11-F02](../../../docs/MODULES.md#m11-f02--trial-period), [M11-F06](
 
 | Component | Location | Purpose |
 |---|---|---|
+| `<UpgradePrompt />` | `subscription/upgrade-prompt.tsx` | Lock icon + "Upgrade to Professional" prompt for Pro+-gated module pages; links to `/pricing` (M11-F08). Props: `featureName`, optional `description`. **Added in M07-F10.** |
 | `<TrialBanner />` | `subscription/trial-banner.tsx` | Top of dashboard layout while subscription is trial; days remaining + Upgrade CTA |
-| `<UpgradePrompt />` | `subscription/upgrade-prompt.tsx` | Inline lock-icon + message for gated features; links to `/settings/subscription` |
 | `<PlanCard />` | `subscription/plan-card.tsx` | Single plan tile for `/pricing` (M11-F08); variants Starter / Professional / Enterprise |
 | `<BillingToggle />` | `subscription/billing-toggle.tsx` | Monthly / Yearly switch on `/pricing` |
 
-These don't exist yet — add when implementing M11-F08 / M11-F02 UI.
+`<UpgradePrompt />` was added by M07-F10 and lives at `subscription/upgrade-prompt.tsx`. The remaining three don't exist yet — add when implementing M11-F08 / M11-F02 UI.
 
 ## Compliant vs non-compliant examples
 
