@@ -33,8 +33,14 @@ import { Route as DashboardAccountPhoneRouteImport } from './routes/dashboard/ac
 import { Route as DashboardStationStationIdShiftsRouteImport } from './routes/dashboard/station.$stationId.shifts'
 import { Route as DashboardStationStationIdSetupRouteImport } from './routes/dashboard/station.$stationId.setup'
 import { Route as DashboardStationStationIdReportsRouteImport } from './routes/dashboard/station.$stationId.reports'
+import { Route as DashboardStationStationIdPricingRouteImport } from './routes/dashboard/station.$stationId.pricing'
+import { Route as DashboardStationStationIdNozzlesRouteImport } from './routes/dashboard/station.$stationId.nozzles'
 import { Route as DashboardStationStationIdInventoryRouteImport } from './routes/dashboard/station.$stationId.inventory'
 import { Route as DashboardStationStationIdFinanceRouteImport } from './routes/dashboard/station.$stationId.finance'
+import { Route as DashboardStationStationIdCreditRouteImport } from './routes/dashboard/station.$stationId.credit'
+import { Route as DashboardStationStationIdAdminUsersRouteImport } from './routes/dashboard/station.$stationId.admin.users'
+import { Route as DashboardStationStationIdAdminStaffRouteImport } from './routes/dashboard/station.$stationId.admin.staff'
+import { Route as DashboardStationStationIdAdminLubricantsRouteImport } from './routes/dashboard/station.$stationId.admin.lubricants'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -161,6 +167,18 @@ const DashboardStationStationIdReportsRoute =
     path: '/reports',
     getParentRoute: () => DashboardStationStationIdRoute,
   } as any)
+const DashboardStationStationIdPricingRoute =
+  DashboardStationStationIdPricingRouteImport.update({
+    id: '/pricing',
+    path: '/pricing',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
+const DashboardStationStationIdNozzlesRoute =
+  DashboardStationStationIdNozzlesRouteImport.update({
+    id: '/nozzles',
+    path: '/nozzles',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
 const DashboardStationStationIdInventoryRoute =
   DashboardStationStationIdInventoryRouteImport.update({
     id: '/inventory',
@@ -171,6 +189,30 @@ const DashboardStationStationIdFinanceRoute =
   DashboardStationStationIdFinanceRouteImport.update({
     id: '/finance',
     path: '/finance',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
+const DashboardStationStationIdCreditRoute =
+  DashboardStationStationIdCreditRouteImport.update({
+    id: '/credit',
+    path: '/credit',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
+const DashboardStationStationIdAdminUsersRoute =
+  DashboardStationStationIdAdminUsersRouteImport.update({
+    id: '/admin/users',
+    path: '/admin/users',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
+const DashboardStationStationIdAdminStaffRoute =
+  DashboardStationStationIdAdminStaffRouteImport.update({
+    id: '/admin/staff',
+    path: '/admin/staff',
+    getParentRoute: () => DashboardStationStationIdRoute,
+  } as any)
+const DashboardStationStationIdAdminLubricantsRoute =
+  DashboardStationStationIdAdminLubricantsRouteImport.update({
+    id: '/admin/lubricants',
+    path: '/admin/lubricants',
     getParentRoute: () => DashboardStationStationIdRoute,
   } as any)
 
@@ -196,11 +238,17 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
   '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
+  '/dashboard/station/$stationId/nozzles': typeof DashboardStationStationIdNozzlesRoute
+  '/dashboard/station/$stationId/pricing': typeof DashboardStationStationIdPricingRoute
   '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
   '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
+  '/dashboard/station/$stationId/admin/lubricants': typeof DashboardStationStationIdAdminLubricantsRoute
+  '/dashboard/station/$stationId/admin/staff': typeof DashboardStationStationIdAdminStaffRoute
+  '/dashboard/station/$stationId/admin/users': typeof DashboardStationStationIdAdminUsersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -221,11 +269,17 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
   '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
+  '/dashboard/station/$stationId/nozzles': typeof DashboardStationStationIdNozzlesRoute
+  '/dashboard/station/$stationId/pricing': typeof DashboardStationStationIdPricingRoute
   '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
   '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
+  '/dashboard/station/$stationId/admin/lubricants': typeof DashboardStationStationIdAdminLubricantsRoute
+  '/dashboard/station/$stationId/admin/staff': typeof DashboardStationStationIdAdminStaffRoute
+  '/dashboard/station/$stationId/admin/users': typeof DashboardStationStationIdAdminUsersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -250,11 +304,17 @@ export interface FileRoutesById {
   '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
   '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
+  '/dashboard/station/$stationId/nozzles': typeof DashboardStationStationIdNozzlesRoute
+  '/dashboard/station/$stationId/pricing': typeof DashboardStationStationIdPricingRoute
   '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
   '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
+  '/dashboard/station/$stationId/admin/lubricants': typeof DashboardStationStationIdAdminLubricantsRoute
+  '/dashboard/station/$stationId/admin/staff': typeof DashboardStationStationIdAdminStaffRoute
+  '/dashboard/station/$stationId/admin/users': typeof DashboardStationStationIdAdminUsersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -280,11 +340,17 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
     | '/dashboard/station/$stationId/inventory'
+    | '/dashboard/station/$stationId/nozzles'
+    | '/dashboard/station/$stationId/pricing'
     | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
     | '/dashboard/station/$stationId/shifts'
+    | '/dashboard/station/$stationId/admin/lubricants'
+    | '/dashboard/station/$stationId/admin/staff'
+    | '/dashboard/station/$stationId/admin/users'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -305,11 +371,17 @@ export interface FileRouteTypes {
     | '/settings'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
     | '/dashboard/station/$stationId/inventory'
+    | '/dashboard/station/$stationId/nozzles'
+    | '/dashboard/station/$stationId/pricing'
     | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
     | '/dashboard/station/$stationId/shifts'
+    | '/dashboard/station/$stationId/admin/lubricants'
+    | '/dashboard/station/$stationId/admin/staff'
+    | '/dashboard/station/$stationId/admin/users'
   id:
     | '__root__'
     | '/'
@@ -333,11 +405,17 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
     | '/dashboard/station/$stationId/inventory'
+    | '/dashboard/station/$stationId/nozzles'
+    | '/dashboard/station/$stationId/pricing'
     | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
     | '/dashboard/station/$stationId/shifts'
+    | '/dashboard/station/$stationId/admin/lubricants'
+    | '/dashboard/station/$stationId/admin/staff'
+    | '/dashboard/station/$stationId/admin/users'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -519,6 +597,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStationStationIdReportsRouteImport
       parentRoute: typeof DashboardStationStationIdRoute
     }
+    '/dashboard/station/$stationId/pricing': {
+      id: '/dashboard/station/$stationId/pricing'
+      path: '/pricing'
+      fullPath: '/dashboard/station/$stationId/pricing'
+      preLoaderRoute: typeof DashboardStationStationIdPricingRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
+    '/dashboard/station/$stationId/nozzles': {
+      id: '/dashboard/station/$stationId/nozzles'
+      path: '/nozzles'
+      fullPath: '/dashboard/station/$stationId/nozzles'
+      preLoaderRoute: typeof DashboardStationStationIdNozzlesRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
     '/dashboard/station/$stationId/inventory': {
       id: '/dashboard/station/$stationId/inventory'
       path: '/inventory'
@@ -531,6 +623,34 @@ declare module '@tanstack/react-router' {
       path: '/finance'
       fullPath: '/dashboard/station/$stationId/finance'
       preLoaderRoute: typeof DashboardStationStationIdFinanceRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
+    '/dashboard/station/$stationId/credit': {
+      id: '/dashboard/station/$stationId/credit'
+      path: '/credit'
+      fullPath: '/dashboard/station/$stationId/credit'
+      preLoaderRoute: typeof DashboardStationStationIdCreditRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
+    '/dashboard/station/$stationId/admin/users': {
+      id: '/dashboard/station/$stationId/admin/users'
+      path: '/admin/users'
+      fullPath: '/dashboard/station/$stationId/admin/users'
+      preLoaderRoute: typeof DashboardStationStationIdAdminUsersRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
+    '/dashboard/station/$stationId/admin/staff': {
+      id: '/dashboard/station/$stationId/admin/staff'
+      path: '/admin/staff'
+      fullPath: '/dashboard/station/$stationId/admin/staff'
+      preLoaderRoute: typeof DashboardStationStationIdAdminStaffRouteImport
+      parentRoute: typeof DashboardStationStationIdRoute
+    }
+    '/dashboard/station/$stationId/admin/lubricants': {
+      id: '/dashboard/station/$stationId/admin/lubricants'
+      path: '/admin/lubricants'
+      fullPath: '/dashboard/station/$stationId/admin/lubricants'
+      preLoaderRoute: typeof DashboardStationStationIdAdminLubricantsRouteImport
       parentRoute: typeof DashboardStationStationIdRoute
     }
   }
@@ -567,23 +687,40 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface DashboardStationStationIdRouteChildren {
+  DashboardStationStationIdCreditRoute: typeof DashboardStationStationIdCreditRoute
   DashboardStationStationIdFinanceRoute: typeof DashboardStationStationIdFinanceRoute
   DashboardStationStationIdInventoryRoute: typeof DashboardStationStationIdInventoryRoute
+  DashboardStationStationIdNozzlesRoute: typeof DashboardStationStationIdNozzlesRoute
+  DashboardStationStationIdPricingRoute: typeof DashboardStationStationIdPricingRoute
   DashboardStationStationIdReportsRoute: typeof DashboardStationStationIdReportsRoute
   DashboardStationStationIdSetupRoute: typeof DashboardStationStationIdSetupRoute
   DashboardStationStationIdShiftsRoute: typeof DashboardStationStationIdShiftsRoute
+  DashboardStationStationIdAdminLubricantsRoute: typeof DashboardStationStationIdAdminLubricantsRoute
+  DashboardStationStationIdAdminStaffRoute: typeof DashboardStationStationIdAdminStaffRoute
+  DashboardStationStationIdAdminUsersRoute: typeof DashboardStationStationIdAdminUsersRoute
 }
 
 const DashboardStationStationIdRouteChildren: DashboardStationStationIdRouteChildren =
   {
+    DashboardStationStationIdCreditRoute: DashboardStationStationIdCreditRoute,
     DashboardStationStationIdFinanceRoute:
       DashboardStationStationIdFinanceRoute,
     DashboardStationStationIdInventoryRoute:
       DashboardStationStationIdInventoryRoute,
+    DashboardStationStationIdNozzlesRoute:
+      DashboardStationStationIdNozzlesRoute,
+    DashboardStationStationIdPricingRoute:
+      DashboardStationStationIdPricingRoute,
     DashboardStationStationIdReportsRoute:
       DashboardStationStationIdReportsRoute,
     DashboardStationStationIdSetupRoute: DashboardStationStationIdSetupRoute,
     DashboardStationStationIdShiftsRoute: DashboardStationStationIdShiftsRoute,
+    DashboardStationStationIdAdminLubricantsRoute:
+      DashboardStationStationIdAdminLubricantsRoute,
+    DashboardStationStationIdAdminStaffRoute:
+      DashboardStationStationIdAdminStaffRoute,
+    DashboardStationStationIdAdminUsersRoute:
+      DashboardStationStationIdAdminUsersRoute,
   }
 
 const DashboardStationStationIdRouteWithChildren =

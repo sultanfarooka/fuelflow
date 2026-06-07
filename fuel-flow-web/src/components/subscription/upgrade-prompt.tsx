@@ -1,9 +1,11 @@
 /**
  * [M07-F10-R04/R05] Shown when a Starter-plan user navigates to a Pro+-gated
  * module. Links to the public pricing page (/pricing, M11-F08).
+ *
+ * Uses a plain <a> because the /pricing route is not yet in the router tree
+ * (M11-F08 planned). Update to <Link to="/pricing"> once M11-F08 ships.
  */
 import { IconLock } from "@tabler/icons-react"
-import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
@@ -43,7 +45,7 @@ export function UpgradePrompt({ featureName, description }: UpgradePromptProps) 
         )}
         <CardContent>
           <Button asChild>
-            <Link to="/pricing">{t("upgradePrompt.cta")}</Link>
+            <a href="/pricing">{t("upgradePrompt.cta")}</a>
           </Button>
         </CardContent>
       </Card>

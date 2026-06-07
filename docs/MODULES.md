@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-07 (M07-F10 Complete Navigation Catalog — In Progress)
+**Last Updated:** 2026-06-07 (M07-F10 Complete Navigation Catalog — Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -1072,7 +1072,7 @@ The cross-cutting layout that wraps every authenticated page: sidebar, top nav, 
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Done |
+| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Done · refined by [M07-F10-R02] |
 | M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | Done |
 | M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | Done |
 | M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | Done |
@@ -1134,7 +1134,7 @@ Provides the shadcn-based design tokens, theme preset, component primitives, dar
 
 ---
 
-### M07-F10 — Complete Navigation Catalog & Module Placeholder Pages   [Status: In Progress]
+### M07-F10 — Complete Navigation Catalog & Module Placeholder Pages   [Status: Done]
 
 > _Discovery (2026-06-07): user request — building out the station dashboard · outcome = every authenticated user sees the full product navigation from day one; unbuilt modules show an "Under Development" page; plan-gated modules show an "Upgrade to Pro+" prompt · maps to ProjectOverView §7.7 (platform UI) · cost-of-not-building: sidebar stays sparse while modules are built; users can't discover the product roadmap_
 
@@ -1163,11 +1163,11 @@ Defines the complete sidebar nav item catalog for the station dashboard: which i
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F10-R01 | Sidebar renders all nav items from the catalog above, organized in labeled groups | — | In Progress |
-| M07-F10-R02 | Owner and Manager see all items in their columns. Custom Users see Dashboard always; all other items appear only when the user has been granted at least View permission for that module via [M01-F06](#m01-f06--granular-permissions); Admin group items are never shown to Custom Users | — | In Progress |
-| M07-F10-R03 | Clicking a nav item whose module has no built routes renders a shared "Under Development" placeholder page: module name, brief description, and a "coming soon" note | — | In Progress |
-| M07-F10-R04 | Plan-gated nav items (Staff & Payroll, Lubricants / Oil Shop) for Starter-plan users render an "Upgrade to Professional" prompt page with a link to [M11-F08](#m11-f08--plan-comparison--pricing-page); plan gate takes precedence over under-development state | — | In Progress |
-| M07-F10-R05 | "Under Development" and "Upgrade" prompts are shared components; module name, icon, and description are passed as props — no per-module pages | — | In Progress |
+| M07-F10-R01 | Sidebar renders all nav items from the catalog above, organized in labeled groups | — | Done |
+| M07-F10-R02 | Owner and Manager see all items in their columns. Custom Users see Dashboard always; all other items appear only when the user has been granted at least View permission for that module via [M01-F06](#m01-f06--granular-permissions); Admin group items are never shown to Custom Users | — | Done |
+| M07-F10-R03 | Clicking a nav item whose module has no built routes renders a shared "Under Development" placeholder page: module name, brief description, and a "coming soon" note | — | Done |
+| M07-F10-R04 | Plan-gated nav items (Staff & Payroll, Lubricants / Oil Shop) for Starter-plan users render an "Upgrade to Professional" prompt page with a link to [M11-F08](#m11-f08--plan-comparison--pricing-page); plan gate takes precedence over under-development state | — | Done |
+| M07-F10-R05 | "Under Development" and "Upgrade" prompts are shared components; module name, icon, and description are passed as props — no per-module pages | — | Done |
 
 **Acceptance Criteria:**
 - **AC1** Given a Custom User with only M04 (Shifts) and M03 (Nozzle Operations) permissions, when they view the sidebar, then only Dashboard, Shifts, and Nozzle Operations appear — all other items are absent.
@@ -2072,8 +2072,8 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | 2.1 | M07-F09 | Design System & Theme Foundation | P0 | Done | — | |
 | 2.2 | M07-F07 | UI Shell | P0 | Done | — (F09 ✓) | |
 | 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Done | M07-F07 ✓ | |
-| 2.4 | M07-F10 | Complete Navigation Catalog & Module Placeholder Pages | P1 | In Progress | M07-F07 ✓ | ★ |
-| 2.5 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | |
+| 2.4 | M07-F10 | Complete Navigation Catalog & Module Placeholder Pages | P1 | Done | M07-F07 ✓ | |
+| 2.5 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | ★ |
 | 2.6 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
 | 2.7 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
 | 2.8 | M07-F03 | Financial Reports | P2 | Planned | M04/M05 | |
