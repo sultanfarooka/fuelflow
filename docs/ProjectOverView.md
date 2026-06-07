@@ -427,6 +427,16 @@ A consistent shadcn-based design system underpins every screen in the applicatio
 | RTL                 | Layout flips when locale switches to Urdu (per §8.5)                |
 | Going-Forward Rules | Documented in `fuel-flow-web/src/components/CLAUDE.md`              |
 
+### 7.7 Navigation Catalog & Module Placeholder Pages
+
+Complete sidebar nav item catalog for the station dashboard, grouped by function:
+Operations, Commercial, Reports, Admin, and Settings. Owner sees all groups; Manager
+sees everything except Admin; Custom Users see only items they have been granted
+permissions for via the granular permissions system ([M01-F06](#m01-f06--granular-permissions)).
+Modules not yet built navigate to a shared "Under Development" placeholder. Plan-gated
+modules (Lubricants, Staff & Payroll on Starter plan) show an "Upgrade to Professional"
+prompt.
+
 ---
 
 ## Module 8: Settings & Configuration
