@@ -9,7 +9,12 @@
       "Skill(update-config)",
       "Skill(update-config:*)",
       "Bash(python -m json.tool)",
-      "Bash(node -e \"JSON.parse\\(require\\(''fs''\\).readFileSync\\(''c:/Users/zainb/Sources/repos/fuelflow/.claude/settings.json'',''utf8''\\)\\); console.log\\(''VALID JSON''\\)\")"
+      "Bash(node -e \"JSON.parse\\(require\\(''fs''\\).readFileSync\\(''c:/Users/zainb/Sources/repos/fuelflow/.claude/settings.json'',''utf8''\\)\\); console.log\\(''VALID JSON''\\)\")",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_snapshot"
     ]
-  }
+  },
+  "disabledMcpjsonServers": [
+    "playwright"
+  ]
 }
