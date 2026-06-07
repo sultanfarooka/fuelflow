@@ -1,7 +1,8 @@
 /**
- * [M07-F07-R01/R05] The application sidebar: role-aware nav links rendered from
- * `getNavItems`, with active-route highlighting. Pure presentation over the
- * shadcn Sidebar primitive — visibility logic lives in nav-config.ts.
+ * [M07-F10-R01] The application sidebar: role-aware grouped nav links rendered
+ * from `getNavItems`, with group labels and active-route highlighting.
+ * Pure presentation over the shadcn Sidebar primitive — visibility and grouping
+ * logic lives in nav-config.ts.
  */
 import { Link, useRouterState, type LinkProps } from "@tanstack/react-router"
 import { IconGasStation } from "@tabler/icons-react"
@@ -12,12 +13,13 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { getNavItems } from "@/components/layout/nav-config"
+import { getNavItems, NAV_GROUPS, type NavGroup } from "@/components/layout/nav-config"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUiStore } from "@/stores/ui-store"
 
@@ -42,6 +44,12 @@ function isActive(itemKey: string, resolvedPath: string, pathname: string): bool
   return pathname === resolvedPath || pathname.startsWith(`${resolvedPath}/`)
 }
 
+/** i18n key for a nav group label. Settings group has no separate label. */
+function groupLabelKey(group: NavGroup): string | null {
+  if (group === "settings") return null
+  return `nav.groups.${group}`
+}
+
 export function AppSidebar() {
   const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
@@ -61,34 +69,44 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const resolved = resolvePath(item.to, item.params)
-                const label = t(item.labelKey)
-                const Icon = item.icon
-                return (
-                  <SidebarMenuItem key={item.key}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={label}
-                      isActive={isActive(item.key, resolved, pathname)}
-                    >
-                      <Link
-                        to={item.to as LinkProps["to"]}
-                        params={item.params as LinkProps["params"]}
-                      >
-                        <Icon />
-                        <span>{label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {NAV_GROUPS.map((group) => {
+          const groupItems = items.filter((item) => item.group === group)
+          if (groupItems.length === 0) return null
+          const labelKey = groupLabelKey(group)
+          return (
+            <SidebarGroup key={group}>
+              {labelKey && (
+                <SidebarGroupLabel>{t(labelKey)}</SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {groupItems.map((item) => {
+                    const resolved = resolvePath(item.to, item.params)
+                    const label = t(item.labelKey)
+                    const Icon = item.icon
+                    return (
+                      <SidebarMenuItem key={item.key}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={label}
+                          isActive={isActive(item.key, resolved, pathname)}
+                        >
+                          <Link
+                            to={item.to as LinkProps["to"]}
+                            params={item.params as LinkProps["params"]}
+                          >
+                            <Icon />
+                            <span>{label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )
+        })}
       </SidebarContent>
     </Sidebar>
   )
