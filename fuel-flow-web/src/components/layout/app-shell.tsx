@@ -9,7 +9,7 @@
  * and onboarding guards stay in those route files; the shell is presentation.
  */
 import { useEffect } from "react"
-import { Outlet, useParams } from "@tanstack/react-router"
+import { Outlet, useParams, useRouterState } from "@tanstack/react-router"
 import { IconAlertCircle, IconLogout } from "@tabler/icons-react"
 import { useTranslation } from "react-i18next"
 
@@ -39,8 +39,10 @@ import { useUiStore } from "@/stores/ui-store"
 
 export function AppShell() {
   const { t } = useTranslation()
-  const { user, stations, devBypassActive, logout: clearAuth } = useAuthStore()
+  const { user, organization, stations, devBypassActive, logout: clearAuth } = useAuthStore()
   const activeStationId = useUiStore((s) => s.activeStationId)
+  const { location } = useRouterState()
+  const isOrgDashboard = location.pathname === "/dashboard"
   const setActiveStation = useUiStore((s) => s.setActiveStation)
 
   // [M07-F07-R02] Keep the active station in sync when the user lands on a
@@ -74,6 +76,67 @@ export function AppShell() {
         .toUpperCase()
         .slice(0, 2)
     : (user?.email?.[0]?.toUpperCase() ?? "?")
+
+  // [M07-F06] Org dashboard — no sidebar, minimal top bar only.
+  if (isOrgDashboard) {
+    return (
+      <div className="flex min-h-svh flex-col">
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
+          <span className="text-sm font-semibold">{organization?.name}</span>
+          <div className="ms-auto flex items-center gap-2">
+            <LanguageSwitch />
+            <ModeToggle />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                    {initials}
+                  </span>
+                  <span className="sr-only">{t("nav.userMenu")}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{user?.fullName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {user?.email ?? user?.phone}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <IconLogout className="me-2 size-4" />
+                  {t("nav.logout")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+        {showDevBypassBanner && (
+          <div className="border-b border-accent bg-accent/40">
+            <div className="px-4 py-2">
+              <Alert className="border-0 bg-transparent p-0">
+                <IconAlertCircle className="text-accent-foreground" />
+                <AlertTitle className="text-accent-foreground">
+                  {t("dashboard.devBypass.bannerTitle")}
+                </AlertTitle>
+                <AlertDescription className="text-accent-foreground/80">
+                  {t("dashboard.devBypass.bannerDescription")}
+                </AlertDescription>
+              </Alert>
+            </div>
+          </div>
+        )}
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </div>
+    )
+  }
 
   return (
     <SidebarProvider>

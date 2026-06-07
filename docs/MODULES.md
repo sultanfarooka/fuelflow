@@ -1045,16 +1045,22 @@ At-a-glance summary widgets with comparison vs prior period.
 
 ---
 
-### M07-F06 — Consolidated All-Stations View   [Status: Planned]
+### M07-F06 — Consolidated All-Stations View   [Status: In Progress]
 
-Owner-only cross-station aggregation.
+Organization-level hub showing all stations as cards. Auto-redirects to the station dashboard when the org has exactly one station. No sidebar — minimal shell (top bar only). Multi-station users choose a station here before entering the sidebar-equipped station view.
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F06-R01 | Owner sees aggregated totals across all owned stations | — | Planned |
-| M07-F06-R02 | Drill-down from aggregate to individual station | — | Planned |
+| M07-F06-R01 | Single-station org auto-redirects to `/dashboard/station/:id` via `beforeLoad` | — | Done |
+| M07-F06-R02 | Multi-station org sees station-card grid with no sidebar | — | Done |
+| M07-F06-R03 | Aggregated totals across all owned stations (Owner analytics) | — | Planned |
+
+**Acceptance criteria:**
+- Single station + `isSetupComplete` → redirect to `/dashboard/station/:id` on `beforeLoad`
+- Multi-station → station-card grid, no sidebar, minimal top bar (org name + user menu + language/theme)
+- Card detail design deferred (currently shows name + placeholder description)
 
 ---
 
@@ -2021,7 +2027,7 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | 2.6 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
 | 2.7 | M07-F03 | Financial Reports | P2 | Planned | M04/M05 | |
 | 2.8 | M07-F04 | Export & Automation | P2 | Planned | F01–F03 + M11-F06 | |
-| 2.9 | M07-F06 | Consolidated All-Stations View | P2 | Planned | F01/F05 | |
+| 2.9 | M07-F06 | Consolidated All-Stations View | P2 | In Progress | F01/F05 | |
 
 ### Order 3 — M11 Subscription & Billing  ·  P0
 
