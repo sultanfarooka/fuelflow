@@ -15,7 +15,7 @@ import {
 import { GoogleIcon } from "@/components/ui/icons/google-icon";
 import { FormTextField } from "@/components/forms/form-text-field";
 import { register, type RegisterRequest } from "@/lib/api/auth";
-import { registerSchema, type RegisterFormData } from "@/lib/validators/auth";
+import { normalizePhone, registerSchema, type RegisterFormData } from "@/lib/validators/auth";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 /**
@@ -69,6 +69,7 @@ export function RegisterForm() {
       // Email is optional in the schema; send undefined (not "") so the backend treats it as absent.
       const apiPayload: RegisterRequest = {
         ...rest,
+        phone: normalizePhone(rest.phone),
         email: rest.email && rest.email.length > 0 ? rest.email : undefined,
       };
       await registerMutation.mutateAsync(apiPayload);
@@ -98,6 +99,7 @@ export function RegisterForm() {
             <FormTextField
               field={field}
               label="Full Name"
+              size="lg"
               placeholder="John Doe"
               autoComplete="name"
             />
@@ -111,6 +113,7 @@ export function RegisterForm() {
                 field={field}
                 label="Email (optional)"
                 type="email"
+                size="lg"
                 inputMode="email"
                 placeholder="m@example.com"
                 autoComplete="email"
@@ -125,10 +128,12 @@ export function RegisterForm() {
                 field={field}
                 label="Phone"
                 type="tel"
+                size="lg"
                 inputMode="tel"
-                placeholder="+92XXXXXXXXXX"
+                placeholder="03XXXXXXXXXX or +92XXXXXXXXXX"
                 autoComplete="tel"
-                description="Pakistani format: +92XXXXXXXXXX"
+                description="Pakistani format: 03XXXXXXXXXX or +92XXXXXXXXXX"
+                onNormalize={normalizePhone}
               />
             )}
           />
@@ -141,6 +146,7 @@ export function RegisterForm() {
                 field={field}
                 label="Password"
                 type="password"
+                size="lg"
                 placeholder="••••••••"
                 autoComplete="new-password"
                 description="Min 6 chars, at least one number."
@@ -154,6 +160,7 @@ export function RegisterForm() {
                 field={field}
                 label="Confirm Password"
                 type="password"
+                size="lg"
                 placeholder="••••••••"
                 autoComplete="new-password"
                 description="Please confirm your password."
@@ -171,6 +178,7 @@ export function RegisterForm() {
         <Field>
           <Button
             type="submit"
+            size="lg"
             disabled={form.state.isSubmitting || registerMutation.isPending}
           >
             {form.state.isSubmitting || registerMutation.isPending
@@ -182,6 +190,7 @@ export function RegisterForm() {
         <Field>
           <Button
             type="button"
+            size="lg"
             variant="outline"
             disabled
             className="w-full justify-center"
@@ -191,6 +200,7 @@ export function RegisterForm() {
           </Button>
           <Button
             type="button"
+            size="lg"
             variant="outline"
             disabled
             className="mt-2 w-full justify-center"

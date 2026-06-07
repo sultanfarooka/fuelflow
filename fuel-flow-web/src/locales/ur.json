@@ -152,7 +152,10 @@
       "deleteTank": "",
       "deleteError": "",
       "validationError": "",
-      "dipEntries": ""
+      "dipEntries": "",
+      "errorNameRequired": "",
+      "errorCapacityRequired": "",
+      "errorCsvRequired": ""
     },
     "step5": {
       "hint": "",

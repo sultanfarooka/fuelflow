@@ -53,7 +53,7 @@ components/
 **Decision flow:**
 
 1. **Does the primitive exist in `ui/`?** → Use it. Do not reinvent buttons, cards, inputs, dropdowns, dialogs, tables, tabs, tooltips, alerts, badges, etc.
-2. **Does shadcn publish it but we haven't installed it?** → `npx shadcn@latest add <name>` and use it.
+2. **Does shadcn publish it but we haven't installed it?** → `npx shadcn@latest add <name>` and use it. **Exception:** `select` — `components.json` is set to `style: "radix-mira"` so the CLI reinstalls the radix-mira variant (dark scoped popup, compact sizes). Our `ui/select.tsx` is a hand-maintained standard-shadcn implementation (theme-aware, `h-10` default, `popper` position, check on left). **Never run `npx shadcn add select` — it will overwrite it.**
 3. **Is it a composition of primitives?** → Build a feature component in the appropriate subfolder (`auth/`, `station-setup/`, etc.) that *uses* primitives. Examples: `<LoginForm />` (composes Field + Input + Button + Alert), `<Step3Tanks />` (composes Card + Form + Select + Button).
 4. **Is it genuinely novel UI not expressible via primitives?** → Build a one-off component co-located with the feature; still respect the theming rules below.
 
@@ -189,6 +189,37 @@ const mutation = useMutation({
 - Other forms: `onBlur` / `onChange` validators are fine.
 - Server errors: display as toast **and** inline `<Alert variant="destructive">` (toasts disappear; alerts persist).
 - Always use `FormTextField` from `forms/` for text inputs — don't build custom wrappers.
+- Always use `FormSelectField` from `forms/` for Select fields — pass `<SelectItem>` children and it handles Field, label, error, description, and aria wiring identically to `FormTextField`. No `size` prop needed; the trigger is `h-10` by default which matches `FormTextField size="lg"` on onboarding forms and is appropriate for in-app forms too.
+
+## Form sizing convention
+
+This project uses a compact component scale by default (the radix-mira preset). `Button` and `Input` default to `h-7` (28 px) — correct for data-dense UIs like tables, toolbars, and sidebar controls. Auth and onboarding forms need more breathing room.
+
+| Context | Button size | FormTextField / FormSelectField size | When to use |
+|---|---|---|---|
+| **Auth / onboarding forms** | `size="lg"` | `size="lg"` | Full-page forms with a single focus: login, register, onboarding, reset-password |
+| **In-app forms** (dialogs, sheets, inline) | `size="default"` *(omit prop)* | `size="default"` *(omit prop)* | Data-entry inside the app shell: create station, set price, open shift |
+| **Toolbars / table actions** | `size="sm"` or `size="default"` | — | Compact controls inside a data-dense screen |
+
+**Rules:**
+- All buttons, `FormTextField`, and `FormSelectField` fields in `components/auth/` must use `size="lg"`. No exceptions.
+- In-app forms use the default compact size — do not add `size="lg"` inside dialogs or sheets.
+- Never mix sizes within a single form — pick one level and apply it to every field and button.
+- `Input` and `SelectTrigger` also support `size` (`"default"` | `"lg"`). When building a custom field that wraps either directly (not via the Form* wrappers), follow the same rule.
+
+```tsx
+// ✅ Auth form — full-page, single focus
+<FormTextField field={field} label="Phone" size="lg" ... />
+<Button type="submit" size="lg">Sign in</Button>
+
+// ✅ In-app form — dialog / sheet
+<FormTextField field={field} label="Station name" ... />  {/* default */}
+<Button type="submit">Save</Button>                       {/* default */}
+
+// ❌ Mixed sizes in one form — don't do this
+<FormTextField field={field} label="Name" size="lg" ... />
+<Button type="submit">Save</Button>   {/* default — inconsistent */}
+```
 
 ## Dialog / Sheet patterns
 

@@ -58,7 +58,7 @@
       "3": { "title": "Opening Prices", "description": "Set the opening price for each fuel type." },
       "4": { "title": "Tanks & Dip Charts", "description": "Add underground tanks and upload dip charts." },
       "5": { "title": "Nozzles", "description": "Configure your fuel dispensing nozzles." },
-      "6": { "title": "Shifts & Payments", "description": "Set your shift schedule and accepted payment methods." },
+      "6": { "title": "Shift Schedule", "description": "Configure your daily shift schedule. You can change this later in Settings." },
       "7": { "title": "Bank Account", "description": "Add a bank account for payments. (Optional)" },
       "8": { "title": "Invite Manager", "description": "Invite your first manager. (Optional)" },
       "9": { "title": "Review & Finish", "description": "Review your setup and go live." }
@@ -152,7 +152,10 @@
       "deleteTank": "Remove tank",
       "deleteError": "Failed to remove tank",
       "validationError": "Every fuel type needs at least one tank with a dip chart.",
-      "dipEntries": "{{count}} dip entries"
+      "dipEntries": "{{count}} dip entries",
+      "errorNameRequired": "Tank name is required",
+      "errorCapacityRequired": "Enter a valid capacity (must be greater than 0)",
+      "errorCsvRequired": "Upload a dip chart CSV before adding the tank"
     },
     "step5": {
       "hint": "Link each nozzle to a tank. Every tank and every fuel type needs at least one nozzle before you continue.",

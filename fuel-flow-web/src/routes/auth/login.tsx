@@ -25,7 +25,7 @@ function LoginPage() {
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center py-4">
-            <div className="w-full max-w-xs">
+            <div className="w-full max-w-sm">
               <LoginForm />
             </div>
           </div>
