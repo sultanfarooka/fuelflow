@@ -14,7 +14,6 @@ public class CompleteStationSetupCommandHandler : IRequestHandler<CompleteStatio
 {
     private readonly ICurrentUserService _currentUser;
     private readonly IStationRepository _stationRepo;
-    private readonly IStationShiftConfigRepository _shiftConfigRepo;
     private readonly IFuelTypeRepository _fuelTypeRepo;
     private readonly IFuelPricesRepository _fuelPricesRepo;
     private readonly IFuelTankRepository _fuelTankRepo;
@@ -26,7 +25,6 @@ public class CompleteStationSetupCommandHandler : IRequestHandler<CompleteStatio
     public CompleteStationSetupCommandHandler(
         ICurrentUserService currentUser,
         IStationRepository stationRepo,
-        IStationShiftConfigRepository shiftConfigRepo,
         IFuelTypeRepository fuelTypeRepo,
         IFuelPricesRepository fuelPricesRepo,
         IFuelTankRepository fuelTankRepo,
@@ -37,7 +35,6 @@ public class CompleteStationSetupCommandHandler : IRequestHandler<CompleteStatio
     {
         _currentUser = currentUser;
         _stationRepo = stationRepo;
-        _shiftConfigRepo = shiftConfigRepo;
         _fuelTypeRepo = fuelTypeRepo;
         _fuelPricesRepo = fuelPricesRepo;
         _fuelTankRepo = fuelTankRepo;
@@ -57,26 +54,15 @@ public class CompleteStationSetupCommandHandler : IRequestHandler<CompleteStatio
         if (station == null || station.OrganizationId != orgId)
             return Result<CompleteSetupResult>.Failure("Station not found or access denied.");
 
-        // Load independent data in parallel
-        var shiftConfigTask = _shiftConfigRepo.GetByStationIdAsync(request.StationId, ct);
-        var fuelTypesTask = _fuelTypeRepo.GetAllForStationAsync(request.StationId, ct);
-        var pricesTask = _fuelPricesRepo.GetByStationIdAsync(request.StationId, ct);
-        var tanksTask = _fuelTankRepo.GetAllByStationIdAsync(request.StationId, ct);
-        var nozzlesTask = _nozzleRepo.GetByStationIdAsync(request.StationId, ct);
-
-        await Task.WhenAll(shiftConfigTask, fuelTypesTask, pricesTask, tanksTask, nozzlesTask);
-
-        var shiftConfig = await shiftConfigTask;
-        var fuelTypes = await fuelTypesTask;
-        var prices = await pricesTask;
-        var tanks = await tanksTask;
-        var nozzles = await nozzlesTask;
+        // EF Core DbContext is not thread-safe — run queries sequentially
+        var fuelTypes = await _fuelTypeRepo.GetAllForStationAsync(request.StationId, ct);
+        var prices    = await _fuelPricesRepo.GetByStationIdAsync(request.StationId, ct);
+        var tanks     = await _fuelTankRepo.GetAllByStationIdAsync(request.StationId, ct);
+        var nozzles   = await _nozzleRepo.GetByStationIdAsync(request.StationId, ct);
 
         var unmet = new List<string>();
 
-        // 1. Shift config
-        if (shiftConfig == null)
-            unmet.Add("Shift schedule has not been configured.");
+        // Shift schedule is optional (step 6 is skippable) — not checked here.
 
         // 2. At least one fuel type
         if (fuelTypes.Count == 0)
@@ -85,7 +71,7 @@ public class CompleteStationSetupCommandHandler : IRequestHandler<CompleteStatio
         }
         else
         {
-            // 3. Every fuel type has a price
+            // 2. Every fuel type has a price
             var pricedTypeIds = prices.Select(p => p.FuelTypeId).ToHashSet();
             foreach (var ft in fuelTypes)
             {
@@ -93,7 +79,7 @@ public class CompleteStationSetupCommandHandler : IRequestHandler<CompleteStatio
                     unmet.Add($"No opening price set for \"{ft.Name}\".");
             }
 
-            // 4. Every fuel type has at least one tank
+            // 3. Every fuel type has at least one tank
             var coveredTypeIds = tanks.Select(t => t.FuelTypeId).ToHashSet();
             foreach (var ft in fuelTypes)
             {
@@ -101,7 +87,7 @@ public class CompleteStationSetupCommandHandler : IRequestHandler<CompleteStatio
                     unmet.Add($"No tank added for \"{ft.Name}\".");
             }
 
-            // 5. Every tank has a dip chart with at least one entry — checked sequentially (by tank id)
+            // 4. Every tank has a dip chart with at least one entry
             foreach (var tank in tanks)
             {
                 var chart = await _dipChartRepo.GetByTankIdAsync(tank.Id, ct);
@@ -110,7 +96,7 @@ public class CompleteStationSetupCommandHandler : IRequestHandler<CompleteStatio
             }
         }
 
-        // 6. At least one nozzle
+        // 5. At least one nozzle
         if (nozzles.Count == 0)
             unmet.Add("No nozzles have been added.");
 

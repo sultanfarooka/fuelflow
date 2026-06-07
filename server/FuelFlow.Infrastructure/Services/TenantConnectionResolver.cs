@@ -35,12 +35,17 @@ public class TenantConnectionResolver : ITenantConnectionResolver
         if (orgId is null)
             return null;
 
+        return await ResolveForOrgAsync(orgId.Value, ct);
+    }
+
+    public async Task<string> ResolveForOrgAsync(Guid orgId, CancellationToken ct = default)
+    {
         var tenant = await _controlPlane.Tenants
             .AsNoTracking()
             .SingleOrDefaultAsync(t => t.Id == orgId, ct);
 
         if (tenant is null)
-            throw new TenantNotFoundException(orgId.Value);
+            throw new TenantNotFoundException(orgId);
 
         var baseConnStr = _configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("DefaultConnection is not configured.");
