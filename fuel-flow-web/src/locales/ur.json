@@ -21,13 +21,25 @@
     "organization": "تنظیم",
     "station": "اسٹیشن",
     "shifts": "شفٹیں",
-    "inventory": "انوینٹری",
-    "finance": "مالیات",
+    "nozzles": "نوزل آپریشنز",
+    "inventory": "ایندھن انوینٹری",
+    "pricing": "ایندھن قیمتیں",
+    "credit": "کریڈٹ گاہک",
+    "finance": "مالیات و اکاؤنٹس",
     "reports": "رپورٹس",
+    "usersAccess": "صارفین اور رسائی",
+    "staffPayroll": "عملہ اور تنخواہ",
+    "lubricants": "لبریکنٹس / آئل شاپ",
     "setup": "سیٹ اپ",
     "settings": "ترتیبات",
     "userMenu": "صارف مینو",
-    "logout": "لاگ آؤٹ"
+    "logout": "لاگ آؤٹ",
+    "groups": {
+      "operations": "آپریشنز",
+      "commercial": "تجارتی",
+      "reports": "رپورٹس",
+      "admin": "انتظامیہ"
+    }
   },
   "stationSwitcher": {
     "label": "اسٹیشن تبدیل کریں",
@@ -37,6 +49,16 @@
     "title": "جلد آ رہا ہے",
     "body": "یہ ماڈیول ابھی دستیاب نہیں ہے۔",
     "detail": "ہم یہ فیچر بنا رہے ہیں۔ تیار ہونے پر یہ یہاں ظاہر ہوگا۔"
+  },
+  "underDevelopment": {
+    "title": "تیاری جاری ہے",
+    "body": "یہ ماڈیول بنایا جا رہا ہے۔",
+    "detail": "تیار ہونے پر یہ یہاں ظاہر ہوگا۔"
+  },
+  "upgradePrompt": {
+    "title": "اپ گریڈ ضروری ہے",
+    "body": "{{featureName}} پروفیشنل پلان کے ساتھ دستیاب ہے۔",
+    "cta": "پروفیشنل میں اپ گریڈ کریں"
   },
   "dashboard": {
     "devBypass": {

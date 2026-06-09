@@ -32,17 +32,14 @@ the wrong thing. `-ResetAll` rebuilds **only** the control plane —
 `TenantMigrationHostedService`.
 
 ### Connection / port SSOT
-Canonical dev host port is **5433** (not 5432): a native PostgreSQL install
-commonly owns host 5432 and would shadow the container, so `fuelflow-db` publishes
-**5433**. The **committed** port SSOT is `server/docker-compose.yml`
-(`5433:5432`) plus the documented dev connection format in root `CLAUDE.md` and
-`docs/ENV-MAP.md`. The connection string itself is supplied **locally** — either a
+Canonical dev host port is **5432**. The **committed** port SSOT is
+`server/docker-compose.yml` (`5432:5432`) plus `appsettings.Development.json`
+and the documented dev connection format in root `CLAUDE.md` and `docs/ENV-MAP.md`.
+The connection string itself is supplied **locally** — either a
 `ConnectionStrings:DefaultConnection` user-secret (the path the setup docs use) or
 a `server/FuelFlow.Api/appsettings.Development.json` (which is **gitignored**, so a
-fresh clone won't have it). Whichever you use, it MUST use port **5433**.
-user-secrets override appsettings; if both are set, keep them consistent. Never
-introduce a third copy of the port, and don't "fix" the compose host port back to
-5432.
+fresh clone won't have it). Whichever you use, it MUST use port **5432**.
+User-secrets override appsettings; if both are set, keep them consistent.
 
 ### psql: DROP/CREATE DATABASE can't run in a transaction
 `psql -c "stmt1; stmt2;"` sends a multi-statement string as **one implicit

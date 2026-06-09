@@ -21,13 +21,25 @@
     "organization": "Organization",
     "station": "Station",
     "shifts": "Shifts",
-    "inventory": "Inventory",
-    "finance": "Finance",
+    "nozzles": "Nozzle Operations",
+    "inventory": "Fuel Inventory",
+    "pricing": "Fuel Pricing",
+    "credit": "Credit Customers",
+    "finance": "Finance & Accounts",
     "reports": "Reports",
+    "usersAccess": "Users & Access",
+    "staffPayroll": "Staff & Payroll",
+    "lubricants": "Lubricants / Oil Shop",
     "setup": "Setup",
     "settings": "Settings",
     "userMenu": "User menu",
-    "logout": "Log out"
+    "logout": "Log out",
+    "groups": {
+      "operations": "Operations",
+      "commercial": "Commercial",
+      "reports": "Reports",
+      "admin": "Admin"
+    }
   },
   "stationSwitcher": {
     "label": "Switch station",
@@ -37,6 +49,16 @@
     "title": "Coming soon",
     "body": "This module is not yet available.",
     "detail": "We're building this feature. It will appear here once it ships."
+  },
+  "underDevelopment": {
+    "title": "Under Development",
+    "body": "This module is being built.",
+    "detail": "It will appear here once it ships."
+  },
+  "upgradePrompt": {
+    "title": "Upgrade Required",
+    "body": "{{featureName}} requires the Professional plan.",
+    "cta": "Upgrade to Professional"
   },
   "dashboard": {
     "devBypass": {

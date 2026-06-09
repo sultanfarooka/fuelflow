@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-07 (M07-F08 Progressive Web App — Done)
+**Last Updated:** 2026-06-07 (M07-F10 Complete Navigation Catalog — Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -97,10 +97,10 @@ below is **independent** (its prerequisites are all `Done`).
 | 1 | [M11](#m11--subscription--billing) (order 3) | [M11-F06](#m11-f06--feature-gating) — feature gating (API-level); then [M11-F08](#m11-f08--plan-comparison--pricing-page) pricing page | Backend + Frontend |
 | 2 | [M01](#m01--user--access-management) (order 4) | [M01-F05-R02](#m01-f05--roles--hierarchy)/[R03](#m01-f05--roles--hierarchy) + [M01-F06](#m01-f06--granular-permissions) — Owner→Manager→Custom users + granular permissions | Backend |
 | 3 | [M12](#m12--onboarding--first-run-experience) (order 5) | [M12-F01-R18](#m12-f01--onboarding-wizard)/[R19](#m12-f01--onboarding-wizard) — opening dip + opening meter readings in the wizard | Frontend + Backend |
-| 4 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
-| 5 | [M06](#m06--pricing--rate-management) (order 7) | [M06-F01](#m06-f01--price-configuration) — price configuration (one active price per fuel type per station) | Backend + Frontend |
+| 4 | [M07](#m07--reporting--analytics) (order 2) | [M07-F10](#m07-f10--complete-navigation-catalog--module-placeholder-pages) — complete nav catalog + under-development placeholder pages | Frontend |
+| 5 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
 
-> First below the fold: [M02](#m02--fuel-inventory--tank-control) (order 8) → [M02-F03](#m02-f03--underground-tank-management) underground tank management (visual stock display, reassignment). [M07](#m07--reporting--analytics) leaves the Top-5 now that [M07-F08](#m07-f08--progressive-web-app-pwa) (PWA) has shipped — its remaining reporting features (F01–F06) are all blocked on shift/sales data (M03/M04). For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
+> First below the fold: [M06](#m06--pricing--rate-management) (order 7) → [M06-F01](#m06-f01--price-configuration) price configuration (one active price per fuel type per station). [M07](#m07--reporting--analytics) re-enters the Top-5 at #4 with the independent [M07-F10](#m07-f10--complete-navigation-catalog--module-placeholder-pages) nav catalog; its remaining reporting features (F01–F06) stay blocked on shift/sales data (M03/M04). For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
 >
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -1072,7 +1072,7 @@ The cross-cutting layout that wraps every authenticated page: sidebar, top nav, 
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Done |
+| M07-F07-R01 | Persistent left sidebar with role-aware navigation links | — | Done · refined by [M07-F10-R02] |
 | M07-F07-R02 | Top bar with user menu, station switcher (Owner), language toggle, theme toggle | — | Done |
 | M07-F07-R03 | Main content area driven by TanStack Router `<Outlet />` composition | — | Done |
 | M07-F07-R04 | Sidebar collapses to drawer on mobile (`< 640px`) — per [M07-F07.Responsive](#) | — | Done |
@@ -1131,6 +1131,50 @@ Provides the shadcn-based design tokens, theme preset, component primitives, dar
 - **AC2** Given the theme toggle in the top bar, When the user switches dark/light, Then all surfaces, text, borders, and overlays update consistently and no rogue colours persist.
 - **AC3** Given the language toggle in the top bar (per [M08-F05-R02](#m08-f05--system-preferences)), When the user switches to Urdu, Then the entire layout flips to RTL, including sidebars, primitive components, and icon positions.
 - **AC4** Given the migration is complete, When [`fuel-flow-web/src/components/CLAUDE.md`](../fuel-flow-web/src/components/CLAUDE.md) is opened, Then it documents the going-forward standards for adding new components with examples of compliant vs non-compliant patterns.
+
+---
+
+### M07-F10 — Complete Navigation Catalog & Module Placeholder Pages   [Status: Done]
+
+> _Discovery (2026-06-07): user request — building out the station dashboard · outcome = every authenticated user sees the full product navigation from day one; unbuilt modules show an "Under Development" page; plan-gated modules show an "Upgrade to Pro+" prompt · maps to ProjectOverView §7.7 (platform UI) · cost-of-not-building: sidebar stays sparse while modules are built; users can't discover the product roadmap_
+
+**Tags:** tenant-scope=platform-global; tier=All; capacity-impact=none; locale=Urdu-needed; sensitive-action=no; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+Defines the complete sidebar nav item catalog for the station dashboard: which items appear, in which labeled groups, which roles see them, and what renders when a module is unbuilt (→ "Under Development" placeholder) or plan-gated on Starter (→ "Upgrade to Professional" prompt). Extends [M07-F07](#m07-f07--ui-shell). Supersedes the informal role-nav AC in [M07-F07-AC1](#m07-f07--ui-shell) which referenced a "Nozzleman" role that does not exist — Custom User visibility is governed by M01-F06 permission grants, not a hard-coded role.
+
+**Nav Item Catalog:**
+
+| Group | Nav Item | Module | Custom User | Manager | Owner | Plan Gate |
+|---|---|---|---|---|---|---|
+| Operations | Dashboard | M07 | ✓ | ✓ | ✓ | All |
+| Operations | Shifts | M04 | if M04 perm | ✓ | ✓ | All |
+| Operations | Nozzle Operations | M03 | if M03 perm | ✓ | ✓ | All |
+| Operations | Fuel Inventory | M02 | if M02 perm | ✓ | ✓ | All |
+| Commercial | Fuel Pricing | M06 | if M06 perm | ✓ | ✓ | All |
+| Commercial | Credit Customers | M15 | if M15 perm | ✓ | ✓ | All |
+| Commercial | Finance & Accounts | M05 | if M05 perm | ✓ | ✓ | All |
+| Reports | Reports | M07-F01..F06 | if M07 perm | ✓ | ✓ | All |
+| Admin | Users & Access | M01-F05..F07 | — | — | ✓ | All |
+| Admin | Staff & Payroll | M13 | — | — | ✓ | Pro+ |
+| Admin | Lubricants / Oil Shop | M09 | — | — | ✓ | Pro+ |
+| Settings | Settings | M08 | — | ✓ | ✓ | All |
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M07-F10-R01 | Sidebar renders all nav items from the catalog above, organized in labeled groups | — | Done |
+| M07-F10-R02 | Owner and Manager see all items in their columns. Custom Users see Dashboard always; all other items appear only when the user has been granted at least View permission for that module via [M01-F06](#m01-f06--granular-permissions); Admin group items are never shown to Custom Users | — | Done |
+| M07-F10-R03 | Clicking a nav item whose module has no built routes renders a shared "Under Development" placeholder page: module name, brief description, and a "coming soon" note | — | Done |
+| M07-F10-R04 | Plan-gated nav items (Staff & Payroll, Lubricants / Oil Shop) for Starter-plan users render an "Upgrade to Professional" prompt page with a link to [M11-F08](#m11-f08--plan-comparison--pricing-page); plan gate takes precedence over under-development state | — | Done |
+| M07-F10-R05 | "Under Development" and "Upgrade" prompts are shared components; module name, icon, and description are passed as props — no per-module pages | — | Done |
+
+**Acceptance Criteria:**
+- **AC1** Given a Custom User with only M04 (Shifts) and M03 (Nozzle Operations) permissions, when they view the sidebar, then only Dashboard, Shifts, and Nozzle Operations appear — all other items are absent.
+- **AC2** Given a Manager, when they view the sidebar, then Operations, Commercial, Reports, and Settings groups are visible; Admin group is absent.
+- **AC3** Given any user clicks a nav item whose module has no built routes, then the "Under Development" page renders with that module's name and a "coming soon" note.
+- **AC4** Given a Starter-plan Owner clicks "Staff & Payroll" or "Lubricants / Oil Shop", then the "Upgrade to Professional" page renders — not the under-development page.
+- **AC5** Given a Pro+-plan Owner clicks "Staff & Payroll" (not yet built), then the "Under Development" page renders.
 
 ---
 
@@ -2028,12 +2072,13 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | 2.1 | M07-F09 | Design System & Theme Foundation | P0 | Done | — | |
 | 2.2 | M07-F07 | UI Shell | P0 | Done | — (F09 ✓) | |
 | 2.3 | M07-F08 | Progressive Web App (PWA) | P1 | Done | M07-F07 ✓ | |
-| 2.4 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | ★ |
-| 2.5 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
-| 2.6 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
-| 2.7 | M07-F03 | Financial Reports | P2 | Planned | M04/M05 | |
-| 2.8 | M07-F04 | Export & Automation | P2 | Planned | F01–F03 + M11-F06 | |
-| 2.9 | M07-F06 | Consolidated All-Stations View | P2 | In Progress | F01/F05 | |
+| 2.4 | M07-F10 | Complete Navigation Catalog & Module Placeholder Pages | P1 | Done | M07-F07 ✓ | |
+| 2.5 | M07-F05 | Dashboard Widgets | P2 | In Progress | shift/sales data (M03/M04) | ★ |
+| 2.6 | M07-F01 | Daily Sales Report | P2 | Planned | M03/M04 | |
+| 2.7 | M07-F02 | Inventory Reports | P2 | Planned | M02 | |
+| 2.8 | M07-F03 | Financial Reports | P2 | Planned | M04/M05 | |
+| 2.9 | M07-F04 | Export & Automation | P2 | Planned | F01–F03 + M11-F06 | |
+| 2.10 | M07-F06 | Consolidated All-Stations View | P2 | In Progress | F01/F05 | |
 
 ### Order 3 — M11 Subscription & Billing  ·  P0
 

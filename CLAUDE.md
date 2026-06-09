@@ -27,14 +27,14 @@ scripts/                        # dev.ps1 (run both / -ResetAll), migrate.ps1 �
 **Prerequisites:** Node.js 18+, .NET 10 SDK, Docker Desktop, `dotnet tool install --global dotnet-ef`
 
 ```bash
-# 1. Start PostgreSQL (container publishes host port 5433 — see server/docker-compose.yml)
+# 1. Start PostgreSQL (container publishes host port 5432 — see server/docker-compose.yml)
 cd server && docker compose up -d
 
 # 2. Configure secrets (first time only)
-#    DefaultConnection is already in appsettings.Development.json (Port=5433), so
-#    a user-secret for it is optional in dev; if you set one it must use 5433.
+#    DefaultConnection is already in appsettings.Development.json (Port=5432), so
+#    a user-secret for it is optional in dev; if you set one it must use 5432.
 cd server/FuelFlow.Api
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5433;Database=fuelflow_dev;Username=fuelflow;Password=fuelflow123"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=fuelflow_dev;Username=fuelflow;Password=fuelflow123"
 dotnet user-secrets set "Jwt:Secret" "your-secret-key-at-least-32-characters-long"
 dotnet user-secrets set "Jwt:Issuer" "FuelFlow"
 dotnet user-secrets set "Jwt:Audience" "FuelFlow"

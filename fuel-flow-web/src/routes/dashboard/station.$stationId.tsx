@@ -52,14 +52,18 @@ export const Route = createFileRoute("/dashboard/station/$stationId")({
   component: StationDashboardPage,
 });
 
-// When the child route (e.g. /setup) is active, render Outlet so the setup wizard shows.
+// Render child routes (setup, shifts, nozzles, etc.) via Outlet; fall back to
+// the station overview when the URL is exactly the station root.
 function StationDashboardPage() {
+  const { stationId } = Route.useParams();
   const { location } = useRouterState();
-  const isSetupRoute = location.pathname.endsWith("/setup");
-  if (isSetupRoute) {
-    return <Outlet />;
+  const isStationRoot =
+    location.pathname === `/dashboard/station/${stationId}` ||
+    location.pathname === `/dashboard/station/${stationId}/`;
+  if (isStationRoot) {
+    return <StationDashboardContent />;
   }
-  return <StationDashboardContent />;
+  return <Outlet />;
 }
 
 function StationDashboardContent() {

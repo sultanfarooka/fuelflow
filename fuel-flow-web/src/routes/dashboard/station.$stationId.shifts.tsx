@@ -10,7 +10,7 @@ import { ROLES } from "@/lib/roles"
 import { requireRoles } from "@/lib/route-guards"
 
 export const Route = createFileRoute("/dashboard/station/$stationId/shifts")({
-  beforeLoad: () => requireRoles([ROLES.Owner, ROLES.Manager, ROLES.Nozzleman]),
+  beforeLoad: () => requireRoles([ROLES.Owner, ROLES.Manager, ROLES.Custom]),
   component: ShiftsStubPage,
 })
 

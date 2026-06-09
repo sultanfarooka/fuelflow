@@ -17,9 +17,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: fuelflow_dev
     # DB port is intentionally NOT published to the host: the API reaches it over the
-    # internal compose network (Host=db), and not publishing avoids clashing with the
-    # dev DB (server/docker-compose.yml) on 5433. To inspect from the host, either use
-    # `docker compose exec db psql -U fuelflow` or add `ports: ["5434:5432"]` here.
+    # internal compose network (Host=db). To inspect from the host, use
+    # `docker compose exec db psql -U fuelflow` or add `ports: ["5432:5432"]` here.
     volumes:
       - pgdata:/var/lib/postgresql/data
       # Grants the fuelflow role CREATEDB so TenantProvisioningService can CREATE DATABASE.

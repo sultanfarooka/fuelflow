@@ -27,5 +27,6 @@ export function hasAnyRole(
 ): boolean {
   if (allowed.length === 0) return true
   if (!userRoles || userRoles.length === 0) return false
-  return userRoles.some((r) => allowed.includes(r))
+  const allowedLower = allowed.map((r) => r.toLowerCase())
+  return userRoles.some((r) => allowedLower.includes(r.toLowerCase()))
 }

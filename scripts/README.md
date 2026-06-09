@@ -1,4 +1,4 @@
-# Dev & DB Scripts — How and When
+﻿# Dev & DB Scripts â€” How and When
 
 Practical guide to the FuelFlow dev-ops scripts. This is the **central index** for
 every script that orchestrates the local database and dev servers, whether it
@@ -18,13 +18,12 @@ lives in `scripts/` or in `server/`.
   container from [`server/docker-compose.yml`](../server/docker-compose.yml)).
 - **.NET 10 SDK** + `dotnet-ef` global tool (`dotnet tool install --global dotnet-ef`).
 - **Node.js 18+** (for the frontend).
-- The dev DB connection is supplied locally — either a
+- The dev DB connection is supplied locally â€” either a
   `ConnectionStrings:DefaultConnection` **user-secret** (per the root `CLAUDE.md`
   setup) or a local `server/FuelFlow.Api/appsettings.Development.json` (which is
   **gitignored**, so a fresh clone won't have it). The container publishes host
-  port **5433** (not 5432) so it coexists with a native PostgreSQL that commonly
-  owns 5432, so the connection must use `Host=localhost;Port=5433;Database=fuelflow_dev`
-  (see [`CLAUDE.md`](CLAUDE.md) → "Connection / port SSOT").
+  port **5432**, so the connection must use `Host=localhost;Port=5432;Database=fuelflow_dev`
+  (see [`CLAUDE.md`](CLAUDE.md) â†’ "Connection / port SSOT").
 
 ---
 
@@ -35,8 +34,8 @@ lives in `scripts/` or in `server/`.
   two separate terminal windows. With `-ResetAll`, instead wipes and rebuilds all
   databases (dev only) and exits without launching the servers.
 - **When:**
-  - *Daily development* — start both apps.
-  - *After pulling schema/migration changes or when the DB is in a bad state* —
+  - *Daily development* â€” start both apps.
+  - *After pulling schema/migration changes or when the DB is in a bad state* â€”
     run with `-ResetAll` first, then run again normally.
 - **How:**
   ```powershell
@@ -46,7 +45,7 @@ lives in `scripts/` or in `server/`.
 - **`-ResetAll` does:** drop every `tenant_*` database and `fuelflow_dev`,
   recreate `fuelflow_dev`, and apply **ControlPlane** migrations
   (`server/db-update.ps1 -Context ControlPlane`). Tenant databases are **not**
-  rebuilt here — each is created and migrated automatically on the org's first
+  rebuilt here â€” each is created and migrated automatically on the org's first
   onboarding (and re-checked on API boot).
 
 ## `scripts/migrate.ps1`
@@ -68,7 +67,7 @@ lives in `scripts/` or in `server/`.
 
 - **What:** The SSOT for applying migrations. Runs `dotnet ef database update` per
   DbContext, ControlPlane first, then Tenant.
-- **When:** Same as `migrate.ps1` — use whichever you prefer; `migrate.ps1` just
+- **When:** Same as `migrate.ps1` â€” use whichever you prefer; `migrate.ps1` just
   calls this from the repo root.
 - **How (run from `server/`):**
   ```powershell
@@ -81,7 +80,7 @@ lives in `scripts/` or in `server/`.
 
 - **What:** The SSOT for **creating** a new EF Core migration. Emits it into the
   correct per-context folder (`Migrations/ControlPlane` or `Migrations/Tenant`).
-  `-Context` is **mandatory** — the wrong context corrupts per-context history.
+  `-Context` is **mandatory** â€” the wrong context corrupts per-context history.
 - **When:** You changed an entity / `IEntityTypeConfiguration<T>` and need a
   migration.
 - **How (run from `server/`):**
@@ -96,7 +95,7 @@ lives in `scripts/` or in `server/`.
 
 | Goal | Commands |
 |---|---|
-| **First-time setup** | Start Docker Desktop → `./scripts/dev.ps1 -ResetAll` → `./scripts/dev.ps1` |
+| **First-time setup** | Start Docker Desktop â†’ `./scripts/dev.ps1 -ResetAll` â†’ `./scripts/dev.ps1` |
 | **Daily dev** | `./scripts/dev.ps1` |
 | **Full clean reset** (bad DB state / after big schema changes) | `./scripts/dev.ps1 -ResetAll` then `./scripts/dev.ps1` |
 | **Add a migration** | `cd server; ./db-migration-add.ps1 -Name <Name> -Context <ControlPlane\|Tenant>` |
@@ -104,4 +103,5 @@ lives in `scripts/` or in `server/`.
 
 > Tenant databases (`tenant_<orgId>`) are created and migrated automatically by
 > `TenantProvisioningService` at onboarding and re-migrated on API boot by
-> `TenantMigrationHostedService` — you never create them by hand.
+> `TenantMigrationHostedService` â€” you never create them by hand.
+

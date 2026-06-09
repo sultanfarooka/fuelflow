@@ -20,11 +20,17 @@ Authoritative mapping of routes to the role(s) allowed to see them. Reference [`
 
 > **M07-F06 note:** Single-station orgs are auto-redirected to their station dashboard via `beforeLoad` in `dashboard/index.tsx`. Multi-station orgs see a station-card grid with no sidebar — just a minimal top bar (org name, user menu, language/theme toggles). The sidebar renders only for `/dashboard/station/*` routes.
 | Station setup wizard | `/dashboard/station/:stationId/setup` | Owner, Manager | [M08-F02](../../../docs/MODULES.md#m08-f02--tank-configuration), [M08-F03](../../../docs/MODULES.md#m08-f03--nozzle-configuration) |
-| Shifts | `/dashboard/station/:stationId/shifts` (stub) | Owner, Manager, Nozzleman | [M04](../../../docs/MODULES.md#m04--shift-management) |
-| Inventory | `/dashboard/station/:stationId/inventory` (stub) | Owner, Manager | [M02](../../../docs/MODULES.md#m02--fuel-inventory--tank-control) |
-| Finance | `/dashboard/station/:stationId/finance` (stub) | Owner, Manager, Accountant | [M05](../../../docs/MODULES.md#m05--finance--accounts) |
-| Reports | `/dashboard/station/:stationId/reports` (stub) | Owner, Manager, Accountant | [M07-F01..F03](../../../docs/MODULES.md#m07--reporting-analytics--platform-ui) |
-| Settings | `/settings` (stub) | Owner | [M08](../../../docs/MODULES.md#m08--settings--configuration) |
+| Shifts | `/dashboard/station/:stationId/shifts` (stub) | Owner, Manager, Custom | [M04](../../../docs/MODULES.md#m04--shift-management) |
+| Nozzle Operations | `/dashboard/station/:stationId/nozzles` (stub) | Owner, Manager, Custom | [M03](../../../docs/MODULES.md#m03--nozzle-operations) |
+| Fuel Inventory | `/dashboard/station/:stationId/inventory` (stub) | Owner, Manager, Custom | [M02](../../../docs/MODULES.md#m02--fuel-inventory--tank-control) |
+| Fuel Pricing | `/dashboard/station/:stationId/pricing` (stub) | Owner, Manager, Custom | [M06](../../../docs/MODULES.md#m06--fuel-pricing) |
+| Credit Customers | `/dashboard/station/:stationId/credit` (stub) | Owner, Manager, Custom | [M15](../../../docs/MODULES.md#m15--credit-customers) |
+| Finance & Accounts | `/dashboard/station/:stationId/finance` (stub) | Owner, Manager, Accountant, Custom | [M05](../../../docs/MODULES.md#m05--finance--accounts) |
+| Reports | `/dashboard/station/:stationId/reports` (stub) | Owner, Manager, Accountant, Custom | [M07-F01..F06](../../../docs/MODULES.md#m07--reporting-analytics--platform-ui) |
+| Users & Access | `/dashboard/station/:stationId/admin/users` (stub) | Owner | [M01-F05..F07](../../../docs/MODULES.md#m01-f05--user-management) |
+| Staff & Payroll | `/dashboard/station/:stationId/admin/staff` (stub, Pro+) | Owner | [M13](../../../docs/MODULES.md#m13--staff--payroll) |
+| Lubricants / Oil Shop | `/dashboard/station/:stationId/admin/lubricants` (stub, Pro+) | Owner | [M09](../../../docs/MODULES.md#m09--lubricants--oil-shop) |
+| Settings | `/settings` (stub) | Owner, Manager | [M08](../../../docs/MODULES.md#m08--settings--configuration) |
 | Subscription | `/settings/subscription` (planned) | Owner | [M11-F01..F07](../../../docs/MODULES.md#m11--subscription--billing) |
 | Audit log viewer | `/settings/audit` (planned) | Owner | [M01-F08-R06](../../../docs/MODULES.md#m01-f08--audit-trail) |
 | Admin: Payment verification | `/admin/payments` (planned) | SuperAdmin | [M11-F03](../../../docs/MODULES.md#m11-f03--payment--verification) |
@@ -78,12 +84,18 @@ routes/
 │   ├── index.tsx                    # /dashboard (org overview)
 │   ├── station.$stationId.tsx       # /dashboard/station/:stationId
 │   ├── station.$stationId.setup.tsx # /dashboard/station/:stationId/setup (wizard)
-│   ├── station.$stationId.shifts.tsx     # M04 stub (role-guarded ComingSoon)
-│   ├── station.$stationId.inventory.tsx  # M02 stub
-│   ├── station.$stationId.finance.tsx    # M05 stub
-│   └── station.$stationId.reports.tsx    # M07-F01..F03 stub
+│   ├── station.$stationId.shifts.tsx          # M04 stub (Owner/Manager/Custom)
+│   ├── station.$stationId.nozzles.tsx         # M03 stub [M07-F10]
+│   ├── station.$stationId.inventory.tsx       # M02 stub
+│   ├── station.$stationId.pricing.tsx         # M06 stub [M07-F10]
+│   ├── station.$stationId.credit.tsx          # M15 stub [M07-F10]
+│   ├── station.$stationId.finance.tsx         # M05 stub
+│   ├── station.$stationId.reports.tsx         # M07-F01..F06 stub
+│   ├── station.$stationId.admin.users.tsx     # M01 stub, Owner only [M07-F10]
+│   ├── station.$stationId.admin.staff.tsx     # M13 stub, Owner only, Pro+ gate [M07-F10]
+│   └── station.$stationId.admin.lubricants.tsx # M09 stub, Owner only, Pro+ gate [M07-F10]
 ├── settings/
-│   ├── route.tsx                    # Renders <AppShell /> (M07-F07), Owner-only guard
+│   ├── route.tsx                    # Renders <AppShell /> (M07-F07), Owner+Manager guard [M07-F10]
 │   └── index.tsx                    # /settings (M08 stub)
 └── onboarding/
     ├── route.tsx                    # Onboarding layout (header + branding)
