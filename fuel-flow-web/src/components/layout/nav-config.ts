@@ -27,6 +27,7 @@ import {
   IconClockHour4,
   IconCreditCard,
   IconDroplet,
+  IconFlame,
   IconGasStation,
   IconId,
   IconSettings,
@@ -39,7 +40,7 @@ import {
 import { ROLES, hasAnyRole } from "@/lib/roles"
 
 export type NavScope = "org" | "station"
-export type NavGroup = "operations" | "commercial" | "reports" | "admin" | "settings"
+export type NavGroup = "operations" | "station-management" | "commercial" | "reports" | "admin" | "settings"
 
 export interface NavItemConfig {
   key: string
@@ -67,6 +68,7 @@ export interface NavItem extends Omit<NavItemConfig, "roles"> {
  */
 export const NAV_GROUPS: readonly NavGroup[] = [
   "operations",
+  "station-management",
   "commercial",
   "reports",
   "admin",
@@ -116,16 +118,44 @@ const NAV_CATALOGUE: readonly NavItemConfig[] = [
     scope: "station",
     group: "operations",
   },
-  // ── Commercial ──────────────────────────────────────────────────────────
+  // ── Station Management (Owner + Manager only) ────────────────────────────
   {
     key: "pricing",
     labelKey: "nav.pricing",
     icon: IconTag,
     to: "/dashboard/station/$stationId/pricing",
-    roles: [ROLES.Owner, ROLES.Manager, ROLES.Custom],
+    roles: [ROLES.Owner, ROLES.Manager],
     scope: "station",
-    group: "commercial",
+    group: "station-management",
   },
+  {
+    key: "fuelTypes",
+    labelKey: "nav.fuelTypes",
+    icon: IconFlame,
+    to: "/dashboard/station/$stationId/manage/fuel-types",
+    roles: [ROLES.Owner, ROLES.Manager],
+    scope: "station",
+    group: "station-management",
+  },
+  {
+    key: "fuelTanks",
+    labelKey: "nav.fuelTanks",
+    icon: IconBarrel,
+    to: "/dashboard/station/$stationId/manage/tanks",
+    roles: [ROLES.Owner, ROLES.Manager],
+    scope: "station",
+    group: "station-management",
+  },
+  {
+    key: "nozzlesConfig",
+    labelKey: "nav.nozzlesConfig",
+    icon: IconGasStation,
+    to: "/dashboard/station/$stationId/manage/nozzles",
+    roles: [ROLES.Owner, ROLES.Manager],
+    scope: "station",
+    group: "station-management",
+  },
+  // ── Commercial ──────────────────────────────────────────────────────────
   {
     key: "credit",
     labelKey: "nav.credit",

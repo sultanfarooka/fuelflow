@@ -34,8 +34,12 @@
     "settings": "Settings",
     "userMenu": "User menu",
     "logout": "Log out",
+    "fuelTypes": "Fuel Types",
+    "fuelTanks": "Fuel Tanks",
+    "nozzlesConfig": "Nozzles",
     "groups": {
       "operations": "Operations",
+      "stationManagement": "Station Management",
       "commercial": "Commercial",
       "reports": "Reports",
       "admin": "Admin"

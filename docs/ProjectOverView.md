@@ -430,12 +430,14 @@ A consistent shadcn-based design system underpins every screen in the applicatio
 ### 7.7 Navigation Catalog & Module Placeholder Pages
 
 Complete sidebar nav item catalog for the station dashboard, grouped by function:
-Operations, Commercial, Reports, Admin, and Settings. Owner sees all groups; Manager
-sees everything except Admin; Custom Users see only items they have been granted
-permissions for via the granular permissions system ([M01-F06](#m01-f06--granular-permissions)).
-Modules not yet built navigate to a shared "Under Development" placeholder. Plan-gated
-modules (Lubricants, Staff & Payroll on Starter plan) show an "Upgrade to Professional"
-prompt.
+Operations, Station Management, Commercial, Reports, Admin, and Settings. Owner sees
+all groups; Manager sees everything except Admin; Custom Users see only items they
+have been granted permissions for via the granular permissions system
+([M01-F06](#m01-f06--granular-permissions)). The **Station Management** group
+(Owner + Manager only) provides direct nav to Fuel Types, Fuel Tanks, Fuel Pricing,
+and Nozzles — Fuel Pricing lives here rather than in Commercial. Modules not yet built
+navigate to a shared "Under Development" placeholder. Plan-gated modules (Lubricants,
+Staff & Payroll on Starter plan) show an "Upgrade to Professional" prompt.
 
 ---
 
@@ -489,6 +491,17 @@ prompt.
 
 - **Auto-backup:** Server-side daily backup
 - **Data security:** Application ensures data is always backed up
+
+### 8.7 Station Management Navigation Hub
+
+A collapsible **Station Management** group in the station dashboard sidebar gives
+Owners and Managers a single, always-visible entry point for the station's core
+configuration screens. The group contains four child items — **Fuel Types**, **Fuel
+Tanks**, **Fuel Pricing**, and **Nozzles** — and auto-expands whenever any of those
+routes is active. Custom Users never see this group. Fuel Pricing is removed from
+the Commercial nav group and appears only here, co-located with the other
+station-level configuration screens. Until a child feature ships a real route, each
+child renders the shared "Under Development" placeholder.
 
 ---
 

@@ -34,8 +34,12 @@
     "settings": "ترتیبات",
     "userMenu": "صارف مینو",
     "logout": "لاگ آؤٹ",
+    "fuelTypes": "ایندھن کی اقسام",
+    "fuelTanks": "ایندھن کے ٹینک",
+    "nozzlesConfig": "نوزلز",
     "groups": {
       "operations": "آپریشنز",
+      "stationManagement": "اسٹیشن مینجمنٹ",
       "commercial": "تجارتی",
       "reports": "رپورٹس",
       "admin": "انتظامیہ"
