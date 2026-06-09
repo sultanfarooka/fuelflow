@@ -9,7 +9,7 @@
 import { useState } from "react"
 import { Link, useRouterState, type LinkProps } from "@tanstack/react-router"
 import { IconChevronDown, IconGasStation, IconSettings2 } from "@tabler/icons-react"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "radix-ui"
+import { Collapsible } from "radix-ui"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -96,14 +96,14 @@ export function AppSidebar() {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     <SidebarMenuItem>
-                      <Collapsible
+                      <Collapsible.Root
                         open={isStationMgmtOpen}
                         onOpenChange={(open) => {
                           if (!isStationMgmtActiveByRoute) setStationMgmtManualOpen(open)
                         }}
                         className="group/station-mgmt"
                       >
-                        <CollapsibleTrigger asChild>
+                        <Collapsible.Trigger asChild>
                           <SidebarMenuButton
                             tooltip={t(labelKey)}
                             isActive={isStationMgmtActiveByRoute}
@@ -112,8 +112,8 @@ export function AppSidebar() {
                             <span>{t(labelKey)}</span>
                             <IconChevronDown className="ms-auto transition-transform group-data-[state=open]/station-mgmt:rotate-180" />
                           </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
+                        </Collapsible.Trigger>
+                        <Collapsible.Content>
                           <SidebarMenuSub>
                             {groupItems.map((item) => {
                               const resolved = resolvePath(item.to, item.params)
@@ -137,8 +137,8 @@ export function AppSidebar() {
                               )
                             })}
                           </SidebarMenuSub>
-                        </CollapsibleContent>
-                      </Collapsible>
+                        </Collapsible.Content>
+                      </Collapsible.Root>
                     </SidebarMenuItem>
                   </SidebarMenu>
                 </SidebarGroupContent>
