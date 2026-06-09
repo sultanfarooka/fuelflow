@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-07 (M07-F10 Complete Navigation Catalog — Done)
+**Last Updated:** 2026-06-09 (M08-F07 Station Management Navigation Hub — Discovered)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -97,10 +97,10 @@ below is **independent** (its prerequisites are all `Done`).
 | 1 | [M11](#m11--subscription--billing) (order 3) | [M11-F06](#m11-f06--feature-gating) — feature gating (API-level); then [M11-F08](#m11-f08--plan-comparison--pricing-page) pricing page | Backend + Frontend |
 | 2 | [M01](#m01--user--access-management) (order 4) | [M01-F05-R02](#m01-f05--roles--hierarchy)/[R03](#m01-f05--roles--hierarchy) + [M01-F06](#m01-f06--granular-permissions) — Owner→Manager→Custom users + granular permissions | Backend |
 | 3 | [M12](#m12--onboarding--first-run-experience) (order 5) | [M12-F01-R18](#m12-f01--onboarding-wizard)/[R19](#m12-f01--onboarding-wizard) — opening dip + opening meter readings in the wizard | Frontend + Backend |
-| 4 | [M07](#m07--reporting--analytics) (order 2) | [M07-F10](#m07-f10--complete-navigation-catalog--module-placeholder-pages) — complete nav catalog + under-development placeholder pages | Frontend |
-| 5 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
+| 4 | [M08](#m08--settings--configuration) (order 6) | [M08-F05-R05](#m08-f05--system-preferences) — i18n content sweep (`useTranslation` across shipped screens) | Frontend |
+| 5 | [M06](#m06--pricing--rate-management) (order 7) | [M06-F01](#m06-f01--price-configuration) — price configuration (one active price per fuel type per station) | Backend + Frontend |
 
-> First below the fold: [M06](#m06--pricing--rate-management) (order 7) → [M06-F01](#m06-f01--price-configuration) price configuration (one active price per fuel type per station). [M07](#m07--reporting--analytics) re-enters the Top-5 at #4 with the independent [M07-F10](#m07-f10--complete-navigation-catalog--module-placeholder-pages) nav catalog; its remaining reporting features (F01–F06) stay blocked on shift/sales data (M03/M04). For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
+> [M07-F10](#m07-f10--complete-navigation-catalog--module-placeholder-pages) and [M08-F07](#m08-f07--station-management-navigation-hub) both shipped (Done). [M08](#m08--settings--configuration) stays at #4 with the next independent item [M08-F05-R05](#m08-f05--system-preferences) (i18n sweep). [M06](#m06--pricing--rate-management) stays at #5 — it is independent and unblocks sales calculation. For the full ranked backlog see [Priority & Implementation Order](#priority--implementation-order); for per-feature numbers see [Appendix C — Priority Matrix](#appendix-c--priority-matrix).
 >
 > When you pick up an item: flip its row to **In Progress** in the relevant feature table below, in the same commit that starts the work. When done: flip to **Done** in the same PR that ships it.
 
@@ -1150,7 +1150,10 @@ Defines the complete sidebar nav item catalog for the station dashboard: which i
 | Operations | Shifts | M04 | if M04 perm | ✓ | ✓ | All |
 | Operations | Nozzle Operations | M03 | if M03 perm | ✓ | ✓ | All |
 | Operations | Fuel Inventory | M02 | if M02 perm | ✓ | ✓ | All |
-| Commercial | Fuel Pricing | M06 | if M06 perm | ✓ | ✓ | All |
+| Station Management | Fuel Types | M08-F07 | — | ✓ | ✓ | All |
+| Station Management | Fuel Tanks | M08-F07 | — | ✓ | ✓ | All |
+| Station Management | Fuel Pricing | M06 | — | ✓ | ✓ | All |
+| Station Management | Nozzles | M08-F07 | — | ✓ | ✓ | All |
 | Commercial | Credit Customers | M15 | if M15 perm | ✓ | ✓ | All |
 | Commercial | Finance & Accounts | M05 | if M05 perm | ✓ | ✓ | All |
 | Reports | Reports | M07-F01..F06 | if M07 perm | ✓ | ✓ | All |
@@ -1163,7 +1166,7 @@ Defines the complete sidebar nav item catalog for the station dashboard: which i
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M07-F10-R01 | Sidebar renders all nav items from the catalog above, organized in labeled groups | — | Done |
+| M07-F10-R01 | Sidebar renders all nav items from the catalog above, organized in labeled groups | — | Done · extended by [M08-F07-R01](#m08-f07--station-management-navigation-hub) |
 | M07-F10-R02 | Owner and Manager see all items in their columns. Custom Users see Dashboard always; all other items appear only when the user has been granted at least View permission for that module via [M01-F06](#m01-f06--granular-permissions); Admin group items are never shown to Custom Users | — | Done |
 | M07-F10-R03 | Clicking a nav item whose module has no built routes renders a shared "Under Development" placeholder page: module name, brief description, and a "coming soon" note | — | Done |
 | M07-F10-R04 | Plan-gated nav items (Staff & Payroll, Lubricants / Oil Shop) for Starter-plan users render an "Upgrade to Professional" prompt page with a link to [M11-F08](#m11-f08--plan-comparison--pricing-page); plan gate takes precedence over under-development state | — | Done |
@@ -1263,6 +1266,33 @@ Server-side daily backup.
 |---|---|---|---|
 | M08-F06-R01 | Automatic daily server-side backup | — | Planned |
 | M08-F06-R02 | Backup retention policy defined and documented | — | Planned |
+
+---
+
+### M08-F07 — Station Management Navigation Hub   [Status: Done]
+
+> _Discovery (2026-06-09): Owner request — station dashboard sidebar is sparse; fuel types, tanks, prices, and nozzles have no dedicated nav entry · outcome = Owner and Manager can navigate directly to Fuel Types, Tanks, Fuel Pricing, and Nozzles from a single collapsible "Station Management" sidebar group; Fuel Pricing moves out of the Commercial group into this hub · maps to ProjectOverView §7.7 and new §8.7 (platform UI + settings) · cost-of-not-building: configuration screens exist but are only reachable via the Setup Wizard — no persistent nav path_
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=locale-agnostic; sensitive-action=no; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
+
+Adds a collapsible **"Station Management"** sidebar group (Owner + Manager only, hidden from Custom Users) with four child nav items: Fuel Types, Fuel Tanks, Fuel Pricing, Nozzles. Each child initially renders the shared `<UnderDevelopment />` placeholder; child routes live under `/dashboard/station/:stationId/manage/`. The group auto-expands when any child route is active. Extends [M07-F10-R01](#m07-f10--complete-navigation-catalog--module-placeholder-pages) and moves Fuel Pricing from the Commercial nav group. Pairs with [M06-F01](#m06-f01--price-configuration) (the actual pricing feature that will replace the placeholder).
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M08-F07-R01 | Sidebar contains a "Station Management" group visible only to Owner and Manager; it is absent for Custom Users regardless of M01-F06 grants | — | Done |
+| M08-F07-R02 | Group contains four child nav items in order: Fuel Types, Fuel Tanks, Fuel Pricing, Nozzles | — | Done |
+| M08-F07-R03 | Each child item renders the shared `<UnderDevelopment />` placeholder until its backing module ships a real route; Fuel Pricing links to M06-F01 when that feature is Done | — | Done |
+| M08-F07-R04 | Group is collapsible; it auto-expands when the active route is any of its four children | — | Done |
+| M08-F07-R05 | Fuel Pricing is removed from the Commercial nav group and appears only under Station Management | — | Done |
+
+**Acceptance Criteria:**
+- **AC1** Given an Owner or Manager on the station dashboard, when they view the sidebar, then a "Station Management" group is visible containing exactly: Fuel Types, Fuel Tanks, Fuel Pricing, Nozzles.
+- **AC2** Given a Custom User on the station dashboard, when they view the sidebar, then no "Station Management" group or its child items appear.
+- **AC3** Given any authenticated user, when they view the sidebar Commercial group, then "Fuel Pricing" is absent from it.
+- **AC4** Given an Owner navigates to any child under Station Management, when the sidebar renders, then the Station Management group is expanded (not collapsed).
+- **AC5** Given an Owner clicks any Station Management child item whose backing feature is not yet built, then the shared "Under Development" placeholder renders.
 
 ---
 
@@ -2121,9 +2151,10 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | 6.1 | M08-F01 | Station Profile | P1 | Done | — | |
 | 6.2 | M08-F02 | Tank Configuration | P1 | In Progress | — | |
 | 6.3 | M08-F03 | Nozzle Configuration | P1 | In Progress | — | |
-| 6.4 | M08-F05 | System Preferences | P1 | Planned | — (i18n foundation ✓; R05 sweep) | ★ |
-| 6.5 | M08-F04 | Dip Chart Management | P1 | Planned | M02-F04 | |
-| 6.6 | M08-F06 | Backup & Data | P2 | Planned | — | |
+| 6.4 | M08-F07 | Station Management Navigation Hub | P1 | Done | — | |
+| 6.5 | M08-F05 | System Preferences | P1 | Planned | — (i18n foundation ✓; R05 sweep) | ★ |
+| 6.6 | M08-F04 | Dip Chart Management | P1 | Planned | M02-F04 | |
+| 6.7 | M08-F06 | Backup & Data | P2 | Planned | — | |
 
 ### Order 7 — M06 Pricing & Rate Management  ·  P1
 
