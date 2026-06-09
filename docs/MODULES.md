@@ -822,7 +822,7 @@ Entry point for recording non-fuel, non-shift income. Writes one `FinancialEntri
 
 ---
 
-### M05-F11 — Financial Ledger (Unified Entry Table)   [Status: Planned]
+### M05-F11 — Financial Ledger (Unified Entry Table)   [Status: Done]
 
 > _Discovery (2026-06-01): design decision — rather than separate transaction tables per feature (Cash Book, Daily Expenses, Other Income, Customer Ledger, Supplier Payments), a single `FinancialEntries` table becomes the authoritative record of every rupee in and out; all other M05 / M15 features are structured reads or writes on this table · outcome = P&L, Cash Book, Bank Balance, Customer Balance, and any future report all query one source; no cross-table joins to reconstruct financial state · cost-of-not-building: each feature creates its own table and the P&L must stitch them together; Customer Balance and Cash Position require queries across four modules_
 
@@ -859,14 +859,14 @@ Single `FinancialEntries` table that all financial events write to. Every row is
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M05-F11-R01 | `FinancialEntries` table stores all financial events; mandatory columns: `Id`, `Date`, `EntryType`, `Amount` (decimal 18,4; positive = in, negative = out), `OrganizationId`, `CreatedByUserId`, `CreatedAt` | — | Planned |
-| M05-F11-R02 | Optional dimension columns: `AccountHeadId?` (FK → AccountHeads; required for all P&L entry types; null for CustomerPayment, BankDeposit, OpeningBalance cash/bank rows), `StationId?`, `BankAccountId?`, `CustomerId?`, `VehicleId?`, `SupplierId?`, `InvoiceId?`, `ShiftId?`, `EmployeeId?`, `TransactionGroupId?` (links paired entries such as a bank deposit's two legs) | — | Planned |
-| M05-F11-R03 | `PaymentMethod` column (Cash / Bank / Card / Digital / Credit / None) indicates how the transaction was settled; Cash Book view filters on `{Cash, Card, Digital}` | — | Planned |
-| M05-F11-R04 | `IsSystemGenerated` flag marks entries auto-created by shift close or seeding; system-generated entries cannot be edited or deleted | — | Planned |
-| M05-F11-R05 | Entries are immutable once created; corrections are made via a paired `ManualAdjustment` entry (reversal row + new correcting row sharing a `TransactionGroupId`); requires reason text; logged to audit trail ([M01-F08](#m01-f08--audit-trail)) | — | Planned |
-| M05-F11-R06 | Global query filter by `OrganizationId` enforced at AppDbContext level; no cross-tenant entry visible | — | Planned |
+| M05-F11-R01 | `FinancialEntries` table stores all financial events; mandatory columns: `Id`, `Date`, `EntryType`, `Amount` (decimal 18,4; positive = in, negative = out), `OrganizationId`, `CreatedByUserId`, `CreatedAt`, `Description` (narration, max 500) | — | Done |
+| M05-F11-R02 | Optional dimension columns: `AccountHeadId?` (FK → AccountHeads; required for all P&L entry types; null for CustomerPayment, BankDeposit, OpeningBalance cash/bank rows), `StationId?`, `BankAccountId?`, `CustomerId?`, `VehicleId?`, `SupplierId?`, `InvoiceId?`, `ShiftId?`, `EmployeeId?`, `TransactionGroupId?` (links paired entries such as a bank deposit's two legs) | — | Done |
+| M05-F11-R03 | `PaymentMethod` column (Cash / Bank / Card / Digital / Credit / None) indicates how the transaction was settled; Cash Book view filters on `{Cash, Card, Digital}` | — | Done |
+| M05-F11-R04 | `IsSystemGenerated` flag marks entries auto-created by shift close or seeding; system-generated entries cannot be edited or deleted | — | Done |
+| M05-F11-R05 | Entries are immutable once created; corrections are made via a paired `ManualAdjustment` entry (reversal row + new correcting row sharing a `TransactionGroupId`); requires reason text; logged to audit trail ([M01-F08](#m01-f08--audit-trail)) | — | Done |
+| M05-F11-R06 | Tenant isolation enforced via explicit `OrganizationId` parameter on all repository methods (per M14 per-tenant DB architecture); no cross-tenant entry visible | — | Done |
 | M05-F11-R07 | All features that previously planned their own transaction tables (M05-F03, M05-F04 balance, M05-F05, M05-F10, M15-F02, M15-F03) write to `FinancialEntries` instead | — | Planned |
-| M05-F11-R08 | Indexes: `(OrganizationId, Date)` for time-range queries; `(CustomerId, Date)` for customer ledger; `(AccountHeadId, Date)` for P&L; `(BankAccountId, Date)` for bank balance; `(ShiftId)` for shift reconciliation | — | Planned |
+| M05-F11-R08 | Indexes: `(OrganizationId, Date)` for time-range queries; `(CustomerId, Date)` for customer ledger; `(AccountHeadId, Date)` for P&L; `(BankAccountId, Date)` for bank balance; `(ShiftId)` for shift reconciliation | — | Done |
 
 **Acceptance Criteria:**
 - **AC1** Given a credit sale of Rs. 56,000 for Ahmed Traders (LEA-4521), When saved via M15-F02, Then one `FinancialEntries` row exists with `EntryType=FuelSaleCredit`, `AccountHeadId=Credit Sales HSD`, `CustomerId=Ahmed`, `VehicleId=LEA-4521`, `Amount=+56,000`.
