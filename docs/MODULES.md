@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-09 (M08-F07 Station Management Navigation Hub — Discovered)
+**Last Updated:** 2026-06-13 (M08-F08 Fuel Type Management — Discovered; M08-F07 redesigned to tabbed "Station Configuration" under Admin)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -335,7 +335,9 @@ Phone (+92 format) becomes the primary identifier for registration, login, verif
 
 **Purpose:** Track underground tanks, fuel products (PMG/HSD/HOBC), supplier purchases, dip readings, and fuel receiving (tanker deliveries) with variance alerts.
 
-### M02-F01 — Fuel Products   [Status: Done]
+### M02-F01 — Fuel Products   [Status: In Progress]
+
+> _Header rolls up to In Progress because [M08-F08](#m08-f08--fuel-type-management) supersedes R03. R01 (product seeding) and R02 (onboarding selectability) remain Done; only R03's "not a self-service feature" stance is now reference-only._
 
 Supported products: PMG (Petrol), HSD (High Speed Diesel), HOBC (Hi-Octane Blending Component).
 
@@ -345,7 +347,7 @@ Supported products: PMG (Petrol), HSD (High Speed Diesel), HOBC (Hi-Octane Blend
 |---|---|---|---|
 | M02-F01-R01 | Three fuel-product types seeded: PMG, HSD, HOBC | — | Done |
 | M02-F01-R02 | Fuel types are selectable during station setup (onboarding) | — | Done |
-| M02-F01-R03 | New fuel-type additions are rare; not a self-service feature | — | Done |
+| M02-F01-R03 | New fuel-type additions are rare; not a self-service feature | — | Done · superseded by M08-F08 |
 
 ---
 
@@ -1150,13 +1152,10 @@ Defines the complete sidebar nav item catalog for the station dashboard: which i
 | Operations | Shifts | M04 | if M04 perm | ✓ | ✓ | All |
 | Operations | Nozzle Operations | M03 | if M03 perm | ✓ | ✓ | All |
 | Operations | Fuel Inventory | M02 | if M02 perm | ✓ | ✓ | All |
-| Station Management | Fuel Types | M08-F07 | — | ✓ | ✓ | All |
-| Station Management | Fuel Tanks | M08-F07 | — | ✓ | ✓ | All |
-| Station Management | Fuel Pricing | M06 | — | ✓ | ✓ | All |
-| Station Management | Nozzles | M08-F07 | — | ✓ | ✓ | All |
 | Commercial | Credit Customers | M15 | if M15 perm | ✓ | ✓ | All |
 | Commercial | Finance & Accounts | M05 | if M05 perm | ✓ | ✓ | All |
 | Reports | Reports | M07-F01..F06 | if M07 perm | ✓ | ✓ | All |
+| Admin | Station Configuration | M08-F07 (tabs: M08-F08 / M06-F01 / M08-F02 / M08-F03) | — | ✓ | ✓ | All |
 | Admin | Users & Access | M01-F05..F07 | — | — | ✓ | All |
 | Admin | Staff & Payroll | M13 | — | — | ✓ | Pro+ |
 | Admin | Lubricants / Oil Shop | M09 | — | — | ✓ | Pro+ |
@@ -1269,30 +1268,63 @@ Server-side daily backup.
 
 ---
 
-### M08-F07 — Station Management Navigation Hub   [Status: Done]
+### M08-F07 — Station Configuration   [Status: Done]
 
-> _Discovery (2026-06-09): Owner request — station dashboard sidebar is sparse; fuel types, tanks, prices, and nozzles have no dedicated nav entry · outcome = Owner and Manager can navigate directly to Fuel Types, Tanks, Fuel Pricing, and Nozzles from a single collapsible "Station Management" sidebar group; Fuel Pricing moves out of the Commercial group into this hub · maps to ProjectOverView §7.7 and new §8.7 (platform UI + settings) · cost-of-not-building: configuration screens exist but are only reachable via the Setup Wizard — no persistent nav path_
+> _Discovery (2026-06-09): Owner request — station dashboard sidebar is sparse; fuel types, tanks, prices, and nozzles have no dedicated nav entry · outcome = Owner and Manager can reach Fuel Types, Tanks, Fuel Pricing, and Nozzles from a single persistent nav path; Fuel Pricing moves out of the Commercial group · maps to ProjectOverView §7.7 and new §8.7 (platform UI + settings) · cost-of-not-building: configuration screens exist but are only reachable via the Setup Wizard — no persistent nav path_
+>
+> _Redesign (2026-06-13): Owner request — replaced the dedicated collapsible "Station Management" sidebar group with a single **"Station Configuration"** item under the **Admin** group that opens a single tabbed page (`/dashboard/station/:stationId/configuration`) with tabs for Fuel Types, Fuel Pricing, Fuel Tanks, and Nozzles. R01–R05 below describe the current (tabbed) design; the original four-`/manage/*`-routes-in-a-collapsible-group shape is superseded._
 
 **Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=locale-agnostic; sensitive-action=no; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
 
-Adds a collapsible **"Station Management"** sidebar group (Owner + Manager only, hidden from Custom Users) with four child nav items: Fuel Types, Fuel Tanks, Fuel Pricing, Nozzles. Each child initially renders the shared `<UnderDevelopment />` placeholder; child routes live under `/dashboard/station/:stationId/manage/`. The group auto-expands when any child route is active. Extends [M07-F10-R01](#m07-f10--complete-navigation-catalog--module-placeholder-pages) and moves Fuel Pricing from the Commercial nav group. Pairs with [M06-F01](#m06-f01--price-configuration) (the actual pricing feature that will replace the placeholder).
+Adds a single **"Station Configuration"** item to the **Admin** sidebar group (Owner + Manager only, hidden from Custom Users) that opens a tabbed page at `/dashboard/station/:stationId/configuration`. The page has four tabs — Fuel Types, Fuel Pricing, Fuel Tanks, Nozzles — each rendering the shared `<UnderDevelopment />` placeholder until its backing feature ships its UI in place. Extends [M07-F10-R01](#m07-f10--complete-navigation-catalog--module-placeholder-pages) and removes Fuel Pricing from the Commercial nav group. Tab contents are owned by [M08-F08](#m08-f08--fuel-type-management) (Fuel Types), [M06-F01](#m06-f01--price-configuration) (Fuel Pricing), [M08-F02](#m08-f02--tank-configuration) (Fuel Tanks), and [M08-F03](#m08-f03--nozzle-configuration) (Nozzles).
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M08-F07-R01 | Sidebar contains a "Station Management" group visible only to Owner and Manager; it is absent for Custom Users regardless of M01-F06 grants | — | Done |
-| M08-F07-R02 | Group contains four child nav items in order: Fuel Types, Fuel Tanks, Fuel Pricing, Nozzles | — | Done |
-| M08-F07-R03 | Each child item renders the shared `<UnderDevelopment />` placeholder until its backing module ships a real route; Fuel Pricing links to M06-F01 when that feature is Done | — | Done |
-| M08-F07-R04 | Group is collapsible; it auto-expands when the active route is any of its four children | — | Done |
-| M08-F07-R05 | Fuel Pricing is removed from the Commercial nav group and appears only under Station Management | — | Done |
+| M08-F07-R01 | Sidebar's **Admin** group contains a single "Station Configuration" item visible only to Owner and Manager; it is absent for Custom Users regardless of M01-F06 grants | — | Done |
+| M08-F07-R02 | The item opens a tabbed page at `/dashboard/station/:stationId/configuration` with four tabs in order: Fuel Types, Fuel Pricing, Fuel Tanks, Nozzles | — | Done |
+| M08-F07-R03 | Each tab renders the shared `<UnderDevelopment />` placeholder until its backing feature ships a real UI (Fuel Types→M08-F08, Fuel Pricing→M06-F01, Fuel Tanks→M08-F02, Nozzles→M08-F03), which replaces the placeholder in place | — | Done |
+| M08-F07-R04 | The Fuel Types tab is the default selected tab on load | — | Done |
+| M08-F07-R05 | Fuel Pricing is removed from the Commercial nav group and is reachable only via the Station Configuration → Fuel Pricing tab | — | Done |
 
 **Acceptance Criteria:**
-- **AC1** Given an Owner or Manager on the station dashboard, when they view the sidebar, then a "Station Management" group is visible containing exactly: Fuel Types, Fuel Tanks, Fuel Pricing, Nozzles.
-- **AC2** Given a Custom User on the station dashboard, when they view the sidebar, then no "Station Management" group or its child items appear.
-- **AC3** Given any authenticated user, when they view the sidebar Commercial group, then "Fuel Pricing" is absent from it.
-- **AC4** Given an Owner navigates to any child under Station Management, when the sidebar renders, then the Station Management group is expanded (not collapsed).
-- **AC5** Given an Owner clicks any Station Management child item whose backing feature is not yet built, then the shared "Under Development" placeholder renders.
+- **AC1** Given an Owner or Manager on the station dashboard, when they view the sidebar, then the Admin group shows a single "Station Configuration" item (no separate "Station Management" group).
+- **AC2** Given a Custom User on the station dashboard, when they view the sidebar, then no "Station Configuration" item appears.
+- **AC3** Given an Owner clicks "Station Configuration", when the page loads, then a tabbed page renders with exactly: Fuel Types, Fuel Pricing, Fuel Tanks, Nozzles.
+- **AC4** Given the Station Configuration page loads, when no tab has been chosen, then the Fuel Types tab is selected by default.
+- **AC5** Given an Owner opens a tab whose backing feature is not yet built, then the shared "Under Development" placeholder renders inside that tab.
+- **AC6** Given any authenticated user, when they view the sidebar Commercial group, then "Fuel Pricing" is absent from it.
+
+---
+
+### M08-F08 — Fuel Type Management   [Status: Planned]
+
+> _Discovery (2026-06-13): Owner request — the "Fuel Types" child of the Station Management hub ([M08-F07](#m08-f07--station-management-navigation-hub)) is only a `<UnderDevelopment />` placeholder; fuel types can be chosen during onboarding ([M12-F01-R04](#m12-f01--onboarding-wizard)) but never managed afterward · outcome = Owner and Manager get a full self-service screen at `/dashboard/station/:stationId/manage/fuel-types` to view, add, rename, and activate/deactivate fuel types post-onboarding · reverses the original [M02-F01-R03](#m02-f01--fuel-products) stance ("not a self-service feature") · maps to ProjectOverView §7.7 (Settings & Configuration) · cost-of-not-building: stations stuck with whatever fuel types they picked at onboarding — no way to add HOBC, rename a custom blend, or retire a discontinued product without DB access._
+
+**Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=locale-agnostic; sensitive-action=yes; notification-trigger=no; money-touch=indirect (drives pricing/sales); shift-lifecycle-touch=guard (block deactivate while referenced by an open shift)
+
+Post-onboarding self-service management surface for a station's fuel types — replaces the placeholder at the first child of the Station Management hub ([M08-F07](#m08-f07--station-management-navigation-hub)). Owner + Manager can view, add (from the OMC catalog or as a custom name + unit), rename, and activate/deactivate fuel types, capabilities previously only available inside the [M12-F01](#m12-f01--onboarding-wizard) wizard. Supersedes [M02-F01-R03](#m02-f01--fuel-products). Pairs with [M06-F01](#m06-f01--price-configuration) (pricing), [M08-F02](#m08-f02--tank-configuration) (tanks), and [M08-F03](#m08-f03--nozzle-configuration) (nozzles) — a new fuel type is not sellable until it has a price, a tank, and a nozzle.
+
+**Requirements:**
+
+| ID | Requirement | Legacy | Status |
+|---|---|---|---|
+| M08-F08-R01 | List all fuel types for the station: name, unit, source (OMC catalog vs custom), active/inactive status, and reference counts (tanks / nozzles / active price). Visible to Owner + Manager only | — | Planned |
+| M08-F08-R02 | Add a fuel type post-onboarding — select from the OMC catalog or create a custom type (name + unit); duplicate names rejected per station. Supersedes M02-F01-R03 | — | Planned |
+| M08-F08-R03 | Rename a custom fuel type's display name; OMC-catalog types are read-only. Display-name only — no key change, historical records unaffected | — | Planned |
+| M08-F08-R04 | Activate / deactivate a fuel type. Deactivated types are excluded from new price, tank, and nozzle pickers but retained for historical reporting | — | Planned |
+| M08-F08-R05 | Deactivation blocked (`409` + blocking references) while the type is referenced by an active price, tank, nozzle, or open shift. Fuel types are never hard-deleted once referenced | — | Planned |
+| M08-F08-R06 | Adding a fuel type does not auto-create a price/tank/nozzle; the UI flags it "not yet sellable" until it has an active price and ≥1 tank + nozzle (mirrors [M12-F01-R15](#m12-f01--onboarding-wizard) completeness checks) | — | Planned |
+| M08-F08-R07 | Add / rename / activate / deactivate are audit-logged (actor, station, before/after) | — | Planned |
+
+**Acceptance Criteria:**
+- **AC1** Given an Owner on `/manage/fuel-types`, when the page loads, then all configured fuel types are listed with name, unit, source, status, and reference counts.
+- **AC2** Given an Owner adds a custom fuel type with a unique name + unit, then it appears as active and flagged "not yet sellable" until it has a price and a tank + nozzle.
+- **AC3** Given a Manager tries to add a fuel type whose name duplicates an existing one for the station, then an inline (Zod) and API (FluentValidation) error blocks it.
+- **AC4** Given an Owner deactivates a fuel type with no active references, then it disappears from new price/tank/nozzle pickers but remains in historical reports.
+- **AC5** Given an Owner tries to deactivate a fuel type referenced by an active price, tank, nozzle, or open shift, then a `409` lists the blocking references and the type stays active.
+- **AC6** Given any add / rename / activate / deactivate action, then an audit-log entry records actor, station, and before/after values.
 
 ---
 
@@ -2155,6 +2187,7 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | 6.5 | M08-F05 | System Preferences | P1 | Planned | — (i18n foundation ✓; R05 sweep) | ★ |
 | 6.6 | M08-F04 | Dip Chart Management | P1 | Planned | M02-F04 | |
 | 6.7 | M08-F06 | Backup & Data | P2 | Planned | — | |
+| 6.8 | M08-F08 | Fuel Type Management | P2 | Planned | — (M08-F07 ✓; fuel types ✓) | |
 
 ### Order 7 — M06 Pricing & Rate Management  ·  P1
 
@@ -2171,7 +2204,7 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 
 | Order | ID | Feature | Tier | Status | Depends on | ★ |
 |---|---|---|---|---|---|---|
-| 8.1 | M02-F01 | Fuel Products | P1 | Done | — | |
+| 8.1 | M02-F01 | Fuel Products | P1 | In Progress | — (R03 superseded by M08-F08) | |
 | 8.2 | M02-F03 | Underground Tank Management | P1 | In Progress | — | ★ |
 | 8.3 | M02-F02 | Supplier Tracking | P1 | Planned | — | |
 | 8.4 | M02-F04 | Dip Chart Management | P1 | Planned | M02-F03 | |
@@ -2235,7 +2268,7 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | 14.3 | M09-F03 | Stock Management | P3 | Planned | M09-F01 | |
 | 14.4 | M09-F04 | Lubricant Reporting | P3 | Planned | M09-F01/F02 | |
 
-> **79 features** total. Tier/Order are a ranking ordinal layered on the stable
+> **80 features** total. Tier/Order are a ranking ordinal layered on the stable
 > IDs — they never renumber an ID (Maintenance Convention 6). When a feature's
 > status or dependencies change, update its row here and, if it shifts the module
 > ranking, the [Priority & Implementation Order](#priority--implementation-order)
