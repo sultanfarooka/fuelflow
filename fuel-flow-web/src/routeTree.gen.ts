@@ -33,14 +33,11 @@ import { Route as DashboardAccountPhoneRouteImport } from './routes/dashboard/ac
 import { Route as DashboardStationStationIdShiftsRouteImport } from './routes/dashboard/station.$stationId.shifts'
 import { Route as DashboardStationStationIdSetupRouteImport } from './routes/dashboard/station.$stationId.setup'
 import { Route as DashboardStationStationIdReportsRouteImport } from './routes/dashboard/station.$stationId.reports'
-import { Route as DashboardStationStationIdPricingRouteImport } from './routes/dashboard/station.$stationId.pricing'
 import { Route as DashboardStationStationIdNozzlesRouteImport } from './routes/dashboard/station.$stationId.nozzles'
 import { Route as DashboardStationStationIdInventoryRouteImport } from './routes/dashboard/station.$stationId.inventory'
 import { Route as DashboardStationStationIdFinanceRouteImport } from './routes/dashboard/station.$stationId.finance'
 import { Route as DashboardStationStationIdCreditRouteImport } from './routes/dashboard/station.$stationId.credit'
-import { Route as DashboardStationStationIdManageTanksRouteImport } from './routes/dashboard/station.$stationId.manage.tanks'
-import { Route as DashboardStationStationIdManageNozzlesRouteImport } from './routes/dashboard/station.$stationId.manage.nozzles'
-import { Route as DashboardStationStationIdManageFuelTypesRouteImport } from './routes/dashboard/station.$stationId.manage.fuel-types'
+import { Route as DashboardStationStationIdConfigurationRouteImport } from './routes/dashboard/station.$stationId.configuration'
 import { Route as DashboardStationStationIdAdminUsersRouteImport } from './routes/dashboard/station.$stationId.admin.users'
 import { Route as DashboardStationStationIdAdminStaffRouteImport } from './routes/dashboard/station.$stationId.admin.staff'
 import { Route as DashboardStationStationIdAdminLubricantsRouteImport } from './routes/dashboard/station.$stationId.admin.lubricants'
@@ -170,12 +167,6 @@ const DashboardStationStationIdReportsRoute =
     path: '/reports',
     getParentRoute: () => DashboardStationStationIdRoute,
   } as any)
-const DashboardStationStationIdPricingRoute =
-  DashboardStationStationIdPricingRouteImport.update({
-    id: '/pricing',
-    path: '/pricing',
-    getParentRoute: () => DashboardStationStationIdRoute,
-  } as any)
 const DashboardStationStationIdNozzlesRoute =
   DashboardStationStationIdNozzlesRouteImport.update({
     id: '/nozzles',
@@ -200,22 +191,10 @@ const DashboardStationStationIdCreditRoute =
     path: '/credit',
     getParentRoute: () => DashboardStationStationIdRoute,
   } as any)
-const DashboardStationStationIdManageTanksRoute =
-  DashboardStationStationIdManageTanksRouteImport.update({
-    id: '/manage/tanks',
-    path: '/manage/tanks',
-    getParentRoute: () => DashboardStationStationIdRoute,
-  } as any)
-const DashboardStationStationIdManageNozzlesRoute =
-  DashboardStationStationIdManageNozzlesRouteImport.update({
-    id: '/manage/nozzles',
-    path: '/manage/nozzles',
-    getParentRoute: () => DashboardStationStationIdRoute,
-  } as any)
-const DashboardStationStationIdManageFuelTypesRoute =
-  DashboardStationStationIdManageFuelTypesRouteImport.update({
-    id: '/manage/fuel-types',
-    path: '/manage/fuel-types',
+const DashboardStationStationIdConfigurationRoute =
+  DashboardStationStationIdConfigurationRouteImport.update({
+    id: '/configuration',
+    path: '/configuration',
     getParentRoute: () => DashboardStationStationIdRoute,
   } as any)
 const DashboardStationStationIdAdminUsersRoute =
@@ -259,20 +238,17 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/configuration': typeof DashboardStationStationIdConfigurationRoute
   '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
   '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
   '/dashboard/station/$stationId/nozzles': typeof DashboardStationStationIdNozzlesRoute
-  '/dashboard/station/$stationId/pricing': typeof DashboardStationStationIdPricingRoute
   '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
   '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
   '/dashboard/station/$stationId/admin/lubricants': typeof DashboardStationStationIdAdminLubricantsRoute
   '/dashboard/station/$stationId/admin/staff': typeof DashboardStationStationIdAdminStaffRoute
   '/dashboard/station/$stationId/admin/users': typeof DashboardStationStationIdAdminUsersRoute
-  '/dashboard/station/$stationId/manage/fuel-types': typeof DashboardStationStationIdManageFuelTypesRoute
-  '/dashboard/station/$stationId/manage/nozzles': typeof DashboardStationStationIdManageNozzlesRoute
-  '/dashboard/station/$stationId/manage/tanks': typeof DashboardStationStationIdManageTanksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -293,20 +269,17 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/configuration': typeof DashboardStationStationIdConfigurationRoute
   '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
   '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
   '/dashboard/station/$stationId/nozzles': typeof DashboardStationStationIdNozzlesRoute
-  '/dashboard/station/$stationId/pricing': typeof DashboardStationStationIdPricingRoute
   '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
   '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
   '/dashboard/station/$stationId/admin/lubricants': typeof DashboardStationStationIdAdminLubricantsRoute
   '/dashboard/station/$stationId/admin/staff': typeof DashboardStationStationIdAdminStaffRoute
   '/dashboard/station/$stationId/admin/users': typeof DashboardStationStationIdAdminUsersRoute
-  '/dashboard/station/$stationId/manage/fuel-types': typeof DashboardStationStationIdManageFuelTypesRoute
-  '/dashboard/station/$stationId/manage/nozzles': typeof DashboardStationStationIdManageNozzlesRoute
-  '/dashboard/station/$stationId/manage/tanks': typeof DashboardStationStationIdManageTanksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -331,20 +304,17 @@ export interface FileRoutesById {
   '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/dashboard/station/$stationId/configuration': typeof DashboardStationStationIdConfigurationRoute
   '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
   '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
   '/dashboard/station/$stationId/nozzles': typeof DashboardStationStationIdNozzlesRoute
-  '/dashboard/station/$stationId/pricing': typeof DashboardStationStationIdPricingRoute
   '/dashboard/station/$stationId/reports': typeof DashboardStationStationIdReportsRoute
   '/dashboard/station/$stationId/setup': typeof DashboardStationStationIdSetupRoute
   '/dashboard/station/$stationId/shifts': typeof DashboardStationStationIdShiftsRoute
   '/dashboard/station/$stationId/admin/lubricants': typeof DashboardStationStationIdAdminLubricantsRoute
   '/dashboard/station/$stationId/admin/staff': typeof DashboardStationStationIdAdminStaffRoute
   '/dashboard/station/$stationId/admin/users': typeof DashboardStationStationIdAdminUsersRoute
-  '/dashboard/station/$stationId/manage/fuel-types': typeof DashboardStationStationIdManageFuelTypesRoute
-  '/dashboard/station/$stationId/manage/nozzles': typeof DashboardStationStationIdManageNozzlesRoute
-  '/dashboard/station/$stationId/manage/tanks': typeof DashboardStationStationIdManageTanksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -370,20 +340,17 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/configuration'
     | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
     | '/dashboard/station/$stationId/inventory'
     | '/dashboard/station/$stationId/nozzles'
-    | '/dashboard/station/$stationId/pricing'
     | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
     | '/dashboard/station/$stationId/shifts'
     | '/dashboard/station/$stationId/admin/lubricants'
     | '/dashboard/station/$stationId/admin/staff'
     | '/dashboard/station/$stationId/admin/users'
-    | '/dashboard/station/$stationId/manage/fuel-types'
-    | '/dashboard/station/$stationId/manage/nozzles'
-    | '/dashboard/station/$stationId/manage/tanks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -404,20 +371,17 @@ export interface FileRouteTypes {
     | '/settings'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/configuration'
     | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
     | '/dashboard/station/$stationId/inventory'
     | '/dashboard/station/$stationId/nozzles'
-    | '/dashboard/station/$stationId/pricing'
     | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
     | '/dashboard/station/$stationId/shifts'
     | '/dashboard/station/$stationId/admin/lubricants'
     | '/dashboard/station/$stationId/admin/staff'
     | '/dashboard/station/$stationId/admin/users'
-    | '/dashboard/station/$stationId/manage/fuel-types'
-    | '/dashboard/station/$stationId/manage/nozzles'
-    | '/dashboard/station/$stationId/manage/tanks'
   id:
     | '__root__'
     | '/'
@@ -441,20 +405,17 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/dashboard/station/$stationId/configuration'
     | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
     | '/dashboard/station/$stationId/inventory'
     | '/dashboard/station/$stationId/nozzles'
-    | '/dashboard/station/$stationId/pricing'
     | '/dashboard/station/$stationId/reports'
     | '/dashboard/station/$stationId/setup'
     | '/dashboard/station/$stationId/shifts'
     | '/dashboard/station/$stationId/admin/lubricants'
     | '/dashboard/station/$stationId/admin/staff'
     | '/dashboard/station/$stationId/admin/users'
-    | '/dashboard/station/$stationId/manage/fuel-types'
-    | '/dashboard/station/$stationId/manage/nozzles'
-    | '/dashboard/station/$stationId/manage/tanks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -636,13 +597,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStationStationIdReportsRouteImport
       parentRoute: typeof DashboardStationStationIdRoute
     }
-    '/dashboard/station/$stationId/pricing': {
-      id: '/dashboard/station/$stationId/pricing'
-      path: '/pricing'
-      fullPath: '/dashboard/station/$stationId/pricing'
-      preLoaderRoute: typeof DashboardStationStationIdPricingRouteImport
-      parentRoute: typeof DashboardStationStationIdRoute
-    }
     '/dashboard/station/$stationId/nozzles': {
       id: '/dashboard/station/$stationId/nozzles'
       path: '/nozzles'
@@ -671,25 +625,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStationStationIdCreditRouteImport
       parentRoute: typeof DashboardStationStationIdRoute
     }
-    '/dashboard/station/$stationId/manage/tanks': {
-      id: '/dashboard/station/$stationId/manage/tanks'
-      path: '/manage/tanks'
-      fullPath: '/dashboard/station/$stationId/manage/tanks'
-      preLoaderRoute: typeof DashboardStationStationIdManageTanksRouteImport
-      parentRoute: typeof DashboardStationStationIdRoute
-    }
-    '/dashboard/station/$stationId/manage/nozzles': {
-      id: '/dashboard/station/$stationId/manage/nozzles'
-      path: '/manage/nozzles'
-      fullPath: '/dashboard/station/$stationId/manage/nozzles'
-      preLoaderRoute: typeof DashboardStationStationIdManageNozzlesRouteImport
-      parentRoute: typeof DashboardStationStationIdRoute
-    }
-    '/dashboard/station/$stationId/manage/fuel-types': {
-      id: '/dashboard/station/$stationId/manage/fuel-types'
-      path: '/manage/fuel-types'
-      fullPath: '/dashboard/station/$stationId/manage/fuel-types'
-      preLoaderRoute: typeof DashboardStationStationIdManageFuelTypesRouteImport
+    '/dashboard/station/$stationId/configuration': {
+      id: '/dashboard/station/$stationId/configuration'
+      path: '/configuration'
+      fullPath: '/dashboard/station/$stationId/configuration'
+      preLoaderRoute: typeof DashboardStationStationIdConfigurationRouteImport
       parentRoute: typeof DashboardStationStationIdRoute
     }
     '/dashboard/station/$stationId/admin/users': {
@@ -747,24 +687,23 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface DashboardStationStationIdRouteChildren {
+  DashboardStationStationIdConfigurationRoute: typeof DashboardStationStationIdConfigurationRoute
   DashboardStationStationIdCreditRoute: typeof DashboardStationStationIdCreditRoute
   DashboardStationStationIdFinanceRoute: typeof DashboardStationStationIdFinanceRoute
   DashboardStationStationIdInventoryRoute: typeof DashboardStationStationIdInventoryRoute
   DashboardStationStationIdNozzlesRoute: typeof DashboardStationStationIdNozzlesRoute
-  DashboardStationStationIdPricingRoute: typeof DashboardStationStationIdPricingRoute
   DashboardStationStationIdReportsRoute: typeof DashboardStationStationIdReportsRoute
   DashboardStationStationIdSetupRoute: typeof DashboardStationStationIdSetupRoute
   DashboardStationStationIdShiftsRoute: typeof DashboardStationStationIdShiftsRoute
   DashboardStationStationIdAdminLubricantsRoute: typeof DashboardStationStationIdAdminLubricantsRoute
   DashboardStationStationIdAdminStaffRoute: typeof DashboardStationStationIdAdminStaffRoute
   DashboardStationStationIdAdminUsersRoute: typeof DashboardStationStationIdAdminUsersRoute
-  DashboardStationStationIdManageFuelTypesRoute: typeof DashboardStationStationIdManageFuelTypesRoute
-  DashboardStationStationIdManageNozzlesRoute: typeof DashboardStationStationIdManageNozzlesRoute
-  DashboardStationStationIdManageTanksRoute: typeof DashboardStationStationIdManageTanksRoute
 }
 
 const DashboardStationStationIdRouteChildren: DashboardStationStationIdRouteChildren =
   {
+    DashboardStationStationIdConfigurationRoute:
+      DashboardStationStationIdConfigurationRoute,
     DashboardStationStationIdCreditRoute: DashboardStationStationIdCreditRoute,
     DashboardStationStationIdFinanceRoute:
       DashboardStationStationIdFinanceRoute,
@@ -772,8 +711,6 @@ const DashboardStationStationIdRouteChildren: DashboardStationStationIdRouteChil
       DashboardStationStationIdInventoryRoute,
     DashboardStationStationIdNozzlesRoute:
       DashboardStationStationIdNozzlesRoute,
-    DashboardStationStationIdPricingRoute:
-      DashboardStationStationIdPricingRoute,
     DashboardStationStationIdReportsRoute:
       DashboardStationStationIdReportsRoute,
     DashboardStationStationIdSetupRoute: DashboardStationStationIdSetupRoute,
@@ -784,12 +721,6 @@ const DashboardStationStationIdRouteChildren: DashboardStationStationIdRouteChil
       DashboardStationStationIdAdminStaffRoute,
     DashboardStationStationIdAdminUsersRoute:
       DashboardStationStationIdAdminUsersRoute,
-    DashboardStationStationIdManageFuelTypesRoute:
-      DashboardStationStationIdManageFuelTypesRoute,
-    DashboardStationStationIdManageNozzlesRoute:
-      DashboardStationStationIdManageNozzlesRoute,
-    DashboardStationStationIdManageTanksRoute:
-      DashboardStationStationIdManageTanksRoute,
   }
 
 const DashboardStationStationIdRouteWithChildren =

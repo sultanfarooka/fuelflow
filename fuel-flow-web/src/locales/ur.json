@@ -37,9 +37,9 @@
     "fuelTypes": "ایندھن کی اقسام",
     "fuelTanks": "ایندھن کے ٹینک",
     "nozzlesConfig": "نوزلز",
+    "stationConfig": "اسٹیشن کنفیگریشن",
     "groups": {
       "operations": "آپریشنز",
-      "stationManagement": "اسٹیشن مینجمنٹ",
       "commercial": "تجارتی",
       "reports": "رپورٹس",
       "admin": "انتظامیہ"
