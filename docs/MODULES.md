@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-07 (M07-F08 Progressive Web App — Done)
+**Last Updated:** 2026-06-14 (M01-F05-R02 Owner-creates-Manager + M01-F09-R07 OTP toggle — Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -228,7 +228,7 @@ Three-tier role system: Owner → Manager → Custom Users.
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
 | M01-F05-R01 | Owner role is system-created at registration; full access to org | — | Done |
-| M01-F05-R02 | Owner can create Manager users | — | In Progress |
+| M01-F05-R02 | Owner can create Manager users | — | Done |
 | M01-F05-R03 | Manager can create Custom Users with granular permissions | — | Planned |
 | M01-F05-R04 | Role-based authorization middleware enforces role on every endpoint | — | Done |
 
@@ -309,7 +309,7 @@ Phone (+92 format) becomes the primary identifier for registration, login, verif
 | M01-F09-R04 | OTP is 6 digits, single-use, 5-minute TTL, max 3 verification attempts, max 1 resend per 60 seconds | — | Done |
 | M01-F09-R05 | Login accepts phone+password as primary credential; email+password resolves only when the email is set AND verified | — | Done |
 | M01-F09-R06 | Existing email-only users are routed through a one-time "add and verify phone" flow on next login; account is restricted to that flow until phone is verified | — | Out of Scope · pre-launch, no email-only users to migrate |
-| M01-F09-R07 | When a Manager creates a sub-user, Manager chooses per user whether OTP verification is required before first login (default = required) | — | In Progress · in M01-F05-R02 PR |
+| M01-F09-R07 | When a Manager creates a sub-user, Manager chooses per user whether OTP verification is required before first login (default = required) | — | Done · shipped in M01-F05-R02 (Owner→Manager); Manager→sub-user path is M01-F05-R03 |
 | M01-F09-R08 | Password recovery offers both channels when both are set (phone OTP and email link); falls back to whichever channel is available when only one is set/verified | — | Done |
 | M01-F09-R09 | Sensitive auth actions are written to audit trail (see [M01-F08](#m01-f08--audit-trail)): phone added/changed, OTP failures past threshold, forced-phone-add completion, recovery channel used | — | Planned · deferred to M01-F08 PR |
 | M01-F09-R10 | Platform provides a default SMS sender for pre-organization signup OTP (organization-configured providers from [M10-F03-R02](#m10-f03--notification-channels) apply post-onboarding) | — | Done · extended by [M10-F03-R04](#m10-f03--notification-channels) |
@@ -322,7 +322,7 @@ Phone (+92 format) becomes the primary identifier for registration, login, verif
 - **AC3** Given a phone number already on file, When a new registration uses it, Then the API returns `409 Conflict`.
 - **AC4** Given an unverified phone, When the user attempts to log in, Then login is blocked with a "verify your phone" message and a resend-OTP action.
 - **AC5** Given an existing user whose account has only an email, When they log in after this feature ships, Then they are routed to a one-time "add and verify phone" screen and can only complete login after phone verification. _(Out of Scope — depends on R06.)_
-- **AC6** Given a Manager creating a sub-user with "require OTP verification = true", When the sub-user first attempts to log in, Then OTP verification is enforced. Given the flag = false, login proceeds without OTP. _(Out of Scope — depends on R07; deferred to M01-F05-R02 PR.)_
+- **AC6** Given a Manager creating a sub-user with "require OTP verification = true", When the sub-user first attempts to log in, Then OTP verification is enforced. Given the flag = false, login proceeds without OTP. _(R07's per-user OTP toggle shipped in M01-F05-R02 and is verified for the Owner→Manager path; the Manager-creates-sub-user path is M01-F05-R03, still Planned.)_
 - **AC7** Given a user with both phone and verified email, When they request password recovery, Then the UI offers a choice of phone OTP or email link.
 - **AC8** Given an OTP past its 5-minute TTL or after 3 failed verification attempts, When verification is attempted, Then the API responds with a clear "expired or exhausted" error and offers a resend action.
 - **AC9** Given any successful or failed phone-OTP event, When it occurs, Then a row is written to the audit trail per [M01-F08](#m01-f08--audit-trail). _(Out of Scope — depends on R09; deferred to M01-F08 PR. Phase 7 handlers emit structured Serilog events to prime the backfill.)_
