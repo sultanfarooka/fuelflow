@@ -13,9 +13,9 @@ export const ROLES = {
   Nozzleman: "Nozzleman",
   Accountant: "Accountant",
   Custom: "Custom",
-} as const
+} as const;
 
-export type Role = (typeof ROLES)[keyof typeof ROLES]
+export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 /**
  * True when the user holds at least one of the allowed roles. An empty
@@ -23,9 +23,11 @@ export type Role = (typeof ROLES)[keyof typeof ROLES]
  */
 export function hasAnyRole(
   userRoles: string[] | null | undefined,
-  allowed: readonly string[]
+  allowed: readonly string[],
 ): boolean {
-  if (allowed.length === 0) return true
-  if (!userRoles || userRoles.length === 0) return false
-  return userRoles.some((r) => allowed.includes(r))
+  if (allowed.length === 0) return true;
+  if (!userRoles || userRoles.length === 0) return false;
+  // Case-insensitive: the backend may serialize roles in any casing ([M01-F05-R02]).
+  const allowedLower = allowed.map((a) => a.toLowerCase());
+  return userRoles.some((r) => allowedLower.includes(r.toLowerCase()));
 }

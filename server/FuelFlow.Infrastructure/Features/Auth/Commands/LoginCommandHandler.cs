@@ -168,7 +168,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResp
                 Email = user.Email,
                 Phone = user.PhoneNumber,
                 FullName = user.FullName,
-                Roles = userRoles.Select(r => r.ToLower()).ToList(),
+                // Preserve enum casing (e.g. "Owner") to match the frontend roles.ts contract ([M01-F05-R02]).
+                Roles = userRoles.ToList(),
             },
             Organization = org != null ? new OrganizationInfo { Id = org.Id, Name = org.Name } : null,
             Stations = stations?.Select(s => new StationInfo { Id = s.Id, Name = s.Name, IsSetupComplete = s.IsSetupComplete, AcceptedPaymentMethods = s.AcceptedPaymentMethods }).ToList(),
