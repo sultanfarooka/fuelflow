@@ -1,8 +1,8 @@
 /**
  * [M07-F10-R01] The application sidebar: role-aware grouped nav links rendered
  * from `getNavItems`, with group labels and active-route highlighting.
- * [M08-F07-R01] "station-management" group renders as a flat section under its
- * group label — same pattern as all other groups.
+ * [M08-F07] Station configuration is reached via a single "Station Configuration"
+ * item in the Admin group (a tabbed page), not a dedicated nav group.
  * Pure presentation over the shadcn Sidebar primitive — visibility and grouping
  * logic lives in nav-config.ts.
  */
@@ -49,7 +49,6 @@ function isActive(itemKey: string, resolvedPath: string, pathname: string): bool
 /** i18n key for a nav group label. Settings group has no separate label. */
 function groupLabelKey(group: NavGroup): string | null {
   if (group === "settings") return null
-  if (group === "station-management") return "nav.groups.stationManagement"
   return `nav.groups.${group}`
 }
 

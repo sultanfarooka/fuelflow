@@ -23,10 +23,7 @@ Authoritative mapping of routes to the role(s) allowed to see them. Reference [`
 | Shifts | `/dashboard/station/:stationId/shifts` (stub) | Owner, Manager, Custom | [M04](../../../docs/MODULES.md#m04--shift-management) |
 | Nozzle Operations | `/dashboard/station/:stationId/nozzles` (stub) | Owner, Manager, Custom | [M03](../../../docs/MODULES.md#m03--nozzle-operations) |
 | Fuel Inventory | `/dashboard/station/:stationId/inventory` (stub) | Owner, Manager, Custom | [M02](../../../docs/MODULES.md#m02--fuel-inventory--tank-control) |
-| Fuel Pricing | `/dashboard/station/:stationId/pricing` (stub) | Owner, Manager | [M06](../../../docs/MODULES.md#m06--fuel-pricing) |
-| Fuel Types (config) | `/dashboard/station/:stationId/manage/fuel-types` (stub) | Owner, Manager | [M08-F07](../../../docs/MODULES.md#m08-f07--station-management-navigation-hub) |
-| Fuel Tanks (config) | `/dashboard/station/:stationId/manage/tanks` (stub) | Owner, Manager | [M08-F07](../../../docs/MODULES.md#m08-f07--station-management-navigation-hub) |
-| Nozzles (config) | `/dashboard/station/:stationId/manage/nozzles` (stub) | Owner, Manager | [M08-F07](../../../docs/MODULES.md#m08-f07--station-management-navigation-hub) |
+| Station Configuration (tabbed: Fuel Types / Fuel Pricing / Fuel Tanks / Nozzles) | `/dashboard/station/:stationId/configuration` | Owner, Manager | [M08-F07](../../../docs/MODULES.md#m08-f07--station-configuration) (tabs → [M08-F08](../../../docs/MODULES.md#m08-f08--fuel-type-management) / [M06-F01](../../../docs/MODULES.md#m06-f01--price-configuration) / [M08-F02](../../../docs/MODULES.md#m08-f02--tank-configuration) / [M08-F03](../../../docs/MODULES.md#m08-f03--nozzle-configuration)) |
 | Credit Customers | `/dashboard/station/:stationId/credit` (stub) | Owner, Manager, Custom | [M15](../../../docs/MODULES.md#m15--credit-customers) |
 | Finance & Accounts | `/dashboard/station/:stationId/finance` (stub) | Owner, Manager, Accountant, Custom | [M05](../../../docs/MODULES.md#m05--finance--accounts) |
 | Reports | `/dashboard/station/:stationId/reports` (stub) | Owner, Manager, Accountant, Custom | [M07-F01..F06](../../../docs/MODULES.md#m07--reporting-analytics--platform-ui) |
@@ -90,16 +87,13 @@ routes/
 │   ├── station.$stationId.shifts.tsx          # M04 stub (Owner/Manager/Custom)
 │   ├── station.$stationId.nozzles.tsx         # M03 stub [M07-F10]
 │   ├── station.$stationId.inventory.tsx       # M02 stub
-│   ├── station.$stationId.pricing.tsx         # M06 stub [M07-F10]
 │   ├── station.$stationId.credit.tsx          # M15 stub [M07-F10]
 │   ├── station.$stationId.finance.tsx         # M05 stub
 │   ├── station.$stationId.reports.tsx         # M07-F01..F06 stub
 │   ├── station.$stationId.admin.users.tsx     # M01 stub, Owner only [M07-F10]
 │   ├── station.$stationId.admin.staff.tsx     # M13 stub, Owner only, Pro+ gate [M07-F10]
 │   ├── station.$stationId.admin.lubricants.tsx # M09 stub, Owner only, Pro+ gate [M07-F10]
-│   ├── station.$stationId.manage.fuel-types.tsx # M08-F07 stub, Owner/Manager only
-│   ├── station.$stationId.manage.tanks.tsx      # M08-F07 stub, Owner/Manager only
-│   └── station.$stationId.manage.nozzles.tsx    # M08-F07 stub, Owner/Manager only
+│   └── station.$stationId.configuration.tsx   # M08-F07 tabbed config (Fuel Types/Pricing/Tanks/Nozzles), Owner/Manager only
 ├── settings/
 │   ├── route.tsx                    # Renders <AppShell /> (M07-F07), Owner+Manager guard [M07-F10]
 │   └── index.tsx                    # /settings (M08 stub)

@@ -37,9 +37,9 @@
     "fuelTypes": "Fuel Types",
     "fuelTanks": "Fuel Tanks",
     "nozzlesConfig": "Nozzles",
+    "stationConfig": "Station Configuration",
     "groups": {
       "operations": "Operations",
-      "stationManagement": "Station Management",
       "commercial": "Commercial",
       "reports": "Reports",
       "admin": "Admin"
