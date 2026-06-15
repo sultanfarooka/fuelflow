@@ -9,7 +9,7 @@ Drives building a `MXX-FXX[-RXX]` item that has already been planned. Assumes a
 document exists at `docs/implementation/<id>.md`. If none exists, stop and tell
 the user to run `/feature-planning` first.
 
-Follows the root `CLAUDE.md` Development Workflow (Rules 1–9) exactly. This
+Follows the root `CLAUDE.md` Development Workflow (Rules 1–10) exactly. This
 skill orchestrates; it does not restate conventions — those load from the
 scoped `CLAUDE.md` files as work moves between folders.
 

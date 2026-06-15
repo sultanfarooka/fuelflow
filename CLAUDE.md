@@ -181,6 +181,8 @@ git checkout -b feat-<module-feature-id>-<short-name>
 
 For fixes use `fix-<id>-<name>`, for docs use `docs-<id>-<name>` — same shape, different prefix.
 
+**Module-scoped work** is the one exception to the per-item branch shape. When a whole module (`MXX`) is planned with `/module-planning` and built with `/module-implementation`, all of its features are built on a single long-lived **integration branch** named `module/<MXX>` (e.g. `module/M08`), cut off `main`, in dependency order, and shipped as **one** `module/<MXX> → main` PR. The constituent features do **not** get their own `feat-` branches or PRs in this flow. Plain feature/requirement work continues to use the per-item `feat-/fix-/docs-<id>-<name>` branches above.
+
 ### 5. PR-per-feature: push and open a PR into `main` when done
 
 When a feature (or a logical chunk of one) is complete:

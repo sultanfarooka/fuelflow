@@ -165,7 +165,7 @@ for that item; you do not touch other items.
 
 - Walk and fix only your assigned item. Do not edit files belonging to
   another item, even if convenient.
-- Follow root `CLAUDE.md` Rules 1–9 exactly — branch naming,
+- Follow root `CLAUDE.md` Rules 1–10 exactly — branch naming,
   conventional commits scoped by ID (`fix(<id>): <symptom>`).
 - **Do not open the PR.** That belongs to the user / `pr-workflow`,
   invoked after you return.

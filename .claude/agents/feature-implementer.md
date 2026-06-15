@@ -66,7 +66,7 @@ over from there.
 
 - Implement only your assigned item. Do not edit files belonging to another
   item, even if convenient.
-- Follow root `CLAUDE.md` Rules 1–9 exactly — branch naming, conventional
+- Follow root `CLAUDE.md` Rules 1–10 exactly — branch naming, conventional
   commits scoped by ID, the PR template, the same-PR `MODULES.md` flip.
 - If you create or modify a dev-ops script (`scripts/*.ps1`, `server/*.ps1`),
   update its How/When entry in `scripts/README.md` in the same PR — a script
