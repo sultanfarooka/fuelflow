@@ -16,7 +16,7 @@ independently: re-walk after a fix, backfill an item where E2E was deferred,
 or verify a feature on its own merits without re-running the whole
 implementation flow.
 
-Follows the root `CLAUDE.md` Development Workflow (Rules 1–9). This skill
+Follows the root `CLAUDE.md` Development Workflow (Rules 1–10). This skill
 orchestrates; it does not restate conventions — those load from the scoped
 `CLAUDE.md` files.
 
@@ -41,11 +41,21 @@ Resolution order for the `MXX-FXX[-RXX]` ID:
    (`/feature-e2e-testing M14-F01`) or check out the matching
    `feat-<id>-<short>` branch — `/feature-planning` cuts it."*
 
-Read `docs/implementation/<id>.md`. If it does not exist, stop and tell the
-user the item was never planned — `/feature-planning <id>` first.
+Resolve the implementation doc path — look in this order and use the first that
+exists:
 
-State the chosen `MXX-FXX[-RXX]` ID and resolved doc path explicitly so the
-user can see what's about to happen.
+1. `docs/implementation/<id>.md` — the standard per-feature location
+   (`/feature-planning`).
+2. `docs/implementation/<MXX>/<id>.md` — the per-feature task doc inside a module
+   plan directory (`/module-planning`), where `<MXX>` is the module prefix of the
+   ID (the `M\d{2}` part, e.g. `M08` for `M08-F02`).
+
+If neither exists, stop and tell the user the item was never planned —
+`/feature-planning <id>` or `/module-planning <MXX>` first.
+
+State the chosen `MXX-FXX[-RXX]` ID and the resolved doc path explicitly so the
+user can see what's about to happen. Everywhere below, "the impl doc" means this
+resolved path.
 
 ### 2. Applicability gate
 
@@ -66,8 +76,8 @@ something that has no user-facing surface to walk.
 
 ### 3. Warn on incomplete implementation, then proceed
 
-Run `grep -n '^- \[ \]' docs/implementation/<id>.md` to list every unticked
-box with its line number.
+Run `grep -n '^- \[ \]'` against the resolved impl doc path to list every
+unticked box with its line number.
 
 Filter the results: boxes that appear under the `## Layers touched`
 heading are *intentionally* unticked for layers the feature deliberately
@@ -90,7 +100,8 @@ Invoke the `feature-e2e-tester` subagent (defined at
 `.claude/agents/feature-e2e-tester.md`). Pass in the brief:
 
 - Item ID (e.g. `M14-F01`).
-- Impl doc path (e.g. `docs/implementation/M14-F01.md`).
+- The resolved impl doc path (the flat `docs/implementation/<id>.md`, or the
+  module-nested `docs/implementation/<MXX>/<id>.md`, whichever was found).
 - Current branch name (the agent commits any fixes here).
 - Whether the spec file `fuel-flow-web/e2e-tests/<id>.spec.ts` already
   exists (the agent appends rather than overwrites if so).

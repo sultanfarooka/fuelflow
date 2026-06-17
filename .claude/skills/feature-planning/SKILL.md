@@ -11,7 +11,7 @@ Runs the planning stage before any code is written. Manually invoked
 cut feature branch — never code, never a commit.
 
 This skill assumes the Fuel Flow repo conventions in the root `CLAUDE.md`
-(Rules 1–9) and the `MXX-FXX-RXX` registry in `docs/MODULES.md`.
+(Rules 1–10) and the `MXX-FXX-RXX` registry in `docs/MODULES.md`.
 
 ## Procedure
 
