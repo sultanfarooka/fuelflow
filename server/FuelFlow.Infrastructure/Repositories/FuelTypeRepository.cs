@@ -35,6 +35,12 @@ public class FuelTypeRepository : IFuelTypeRepository
         await _dbContext.FuelTypes.AddAsync(fuelType);
     }
 
+    public Task UpdateAsync(FuelType fuelType)
+    {
+        _dbContext.FuelTypes.Update(fuelType);
+        return Task.CompletedTask;
+    }
+
     public Task DeleteAsync(FuelType fuelType)
     {
         _dbContext.FuelTypes.Remove(fuelType);

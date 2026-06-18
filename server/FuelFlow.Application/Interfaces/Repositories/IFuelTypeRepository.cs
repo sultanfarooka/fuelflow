@@ -11,5 +11,6 @@ public interface IFuelTypeRepository
     Task<FuelType?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<List<FuelType>> GetAllForStationAsync(Guid stationId, CancellationToken cancellationToken = default);
     Task AddAsync(FuelType fuelType);
+    Task UpdateAsync(FuelType fuelType);
     Task DeleteAsync(FuelType fuelType);
 }
