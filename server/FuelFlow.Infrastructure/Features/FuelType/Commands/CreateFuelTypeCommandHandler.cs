@@ -59,10 +59,16 @@ public class CreateFuelTypeCommandHandler : IRequestHandler<CreateFuelTypeComman
         if (station.OrganizationId != orgId)
             return Result<CreateFuelTypeResponse>.Failure("You do not have access to this station.");
 
-        // --- Step 3: Create and persist custom fuel type (StationId set) ---
+        // --- Step 3: Reject duplicate names per station (case-insensitive, trimmed) [M08-F08-R02] ---
+        var name = req.Name.Trim();
+        var existing = await _fuelTypeRepo.GetAllForStationAsync(stationId, cancellationToken);
+        if (existing.Any(f => string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase)))
+            return Result<CreateFuelTypeResponse>.Failure($"A fuel type named \"{name}\" already exists for this station.");
+
+        // --- Step 4: Create and persist custom fuel type (StationId set) ---
         var fuelType = new FuelTypeEntity
         {
-            Name = req.Name.Trim(),
+            Name = name,
             Unit = string.IsNullOrWhiteSpace(req.Unit) ? "L" : req.Unit.Trim(),
             StationId = stationId,
             IsCustom = req.IsCustom,
@@ -78,6 +84,11 @@ public class CreateFuelTypeCommandHandler : IRequestHandler<CreateFuelTypeComman
             _logger.LogError(ex, "Failed to create fuel type {Name} for station {StationId}", req.Name, stationId);
             return Result<CreateFuelTypeResponse>.Failure("Failed to create fuel type.");
         }
+
+        // Audit (M08-F08-R07): record the sensitive action with actor + station.
+        _logger.LogInformation(
+            "AUDIT FuelType.Create: user {UserId} created fuel type {FuelTypeId} \"{Name}\" (unit {Unit}, custom {IsCustom}) for station {StationId}",
+            _currentUser.UserId, fuelType.Id, fuelType.Name, fuelType.Unit, fuelType.IsCustom, stationId);
 
         // Seed the matching income account heads for this fuel type (M05-F09-R02):
         // "Fuel Sales {name} (Cash/Card)" and "Credit Sales {name}". Idempotent and

@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-13 (M08-F08 Fuel Type Management — Discovered; M08-F07 redesigned to tabbed "Station Configuration" under Admin)
+**Last Updated:** 2026-06-18 (M08-F08 Fuel Type Management — Done: management surface on the Station Configuration Fuel Types tab)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -1298,7 +1298,7 @@ Adds a single **"Station Configuration"** item to the **Admin** sidebar group (O
 
 ---
 
-### M08-F08 — Fuel Type Management   [Status: Planned]
+### M08-F08 — Fuel Type Management   [Status: Done]
 
 > _Discovery (2026-06-13): Owner request — the "Fuel Types" child of the Station Management hub ([M08-F07](#m08-f07--station-management-navigation-hub)) is only a `<UnderDevelopment />` placeholder; fuel types can be chosen during onboarding ([M12-F01-R04](#m12-f01--onboarding-wizard)) but never managed afterward · outcome = Owner and Manager get a full self-service screen at `/dashboard/station/:stationId/manage/fuel-types` to view, add, rename, and activate/deactivate fuel types post-onboarding · reverses the original [M02-F01-R03](#m02-f01--fuel-products) stance ("not a self-service feature") · maps to ProjectOverView §7.7 (Settings & Configuration) · cost-of-not-building: stations stuck with whatever fuel types they picked at onboarding — no way to add HOBC, rename a custom blend, or retire a discontinued product without DB access._
 
@@ -1310,20 +1310,20 @@ Post-onboarding self-service management surface for a station's fuel types — r
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M08-F08-R01 | List all fuel types for the station: name, unit, source (OMC catalog vs custom), active/inactive status, and reference counts (tanks / nozzles / active price). Visible to Owner + Manager only | — | Planned |
-| M08-F08-R02 | Add a fuel type post-onboarding — select from the OMC catalog or create a custom type (name + unit); duplicate names rejected per station. Supersedes M02-F01-R03 | — | Planned |
-| M08-F08-R03 | Rename a custom fuel type's display name; OMC-catalog types are read-only. Display-name only — no key change, historical records unaffected | — | Planned |
-| M08-F08-R04 | Activate / deactivate a fuel type. Deactivated types are excluded from new price, tank, and nozzle pickers but retained for historical reporting | — | Planned |
-| M08-F08-R05 | Deactivation blocked (`409` + blocking references) while the type is referenced by an active price, tank, nozzle, or open shift. Fuel types are never hard-deleted once referenced | — | Planned |
-| M08-F08-R06 | Adding a fuel type does not auto-create a price/tank/nozzle; the UI flags it "not yet sellable" until it has an active price and ≥1 tank + nozzle (mirrors [M12-F01-R15](#m12-f01--onboarding-wizard) completeness checks) | — | Planned |
-| M08-F08-R07 | Add / rename / activate / deactivate are audit-logged (actor, station, before/after) | — | Planned |
+| M08-F08-R01 | List all fuel types for the station: name, unit, source (OMC catalog vs custom), active/inactive status, and references (tank count + whether an active price exists; nozzles hang off tanks). Visible to Owner + Manager only | — | Done |
+| M08-F08-R02 | Add a fuel type post-onboarding — select from the OMC catalog or create a custom type (name + unit); duplicate names rejected per station. Supersedes M02-F01-R03 | — | Done |
+| M08-F08-R03 | Rename a fuel type's display name (OMC-derived and custom alike — both are per-station rows, so renaming affects only this station; the shared OMC catalog is untouched). Display-name only — historical records unaffected | — | Done |
+| M08-F08-R04 | Activate / deactivate a fuel type. Deactivated types are excluded from new price, tank, and nozzle pickers but retained for historical reporting | — | Done |
+| M08-F08-R05 | Deactivation blocked (`409` + blocking references) while the type is referenced by a tank or an active price. Fuel types are never hard-deleted on the management surface (the onboarding wizard's remove-just-added DELETE is unchanged) | — | Done |
+| M08-F08-R06 | Adding a fuel type does not auto-create a price/tank/nozzle; the UI flags it "not yet sellable" until it has an active price and ≥1 tank (mirrors [M12-F01-R15](#m12-f01--onboarding-wizard) completeness checks) | — | Done |
+| M08-F08-R07 | Add / rename / activate / deactivate are audit-logged (actor, station, before/after) — via Serilog now; persisted to the `AuditLog` table when [M01-F08](#m01-f08--audit-trail) ships | — | Done |
 
 **Acceptance Criteria:**
-- **AC1** Given an Owner on `/manage/fuel-types`, when the page loads, then all configured fuel types are listed with name, unit, source, status, and reference counts.
-- **AC2** Given an Owner adds a custom fuel type with a unique name + unit, then it appears as active and flagged "not yet sellable" until it has a price and a tank + nozzle.
+- **AC1** Given an Owner on the Fuel Types tab of Station Configuration (`/dashboard/station/:stationId/configuration`), when the page loads, then all configured fuel types are listed with name, unit, source, status, and references (tank count + active-price indicator).
+- **AC2** Given an Owner adds a custom fuel type with a unique name + unit, then it appears as active and flagged "not yet sellable" until it has a price and a tank.
 - **AC3** Given a Manager tries to add a fuel type whose name duplicates an existing one for the station, then an inline (Zod) and API (FluentValidation) error blocks it.
 - **AC4** Given an Owner deactivates a fuel type with no active references, then it disappears from new price/tank/nozzle pickers but remains in historical reports.
-- **AC5** Given an Owner tries to deactivate a fuel type referenced by an active price, tank, nozzle, or open shift, then a `409` lists the blocking references and the type stays active.
+- **AC5** Given an Owner tries to deactivate a fuel type referenced by a tank or an active price, then a `409` lists the blocking references and the type stays active.
 - **AC6** Given any add / rename / activate / deactivate action, then an audit-log entry records actor, station, and before/after values.
 
 ---
@@ -2187,7 +2187,7 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 | 6.5 | M08-F05 | System Preferences | P1 | Planned | — (i18n foundation ✓; R05 sweep) | ★ |
 | 6.6 | M08-F04 | Dip Chart Management | P1 | Planned | M02-F04 | |
 | 6.7 | M08-F06 | Backup & Data | P2 | Planned | — | |
-| 6.8 | M08-F08 | Fuel Type Management | P2 | Planned | — (M08-F07 ✓; fuel types ✓) | |
+| 6.8 | M08-F08 | Fuel Type Management | P2 | Done | — (M08-F07 ✓; fuel types ✓) | |
 
 ### Order 7 — M06 Pricing & Rate Management  ·  P1
 
