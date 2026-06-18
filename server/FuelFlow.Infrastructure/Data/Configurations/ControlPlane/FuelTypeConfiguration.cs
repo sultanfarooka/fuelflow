@@ -34,6 +34,11 @@ public class FuelTypeConfiguration : IEntityTypeConfiguration<FuelType>
             .HasColumnName("is_custom")
             .HasDefaultValue(false);
 
+        // M08-F08: active/inactive flag. Default true so legacy rows backfill to active.
+        builder.Property(f => f.IsActive)
+            .HasColumnName("is_active")
+            .HasDefaultValue(true);
+
         builder.Property(f => f.OMCId)
             .HasColumnName("omc_id");
 
