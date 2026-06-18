@@ -9,7 +9,6 @@
  */
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { AxiosError } from "axios"
 import { toast } from "sonner"
 import {
   IconAlertTriangle,
@@ -76,12 +75,19 @@ import { fuelTypeNameSchema } from "@/lib/validators/fuel-type"
 
 const FUEL_TYPES_KEY = (stationId: string) => ["stations", stationId, "fuel-types"]
 
-/** Pull the server's `{ error }` message out of an Axios failure. */
+/**
+ * The Axios client (`lib/api/client.ts`) wraps non-401 failures in a plain
+ * `Error` whose `message` is already the server's `{ error }` string and which
+ * carries the original `response`. Type that shape so we can read status +
+ * references without relying on `instanceof AxiosError` (which never holds here).
+ */
+type ApiError = Error & {
+  response?: { status?: number; data?: { error?: string; references?: string[] } }
+}
+
+/** The interceptor already resolves the server message into `.message`. */
 function serverError(err: unknown, fallback: string): string {
-  if (err instanceof AxiosError) {
-    return (err.response?.data as { error?: string } | undefined)?.error ?? fallback
-  }
-  return fallback
+  return (err as Error)?.message || fallback
 }
 
 export function FuelTypesPanel({ stationId }: { stationId: string }) {
@@ -153,9 +159,9 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
     },
     onError: (err) => {
       // 409 = blocked by references; surface them in the confirm dialog.
-      if (err instanceof AxiosError && err.response?.status === 409) {
-        const refs = (err.response?.data as { references?: string[] } | undefined)?.references
-        setBlockReferences(refs ?? ["existing references"])
+      const ae = err as ApiError
+      if (ae.response?.status === 409) {
+        setBlockReferences(ae.response.data?.references ?? ["existing references"])
         return
       }
       toast.error(serverError(err, "Failed to update fuel type."))
