@@ -15,6 +15,7 @@ import { IconBarrel, IconFlame, IconGasStation, IconTag } from "@tabler/icons-re
 import { useTranslation } from "react-i18next"
 
 import { UnderDevelopment } from "@/components/common/under-development"
+import { FuelTypesPanel } from "@/components/station-config/fuel-types-panel"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ROLES } from "@/lib/roles"
 import { requireRoles } from "@/lib/route-guards"
@@ -28,6 +29,7 @@ export const Route = createFileRoute(
 
 function StationConfigurationPage() {
   const { t } = useTranslation()
+  const { stationId } = Route.useParams()
 
   return (
     <div className="container mx-auto p-4">
@@ -56,7 +58,7 @@ function StationConfigurationPage() {
         </TabsList>
 
         <TabsContent value="fuel-types">
-          <UnderDevelopment moduleName={t("nav.fuelTypes")} icon={IconFlame} />
+          <FuelTypesPanel stationId={stationId} />
         </TabsContent>
         <TabsContent value="pricing">
           <UnderDevelopment moduleName={t("nav.pricing")} icon={IconTag} />

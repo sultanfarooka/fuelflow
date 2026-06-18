@@ -13,6 +13,14 @@ export interface FuelTypeDto {
   isCustom: boolean
   omcId?: string | null
   source: string
+  /** M08-F08: active/inactive for the station. */
+  isActive: boolean
+  /** M08-F08: number of tanks referencing this type. */
+  tankCount: number
+  /** M08-F08: whether a currently-effective price exists. */
+  hasActivePrice: boolean
+  /** M08-F08-R06: active price + ≥1 tank. */
+  isSellable: boolean
 }
 
 export interface createFuelTypePayload {
@@ -60,6 +68,44 @@ export async function createFuelType(
 ): Promise<CreateFuelTypeApiResponse> {
   return api.post<CreateFuelTypeApiResponse>(
     `/stations/${stationId}/fuel-types`,
+    payload
+  )
+}
+
+/**
+ * Rename a fuel type's display name for the station (M08-F08-R03).
+ * Applies to OMC-derived and custom rows alike.
+ */
+export async function renameFuelType(
+  stationId: string,
+  fuelTypeId: string,
+  payload: { name: string }
+): Promise<{ success: boolean }> {
+  return api.put<{ success: boolean }>(
+    `/stations/${stationId}/fuel-types/${fuelTypeId}`,
+    payload
+  )
+}
+
+export interface SetFuelTypeActiveResponse {
+  fuelTypeId: string
+  isActive: boolean
+  blocked: boolean
+  blockingReferences: string[]
+}
+
+/**
+ * Activate or deactivate a fuel type for the station (M08-F08-R04/R05).
+ * Deactivation returns HTTP 409 (axios throws) when blocked by a tank or active
+ * price; the error body carries `{ error, references }`.
+ */
+export async function setFuelTypeActive(
+  stationId: string,
+  fuelTypeId: string,
+  payload: { isActive: boolean }
+): Promise<{ success: boolean; data: SetFuelTypeActiveResponse }> {
+  return api.patch<{ success: boolean; data: SetFuelTypeActiveResponse }>(
+    `/stations/${stationId}/fuel-types/${fuelTypeId}/status`,
     payload
   )
 }
