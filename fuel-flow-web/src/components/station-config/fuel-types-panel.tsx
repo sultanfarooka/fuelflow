@@ -180,7 +180,7 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
   }
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="space-y-1.5">
           <CardTitle className="flex items-center gap-2">
@@ -198,114 +198,106 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
         </Button>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="p-0">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="px-6 pb-6 text-sm text-muted-foreground">Loading…</p>
         ) : fuelTypes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="px-6 pb-6 text-sm text-muted-foreground">
             No fuel types yet. Add one to get started.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border">
-            <Table>
-              <TableHeader className="bg-muted/60 [&_th]:font-semibold [&_th]:text-foreground">
-                <TableRow className="hover:bg-muted/60">
-                  <TableHead>Name</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tanks</TableHead>
-                  <TableHead>Sellable</TableHead>
-                  <TableHead className="text-end">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="[&_tr:nth-child(even)]:bg-muted/30">
-                {fuelTypes.map((ft) => (
-                  <TableRow
-                    key={ft.id}
-                    data-inactive={!ft.isActive}
-                    className="data-[inactive=true]:text-muted-foreground"
-                  >
-                    <TableCell className="font-medium">{ft.name}</TableCell>
-                    <TableCell>{ft.unit}</TableCell>
-                    <TableCell>
-                      {ft.isCustom ? (
-                        <Badge className="border-transparent bg-primary/10 text-primary hover:bg-primary/10">
-                          Custom
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">OMC</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
+          <Table>
+            <TableHeader className="bg-muted/60 [&_th]:font-semibold [&_th]:text-foreground">
+              <TableRow className="hover:bg-muted/60 [&_th:first-child]:ps-6 [&_th:last-child]:pe-6">
+                <TableHead>Name</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Tanks</TableHead>
+                <TableHead>Sellable</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="[&_tr:nth-child(even)]:bg-muted/30 [&_td:first-child]:ps-6 [&_td:last-child]:pe-6">
+              {fuelTypes.map((ft) => (
+                <TableRow
+                  key={ft.id}
+                  data-inactive={!ft.isActive}
+                  className="data-[inactive=true]:text-muted-foreground"
+                >
+                  <TableCell className="font-medium">{ft.name}</TableCell>
+                  <TableCell>{ft.unit}</TableCell>
+                  <TableCell>
+                    {ft.isCustom ? (
+                      <Badge className="border-transparent bg-primary/10 text-primary hover:bg-primary/10">
+                        Custom
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">OMC</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {ft.isActive ? (
+                      <Badge className="border-transparent bg-success/10 text-success hover:bg-success/10">
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge className="border-transparent bg-destructive/10 text-destructive hover:bg-destructive/10">
+                        Inactive
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>{ft.tankCount}</TableCell>
+                  <TableCell>
+                    {ft.isSellable ? (
+                      <Badge className="border-transparent bg-success/10 text-success hover:bg-success/10">
+                        Sellable
+                      </Badge>
+                    ) : (
+                      <Badge className="border-transparent bg-muted text-muted-foreground hover:bg-muted">
+                        Not yet sellable
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setRenameTarget(ft)}
+                      >
+                        <IconPencil className="me-1 size-4" />
+                        Rename
+                      </Button>
                       {ft.isActive ? (
-                        <Badge className="border-transparent bg-success/10 text-success hover:bg-success/10">
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge className="border-transparent bg-destructive/10 text-destructive hover:bg-destructive/10">
-                          Inactive
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{ft.tankCount}</TableCell>
-                    <TableCell>
-                      {ft.isSellable ? (
-                        <Badge className="border-transparent bg-success/10 text-success hover:bg-success/10">
-                          Sellable
-                        </Badge>
-                      ) : (
-                        <Badge className="border-transparent bg-muted text-muted-foreground hover:bg-muted">
-                          Not yet sellable
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          disabled={!ft.isCustom}
-                          title={
-                            ft.isCustom
-                              ? undefined
-                              : "OMC catalog fuel types can't be renamed — they use the OMC's official name."
-                          }
-                          onClick={() => setRenameTarget(ft)}
+                          onClick={() => {
+                            setBlockReferences(null)
+                            setDeactivateTarget(ft)
+                          }}
                         >
-                          <IconPencil className="me-1 size-4" />
-                          Rename
+                          <IconToggleLeft className="me-1 size-4" />
+                          Deactivate
                         </Button>
-                        {ft.isActive ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setBlockReferences(null)
-                              setDeactivateTarget(ft)
-                            }}
-                          >
-                            <IconToggleLeft className="me-1 size-4" />
-                            Deactivate
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={activeMutation.isPending}
-                            onClick={() => activeMutation.mutate({ id: ft.id, isActive: true })}
-                          >
-                            <IconToggleRight className="me-1 size-4" />
-                            Activate
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={activeMutation.isPending}
+                          onClick={() => activeMutation.mutate({ id: ft.id, isActive: true })}
+                        >
+                          <IconToggleRight className="me-1 size-4" />
+                          Activate
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
 
