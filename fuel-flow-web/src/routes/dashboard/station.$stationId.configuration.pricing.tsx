@@ -1,24 +1,37 @@
 /**
  * [M08-F07-R06] Fuel Pricing child route of the Station Configuration hub.
- * Renders the shared `<UnderDevelopment />` placeholder until M06-F01 ships
- * a real UI. Owner + Manager only.
+ * Placeholder until M06-F01 ships. Owner/Manager guard inherited from parent.
  */
 import { createFileRoute } from "@tanstack/react-router"
 import { IconTag } from "@tabler/icons-react"
 import { useTranslation } from "react-i18next"
 
+import { ConfigBreadcrumb } from "@/components/station-config/config-breadcrumb"
 import { UnderDevelopment } from "@/components/common/under-development"
-import { ROLES } from "@/lib/roles"
-import { requireRoles } from "@/lib/route-guards"
 
 export const Route = createFileRoute(
   "/dashboard/station/$stationId/configuration/pricing"
 )({
-  beforeLoad: () => requireRoles([ROLES.Owner, ROLES.Manager]),
   component: PricingPage,
 })
 
 function PricingPage() {
   const { t } = useTranslation()
-  return <UnderDevelopment moduleName={t("nav.pricing")} icon={IconTag} />
+  const { stationId } = Route.useParams()
+  return (
+    <div className="container mx-auto max-w-5xl px-4 py-6">
+      <ConfigBreadcrumb
+        items={[
+          { label: t("nav.dashboard"), to: "/dashboard/station/$stationId", params: { stationId } },
+          {
+            label: t("nav.stationConfig"),
+            to: "/dashboard/station/$stationId/configuration",
+            params: { stationId },
+          },
+          { label: t("nav.pricing") },
+        ]}
+      />
+      <UnderDevelopment moduleName={t("nav.pricing")} icon={IconTag} />
+    </div>
+  )
 }
