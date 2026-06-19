@@ -1,22 +1,24 @@
 /**
- * [M08-F07] Station Configuration — a single tabbed page (under the Admin nav
- * group) that consolidates the four station-level configuration surfaces:
- * Fuel Types, Fuel Pricing, Fuel Tanks, and Nozzles. Each tab currently renders
- * the shared <UnderDevelopment /> placeholder; they are replaced in place by the
- * real UIs as their backing features ship:
- *   - Fuel Types   → M08-F08
- *   - Fuel Pricing → M06-F01
- *   - Fuel Tanks   → M08-F02
- *   - Nozzles      → M08-F03
- * Owner + Manager only (route guard + nav gating; API enforces regardless).
+ * [M08-F07-R06] Station Configuration — list-menu hub.
+ *
+ * Renders a stacked list of clickable cards (icon + title + description +
+ * chevron) for the four sub-areas: Fuel Types, Fuel Pricing, Fuel Tanks,
+ * Nozzles. Each card navigates to its own child route at
+ * `/configuration/<slug>`, which renders the area's real UI or the shared
+ * `<UnderDevelopment />` placeholder until its backing feature ships.
+ *
+ * Supersedes the previous tabbed layout (R02 / R04). Owner + Manager only.
  */
 import { createFileRoute } from "@tanstack/react-router"
-import { IconBarrel, IconFlame, IconGasStation, IconTag } from "@tabler/icons-react"
+import {
+  IconBarrel,
+  IconFlame,
+  IconGasStation,
+  IconTag,
+} from "@tabler/icons-react"
 import { useTranslation } from "react-i18next"
 
-import { UnderDevelopment } from "@/components/common/under-development"
-import { FuelTypesPanel } from "@/components/station-config/fuel-types-panel"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ConfigMenuCard } from "@/components/station-config/config-menu-card"
 import { ROLES } from "@/lib/roles"
 import { requireRoles } from "@/lib/route-guards"
 
@@ -24,52 +26,54 @@ export const Route = createFileRoute(
   "/dashboard/station/$stationId/configuration"
 )({
   beforeLoad: () => requireRoles([ROLES.Owner, ROLES.Manager]),
-  component: StationConfigurationPage,
+  component: StationConfigurationHub,
 })
 
-function StationConfigurationPage() {
+function StationConfigurationHub() {
   const { t } = useTranslation()
   const { stationId } = Route.useParams()
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="mb-4 text-2xl font-semibold tracking-tight">
-        {t("nav.stationConfig")}
-      </h1>
+    <div className="container mx-auto max-w-3xl px-4 py-6">
+      <div className="mb-6 space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("nav.stationConfig")}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {t("stationConfig.hubDescription")}
+        </p>
+      </div>
 
-      <Tabs defaultValue="fuel-types">
-        <TabsList>
-          <TabsTrigger value="fuel-types">
-            <IconFlame data-icon="inline-start" />
-            {t("nav.fuelTypes")}
-          </TabsTrigger>
-          <TabsTrigger value="pricing">
-            <IconTag data-icon="inline-start" />
-            {t("nav.pricing")}
-          </TabsTrigger>
-          <TabsTrigger value="tanks">
-            <IconBarrel data-icon="inline-start" />
-            {t("nav.fuelTanks")}
-          </TabsTrigger>
-          <TabsTrigger value="nozzles">
-            <IconGasStation data-icon="inline-start" />
-            {t("nav.nozzlesConfig")}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="fuel-types">
-          <FuelTypesPanel stationId={stationId} />
-        </TabsContent>
-        <TabsContent value="pricing">
-          <UnderDevelopment moduleName={t("nav.pricing")} icon={IconTag} />
-        </TabsContent>
-        <TabsContent value="tanks">
-          <UnderDevelopment moduleName={t("nav.fuelTanks")} icon={IconBarrel} />
-        </TabsContent>
-        <TabsContent value="nozzles">
-          <UnderDevelopment moduleName={t("nav.nozzlesConfig")} icon={IconGasStation} />
-        </TabsContent>
-      </Tabs>
+      <div className="flex flex-col gap-3">
+        <ConfigMenuCard
+          to="/dashboard/station/$stationId/configuration/fuel-types"
+          params={{ stationId }}
+          icon={IconFlame}
+          title={t("nav.fuelTypes")}
+          description={t("stationConfig.fuelTypesDesc")}
+        />
+        <ConfigMenuCard
+          to="/dashboard/station/$stationId/configuration/pricing"
+          params={{ stationId }}
+          icon={IconTag}
+          title={t("nav.pricing")}
+          description={t("stationConfig.pricingDesc")}
+        />
+        <ConfigMenuCard
+          to="/dashboard/station/$stationId/configuration/tanks"
+          params={{ stationId }}
+          icon={IconBarrel}
+          title={t("nav.fuelTanks")}
+          description={t("stationConfig.tanksDesc")}
+        />
+        <ConfigMenuCard
+          to="/dashboard/station/$stationId/configuration/nozzles"
+          params={{ stationId }}
+          icon={IconGasStation}
+          title={t("nav.nozzlesConfig")}
+          description={t("stationConfig.nozzlesDesc")}
+        />
+      </div>
     </div>
   )
 }
