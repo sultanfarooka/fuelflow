@@ -15,6 +15,7 @@ import {
   IconFlame,
   IconPencil,
   IconPlus,
+  IconSearch,
   IconToggleLeft,
   IconToggleRight,
 } from "@tabler/icons-react"
@@ -34,7 +35,6 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -125,6 +125,17 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
   const [addOpen, setAddOpen] = useState(false)
   const [renameTarget, setRenameTarget] = useState<FuelTypeDto | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<FuelTypeDto | null>(null)
+
+  // ── Table search ────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState("")
+  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const filteredFuelTypes = normalizedQuery
+    ? fuelTypes.filter(
+        (ft) =>
+          ft.name.toLowerCase().includes(normalizedQuery) ||
+          ft.source.toLowerCase().includes(normalizedQuery)
+      )
+    : fuelTypes
   const [blockReferences, setBlockReferences] = useState<string[] | null>(null)
 
   // ── Mutations ──────────────────────────────────────────────────────────
@@ -206,20 +217,43 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
             No fuel types yet. Add one to get started.
           </p>
         ) : (
-          <Table>
-            <TableHeader className="bg-muted/60 [&_th]:font-semibold [&_th]:text-foreground">
-              <TableRow className="hover:bg-muted/60 [&_th:first-child]:ps-6 [&_th:last-child]:pe-6">
-                <TableHead>Name</TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Tanks</TableHead>
-                <TableHead>Sellable</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="[&_tr:nth-child(even)]:bg-muted/30 [&_td:first-child]:ps-6 [&_td:last-child]:pe-6">
-              {fuelTypes.map((ft) => (
+          <>
+            <div className="border-b border-border px-6 py-3">
+              <div className="relative max-w-sm">
+                <IconSearch
+                  className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  stroke={1.75}
+                  aria-hidden
+                />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search fuel types…"
+                  className="h-9 w-full ps-9"
+                  aria-label="Search fuel types"
+                />
+              </div>
+            </div>
+
+            {filteredFuelTypes.length === 0 ? (
+              <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+                No fuel types match “{searchQuery}”.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader className="bg-muted/60 [&_th]:font-semibold [&_th]:text-foreground">
+                  <TableRow className="hover:bg-muted/60 [&_th:first-child]:ps-6 [&_th:last-child]:pe-6">
+                    <TableHead>Name</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tanks</TableHead>
+                    <TableHead>Sellable</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&_tr:nth-child(even)]:bg-muted/30 [&_td:first-child]:ps-6 [&_td:last-child]:pe-6">
+                  {filteredFuelTypes.map((ft) => (
                 <TableRow
                   key={ft.id}
                   data-inactive={!ft.isActive}
@@ -298,6 +332,8 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
               ))}
             </TableBody>
           </Table>
+            )}
+          </>
         )}
       </CardContent>
 
@@ -415,9 +451,14 @@ function AddFuelTypeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        showCloseButton={false}
+        className="gap-4 p-6 sm:max-w-md"
+      >
         <DialogHeader>
-          <DialogTitle className="text-base">Add fuel type</DialogTitle>
+          <DialogTitle className="text-base font-semibold">
+            Add fuel type
+          </DialogTitle>
           <DialogDescription>
             Pick one from your OMC catalog or create a custom one.
           </DialogDescription>
@@ -573,9 +614,12 @@ function RenameFuelTypeDialog({
 
   return (
     <Dialog open={!!target} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        showCloseButton={false}
+        className="gap-4 p-6 sm:max-w-md"
+      >
         <DialogHeader>
-          <DialogTitle className="text-base">
+          <DialogTitle className="text-base font-semibold">
             {isOmc ? "Can't rename this fuel type" : "Rename fuel type"}
           </DialogTitle>
           <DialogDescription>
@@ -599,17 +643,15 @@ function RenameFuelTypeDialog({
           </div>
         )}
 
-        <DialogFooter>
+        <div className="mt-2 flex justify-end gap-2">
           {isOmc ? (
             <DialogClose asChild>
-              <Button className="h-10 w-full text-sm font-semibold sm:w-auto">
-                Close
-              </Button>
+              <Button>Close</Button>
             </DialogClose>
           ) : (
             <>
               <DialogClose asChild>
-                <Button variant="ghost">Cancel</Button>
+                <Button variant="outline">Cancel</Button>
               </DialogClose>
               <Button
                 onClick={handleSave}
@@ -619,7 +661,7 @@ function RenameFuelTypeDialog({
               </Button>
             </>
           )}
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   )
@@ -642,12 +684,17 @@ function DeactivateDialog({
   const blocked = references !== null && references.length > 0
   return (
     <Dialog open={!!target} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent
+        showCloseButton={false}
+        className="gap-4 p-6 sm:max-w-md"
+      >
         <DialogHeader>
-          <DialogTitle>Deactivate {target?.name}?</DialogTitle>
+          <DialogTitle className="text-base font-semibold">
+            Deactivate {target?.name}?
+          </DialogTitle>
           <DialogDescription>
-            Deactivated fuel types are hidden from new price, tank, and nozzle pickers
-            but kept for historical reporting.
+            Deactivated fuel types are hidden from new price, tank, and nozzle
+            pickers but kept for historical reporting.
           </DialogDescription>
         </DialogHeader>
 
@@ -655,22 +702,26 @@ function DeactivateDialog({
           <Alert variant="destructive" className="[&>svg+div]:translate-y-0">
             <IconAlertTriangle className="size-4" />
             <AlertDescription>
-              Can&apos;t deactivate — still in use by {references!.join(" and ")}. Remove
-              those references first.
+              Can&apos;t deactivate — still in use by {references!.join(" and ")}.
+              Remove those references first.
             </AlertDescription>
           </Alert>
         )}
 
-        <DialogFooter>
+        <div className="mt-2 flex justify-end gap-2">
           <DialogClose asChild>
-            <Button variant="ghost">{blocked ? "Close" : "Cancel"}</Button>
+            <Button variant="outline">{blocked ? "Close" : "Cancel"}</Button>
           </DialogClose>
           {!blocked && (
-            <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
+            <Button
+              variant="destructive"
+              onClick={onConfirm}
+              disabled={isPending}
+            >
               {isPending ? "Deactivating…" : "Deactivate"}
             </Button>
           )}
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   )
