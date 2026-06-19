@@ -206,86 +206,106 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
             No fuel types yet. Add one to get started.
           </p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Tanks</TableHead>
-                <TableHead>Sellable</TableHead>
-                <TableHead className="text-end">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fuelTypes.map((ft) => (
-                <TableRow key={ft.id} data-inactive={!ft.isActive}>
-                  <TableCell className="font-medium">{ft.name}</TableCell>
-                  <TableCell>{ft.unit}</TableCell>
-                  <TableCell>
-                    <Badge variant={ft.isCustom ? "secondary" : "outline"}>
-                      {ft.source}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {ft.isActive ? (
-                      <Badge variant="secondary">Active</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
-                        Inactive
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{ft.tankCount}</TableCell>
-                  <TableCell>
-                    {ft.isSellable ? (
-                      <Badge className="bg-success/10 text-success">Sellable</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
-                        Not yet sellable
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setRenameTarget(ft)}
-                      >
-                        <IconPencil className="me-1 size-4" />
-                        Rename
-                      </Button>
-                      {ft.isActive ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setBlockReferences(null)
-                            setDeactivateTarget(ft)
-                          }}
-                        >
-                          <IconToggleLeft className="me-1 size-4" />
-                          Deactivate
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={activeMutation.isPending}
-                          onClick={() => activeMutation.mutate({ id: ft.id, isActive: true })}
-                        >
-                          <IconToggleRight className="me-1 size-4" />
-                          Activate
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+          <div className="overflow-hidden rounded-lg border border-border">
+            <Table>
+              <TableHeader className="bg-muted/60 [&_th]:font-semibold [&_th]:text-foreground">
+                <TableRow className="hover:bg-muted/60">
+                  <TableHead>Name</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Tanks</TableHead>
+                  <TableHead>Sellable</TableHead>
+                  <TableHead className="text-end">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="[&_tr:nth-child(even)]:bg-muted/30">
+                {fuelTypes.map((ft) => (
+                  <TableRow
+                    key={ft.id}
+                    data-inactive={!ft.isActive}
+                    className="data-[inactive=true]:text-muted-foreground"
+                  >
+                    <TableCell className="font-medium">{ft.name}</TableCell>
+                    <TableCell>{ft.unit}</TableCell>
+                    <TableCell>
+                      {ft.isCustom ? (
+                        <Badge className="border-transparent bg-primary/10 text-primary hover:bg-primary/10">
+                          Custom
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">OMC</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {ft.isActive ? (
+                        <Badge className="border-transparent bg-success/10 text-success hover:bg-success/10">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge className="border-transparent bg-destructive/10 text-destructive hover:bg-destructive/10">
+                          Inactive
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{ft.tankCount}</TableCell>
+                    <TableCell>
+                      {ft.isSellable ? (
+                        <Badge className="border-transparent bg-success/10 text-success hover:bg-success/10">
+                          Sellable
+                        </Badge>
+                      ) : (
+                        <Badge className="border-transparent bg-muted text-muted-foreground hover:bg-muted">
+                          Not yet sellable
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={!ft.isCustom}
+                          title={
+                            ft.isCustom
+                              ? undefined
+                              : "OMC catalog fuel types can't be renamed — they use the OMC's official name."
+                          }
+                          onClick={() => setRenameTarget(ft)}
+                        >
+                          <IconPencil className="me-1 size-4" />
+                          Rename
+                        </Button>
+                        {ft.isActive ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setBlockReferences(null)
+                              setDeactivateTarget(ft)
+                            }}
+                          >
+                            <IconToggleLeft className="me-1 size-4" />
+                            Deactivate
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={activeMutation.isPending}
+                            onClick={() => activeMutation.mutate({ id: ft.id, isActive: true })}
+                          >
+                            <IconToggleRight className="me-1 size-4" />
+                            Activate
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
 
@@ -519,6 +539,14 @@ function AddFuelTypeDialog({
 }
 
 // ── Rename dialog ─────────────────────────────────────────────────────────
+/**
+ * Rename Custom fuel types only. OMC catalog rows aren't renameable on this
+ * screen (they use the OMC's official name); the dialog renders a read-only
+ * explanation in that case. Pre-fills the name field whenever a new target
+ * is opened — using `useEffect` on `target.id` because Radix's
+ * `onOpenChange` only fires for internal close events, not when the parent
+ * sets `open=true` from outside.
+ */
 function RenameFuelTypeDialog({
   target,
   onOpenChange,
@@ -530,48 +558,75 @@ function RenameFuelTypeDialog({
   isPending: boolean
   onRename: (name: string) => void
 }) {
+  const isOmc = target ? !target.isCustom : false
   const [name, setName] = useState("")
 
+  // Seed / reset the name field whenever a new target is opened.
+  useEffect(() => {
+    if (target) setName(target.name)
+    else setName("")
+  }, [target?.id])
+
+  const trimmed = name.trim()
+  const unchanged = !!target && trimmed === target.name.trim()
+
+  const handleSave = () => {
+    const parsed = fuelTypeNameSchema.safeParse(name)
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message)
+      return
+    }
+    onRename(parsed.data)
+  }
+
   return (
-    <Dialog
-      open={!!target}
-      onOpenChange={(o) => {
-        if (o && target) setName(target.name)
-        onOpenChange(o)
-      }}
-    >
-      <DialogContent>
+    <Dialog open={!!target} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Rename fuel type</DialogTitle>
+          <DialogTitle className="text-base">
+            {isOmc ? "Can't rename this fuel type" : "Rename fuel type"}
+          </DialogTitle>
           <DialogDescription>
-            Renaming affects only this station; historical records are unchanged.
+            {isOmc
+              ? "This fuel type comes from your OMC catalog and uses the OMC's official name. If you need a different name, add a custom fuel type instead."
+              : "Renaming affects only this station; historical records are unchanged."}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-1.5">
-          <Label htmlFor="rename-ft-name">Name</Label>
-          <Input
-            id="rename-ft-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
+
+        {!isOmc && (
+          <div className="grid gap-1.5">
+            <Label htmlFor="rename-ft-name" className="text-sm font-semibold">
+              Name
+            </Label>
+            <Input
+              id="rename-ft-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full"
+            />
+          </div>
+        )}
+
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
-          </DialogClose>
-          <Button
-            onClick={() => {
-              const parsed = fuelTypeNameSchema.safeParse(name)
-              if (!parsed.success) {
-                toast.error(parsed.error.issues[0].message)
-                return
-              }
-              onRename(parsed.data)
-            }}
-            disabled={isPending || !name.trim()}
-          >
-            {isPending ? "Saving…" : "Save"}
-          </Button>
+          {isOmc ? (
+            <DialogClose asChild>
+              <Button className="h-10 w-full text-sm font-semibold sm:w-auto">
+                Close
+              </Button>
+            </DialogClose>
+          ) : (
+            <>
+              <DialogClose asChild>
+                <Button variant="ghost">Cancel</Button>
+              </DialogClose>
+              <Button
+                onClick={handleSave}
+                disabled={isPending || !trimmed || unchanged}
+              >
+                {isPending ? "Saving…" : "Save"}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
