@@ -7,7 +7,7 @@
  * Tab contents render English literals to match sibling config screens; the
  * i18next call-site sweep is tracked under M08-F05-R05.
  */
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import {
@@ -326,6 +326,14 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
 }
 
 // ── Add dialog ──────────────────────────────────────────────────────────────
+/**
+ * Single-form add dialog. The Name + Unit fields are the only inputs and
+ * are used for both Custom and OMC-derived types. Below them, the station's
+ * OMC catalog (minus any types already added) appears as click-to-fill rows.
+ * Clicking an OMC row populates the fields and remembers the selection; the
+ * single "Add fuel type" button then submits as an OMC pick. Typing in the
+ * Name field after picking an OMC row demotes the submission back to Custom.
+ */
 function AddFuelTypeDialog({
   open,
   onOpenChange,
@@ -341,126 +349,147 @@ function AddFuelTypeDialog({
   isPending: boolean
   onAdd: (payload: { name: string; unit: string; isCustom: boolean; omcId?: string }) => void
 }) {
-  const [mode, setMode] = useState<"omc" | "custom">("custom")
-  const [omcChoiceId, setOmcChoiceId] = useState<string>("")
   const [name, setName] = useState("")
   const [unit, setUnit] = useState("L")
+  const [pickedOmc, setPickedOmc] = useState<OMCFuelTypeDto | null>(null)
+
+  // Reset to a clean form whenever the dialog closes so reopening is fresh.
+  useEffect(() => {
+    if (!open) {
+      setName("")
+      setUnit("L")
+      setPickedOmc(null)
+    }
+  }, [open])
 
   const existingNames = new Set(existing.map((f) => f.name.toLowerCase()))
   const availableOmc = omcFuelTypes.filter((o) => !existingNames.has(o.name.toLowerCase()))
-  const hasOmc = omcFuelTypes.length > 0
+
+  const handleNameChange = (next: string) => {
+    setName(next)
+    // Typing a name different from the picked OMC entry demotes to Custom.
+    if (pickedOmc && next.trim().toLowerCase() !== pickedOmc.name.toLowerCase()) {
+      setPickedOmc(null)
+    }
+  }
+
+  const handlePickOmc = (choice: OMCFuelTypeDto) => {
+    setPickedOmc(choice)
+    setName(choice.name)
+    setUnit(choice.unit)
+  }
 
   const submit = () => {
-    if (mode === "omc") {
-      const choice = omcFuelTypes.find((o) => o.id === omcChoiceId)
-      if (!choice) {
-        toast.error("Select a fuel type from the catalog.")
-        return
-      }
-      onAdd({ name: choice.name, unit: choice.unit, omcId: choice.omcId, isCustom: false })
+    const parsed = fuelTypeNameSchema.safeParse(name)
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message)
+      return
+    }
+    const n = parsed.data
+    if (existingNames.has(n.toLowerCase())) {
+      toast.error("A fuel type with this name already exists.")
+      return
+    }
+    // OMC pick still valid only if the name was not edited away from it.
+    if (pickedOmc && n.toLowerCase() === pickedOmc.name.toLowerCase()) {
+      onAdd({
+        name: pickedOmc.name,
+        unit: pickedOmc.unit,
+        omcId: pickedOmc.omcId,
+        isCustom: false,
+      })
     } else {
-      const parsed = fuelTypeNameSchema.safeParse(name)
-      if (!parsed.success) {
-        toast.error(parsed.error.issues[0].message)
-        return
-      }
-      const n = parsed.data
-      if (existingNames.has(n.toLowerCase())) {
-        toast.error("A fuel type with this name already exists.")
-        return
-      }
       onAdd({ name: n, unit, isCustom: true })
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add fuel type</DialogTitle>
+          <DialogTitle className="text-base">Add fuel type</DialogTitle>
           <DialogDescription>
-            Add one from your OMC catalog or create a custom type.
+            Add one from your OMC catalog or create a custom one.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {hasOmc && (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={mode === "omc" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setMode("omc")}
-              >
-                OMC catalog
-              </Button>
-              <Button
-                type="button"
-                variant={mode === "custom" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setMode("custom")}
-              >
-                Custom
-              </Button>
-            </div>
-          )}
+          <div className="grid gap-1.5">
+            <Label htmlFor="add-ft-name" className="text-sm font-semibold">
+              Name
+            </Label>
+            <Input
+              id="add-ft-name"
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder="e.g. Diesel Premium"
+              className="w-full"
+            />
+          </div>
 
-          {mode === "omc" && hasOmc ? (
-            <div className="grid gap-1.5">
-              <Label>OMC fuel type</Label>
-              <Select value={omcChoiceId} onValueChange={setOmcChoiceId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a fuel type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableOmc.map((o) => (
-                    <SelectItem key={o.id} value={o.id}>
-                      {o.name} ({o.unit})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {availableOmc.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  All catalog fuel types are already added.
-                </p>
-              )}
-            </div>
-          ) : (
+          <div className="grid gap-1.5">
+            <Label className="text-sm font-semibold">Unit</Label>
+            <Select value={unit} onValueChange={setUnit}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="L">Liter (L)</SelectItem>
+                <SelectItem value="kg">Kilogram (kg)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button
+            type="button"
+            onClick={submit}
+            disabled={isPending}
+            className="h-11 w-full text-sm font-semibold"
+          >
+            {isPending ? "Adding…" : "Add fuel type"}
+          </Button>
+
+          {availableOmc.length > 0 && (
             <>
-              <div className="grid gap-1.5">
-                <Label htmlFor="add-ft-name">Name</Label>
-                <Input
-                  id="add-ft-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Diesel Premium"
-                />
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center" aria-hidden>
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-background px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Or pick from your OMC catalog
+                  </span>
+                </div>
               </div>
-              <div className="grid gap-1.5">
-                <Label>Unit</Label>
-                <Select value={unit} onValueChange={setUnit}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="L">Liter (L)</SelectItem>
-                    <SelectItem value="kg">Kilogram (kg)</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div className="space-y-2">
+                {availableOmc.map((o) => {
+                  const selected = pickedOmc?.id === o.id
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => handlePickOmc(o)}
+                      aria-pressed={selected}
+                      className={`flex w-full items-center justify-between rounded-md border px-3 py-2.5 text-start outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                        selected
+                          ? "border-primary/40 bg-primary/5"
+                          : "border-border"
+                      }`}
+                    >
+                      <span className="text-sm font-medium text-foreground">
+                        {o.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {o.unit}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </>
           )}
         </div>
-
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
-          </DialogClose>
-          <Button onClick={submit} disabled={isPending}>
-            {isPending ? "Adding…" : "Add"}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
