@@ -1,0 +1,32 @@
+[
+  {
+    "sheet": 1,
+    "components": [
+      "Alert",
+      "Badge",
+      "Button",
+      "Card",
+      "Checkbox",
+      "Dialog",
+      "DropdownMenu",
+      "Field",
+      "GoogleIcon",
+      "Input",
+      "Label",
+      "Select",
+      "Separator",
+      "Sheet",
+      "Sidebar",
+      "Skeleton"
+    ]
+  },
+  {
+    "sheet": 2,
+    "components": [
+      "Table",
+      "Tabs",
+      "Toaster",
+      "Tooltip"
+    ]
+  }
+]
