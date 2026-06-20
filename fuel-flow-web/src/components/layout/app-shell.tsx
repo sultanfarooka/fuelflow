@@ -141,7 +141,7 @@ export function AppShell() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
           <SidebarTrigger />
           <Separator orientation="vertical" className="me-1 h-6" />
@@ -196,7 +196,7 @@ export function AppShell() {
           </div>
         )}
 
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
           <Outlet />
         </main>
       </SidebarInset>

@@ -25,6 +25,14 @@ components/
 │   ├── tooltip.tsx        # Tooltip / TooltipTrigger / TooltipContent (requires TooltipProvider mounted in main.tsx)
 │   └── icons/
 │       └── google-icon.tsx  # OAuth-spec brand icon — sanctioned hex literals
+├── data-table/           # Shared, reusable TanStack-Table-on-shadcn DataTable — the project-wide standard for list screens (sort, filter, paginate, responsive cards). See "Shared DataTable" below.
+│   ├── data-table.tsx              # Generic <DataTable columns data … /> (state, responsive table↔cards, loading/empty)
+│   ├── data-table-toolbar.tsx      # Search + faceted filters + Reset + view options + actions slot
+│   ├── data-table-column-header.tsx# Sortable header (Asc/Desc/Hide menu)
+│   ├── data-table-faceted-filter.tsx# Multi-select column filter (DropdownMenu + faceted counts)
+│   ├── data-table-view-options.tsx # Column visibility toggle
+│   ├── data-table-pagination.tsx   # Rows-per-page + page nav
+│   └── index.ts                    # Barrel export
 ├── layout/               # [M07-F07] App shell: app-shell.tsx (SidebarProvider + top bar + Outlet), app-sidebar.tsx (role-aware nav + active highlight), station-switcher.tsx, nav-config.ts (pure getNavItems)
 ├── common/               # Cross-feature components: coming-soon.tsx (M07-F07 stub), under-development.tsx (M07-F10 richer placeholder with moduleName/icon/description props)
 ├── auth/                  # Auth form components (TanStack Form + Zod)
@@ -58,6 +66,81 @@ components/
 4. **Is it genuinely novel UI not expressible via primitives?** → Build a one-off component co-located with the feature; still respect the theming rules below.
 
 **Never:** rebuild a primitive (no custom Button, custom Dialog, custom Tooltip). The primitives are owned code — modify them in place if you need a new variant.
+
+## Shared DataTable (the standard for list screens)
+
+`components/data-table/` is the **project-wide standard** for any tabular list
+screen (fuel types, users, customers, suppliers, transactions, …). It wraps
+**TanStack Table** (headless) with **shadcn primitives only** — no extra UI deps.
+First adopter: `station-config/fuel-types-panel.tsx`.
+
+**Do not** hand-roll a `<Table>` with bespoke search/sort/filter/pagination for a
+new list screen. Define a `ColumnDef[]` and render `<DataTable />`.
+
+**What it provides (all opt-in via props):**
+
+| Capability | Prop |
+|---|---|
+| Global search box | `enableSearch` (default true) + `searchPlaceholder` |
+| Faceted multi-select filters (with live counts) | `filters: DataTableFilterDef[]` |
+| Column sorting | per-column `header: ({column}) => <DataTableColumnHeader … />` |
+| Column visibility | automatic (View menu) for columns with `meta.title` |
+| Client pagination | automatic; `initialPageSize` |
+| **Responsive: table on `md+`, cards on mobile** | `renderMobileCard: (row) => ReactNode` |
+| Loading skeletons | `isLoading` |
+| Empty state | `emptyState` |
+| Per-row styling (e.g. mute inactive) | `rowClassName: (row) => string` |
+| Primary action (e.g. "Add") in toolbar | `toolbarActions` |
+
+**Column presentation hints** travel through `column.meta` (typed via a module
+augmentation in `data-table.tsx`): `title` (label for the View menu), `align`
+(`"start" | "end" | "center"`), `headerClassName`, `cellClassName`.
+
+**Faceted filters** filter on a column's value, so derive a stable string with
+`accessorFn` (e.g. `row => row.isActive ? "Active" : "Inactive"`) and set
+`filterFn` to a small `(row, id, value[]) => value.includes(row.getValue(id))`
+helper. The faceted filter is built on `DropdownMenu` (not Popover+Command) so
+the data-table needs no primitives beyond what's already vendored.
+
+**Responsive contract:** when `renderMobileCard` is supplied, the table is
+`hidden md:block` and the card list is `md:hidden`, both driven by the *same*
+table instance — so sort/filter/search/pagination apply identically to both. On
+desktop, show full text action buttons; reuse the same actions component inside
+the mobile card footer (see `FuelTypeActions` in `fuel-types-panel.tsx`).
+
+```tsx
+const columns: ColumnDef<Row>[] = [
+  {
+    accessorKey: "name",
+    meta: { title: "Name" },
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+  },
+  {
+    id: "status",
+    accessorFn: (r) => (r.isActive ? "Active" : "Inactive"),
+    meta: { title: "Status" },
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    cell: ({ row }) => <StatusBadge row={row.original} />,
+  },
+]
+
+<DataTable
+  columns={columns}
+  data={rows}
+  isLoading={isLoading}
+  getRowId={(r) => r.id}
+  searchPlaceholder="Search…"
+  renderMobileCard={(row) => <RowCard row={row.original} />}
+  filters={[{ columnId: "status", title: "Status",
+    options: [{ label: "Active", value: "Active" }, { label: "Inactive", value: "Inactive" }] }]}
+/>
+```
+
+> **App-shell note:** the `SidebarInset` + inner `<main>` in `layout/app-shell.tsx`
+> carry `min-w-0` so a wide table scrolls inside its own card instead of pushing
+> the whole layout past the viewport. Keep that when adding wide content.
 
 ## Theming rules (NON-NEGOTIABLE)
 
