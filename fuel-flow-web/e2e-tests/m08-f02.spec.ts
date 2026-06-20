@@ -54,6 +54,13 @@ type ServerFuelTank = {
   nozzleCount: number
 }
 
+type ServerDipChart = {
+  id: string
+  tankId: string
+  entryCount: number
+  entries: { id: string; depthCm: number; volumeLiters: number }[]
+}
+
 function seedFuelTypes(): ServerFuelType[] {
   return [
     { id: FT_PMG, name: "PMG", unit: "L", isCustom: false, omcId: OMC_ID, source: "OMC", isActive: true, tankCount: 1, hasActivePrice: true, isSellable: true },
@@ -121,6 +128,7 @@ async function mockApi(
   page: Page,
   fuelTypes: ServerFuelType[],
   tanks: ServerFuelTank[],
+  dipCharts: Map<string, ServerDipChart> = new Map(),
 ) {
   await page.route("**/api/v1/**", async (route) => {
     const req = route.request()
@@ -137,6 +145,38 @@ async function mockApi(
 
     if (pathname === `/api/v1/stations/${STATION_ID}/fuel-types` && method === "GET") {
       return json(200, { success: true, data: fuelTypes })
+    }
+
+    // Dip chart — GET / POST under /…/fuel-tanks/{tankId}/dip-chart
+    const dipMatch = pathname.match(/\/fuel-tanks\/([^/]+)\/dip-chart$/)
+    if (dipMatch) {
+      const tankId = dipMatch[1]
+      if (method === "GET") {
+        const chart = dipCharts.get(tankId) ?? null
+        return json(200, { success: true, data: chart })
+      }
+      if (method === "POST") {
+        const body = req.postDataJSON() as {
+          entries: { depthCm: number; volumeLiters: number }[]
+        }
+        const chart: ServerDipChart = {
+          id: `d9999999-0000-0000-0000-${tankId.slice(-12)}`,
+          tankId,
+          entryCount: body.entries.length,
+          entries: body.entries.map((e, i) => ({
+            id: `e${i.toString().padStart(35, "0")}`,
+            depthCm: e.depthCm,
+            volumeLiters: e.volumeLiters,
+          })),
+        }
+        dipCharts.set(tankId, chart)
+        const t = tanks.find((tt) => tt.id === tankId)
+        if (t) {
+          t.hasDipChart = true
+          t.dipChartEntryCount = chart.entryCount
+        }
+        return json(200, { success: true, data: chart })
+      }
     }
 
     // Tank list
@@ -323,5 +363,69 @@ test.describe("M08-F02 — Tank Configuration", () => {
     await expect(page.getByRole("button", { name: /Delete tank/ })).not.toBeVisible()
     await page.getByRole("button", { name: /Close/ }).click()
     await expect(tank1).toBeVisible()
+  })
+
+  test("Dip — Add tank with CSV → row flips to dip-chart Yes", async ({ page }) => {
+    const fts = seedFuelTypes()
+    const tks = seedTanks()
+    await injectAuth(page)
+    await mockApi(page, fts, tks)
+    await page.goto(TANKS_URL)
+
+    await page.getByRole("button", { name: /Add tank/ }).click()
+    await page.getByLabel(/^Name/).fill("Tank With Chart")
+    await page.getByLabel(/Capacity/).fill("20000")
+    // Upload a CSV in-memory — Playwright's setInputFiles accepts a buffer.
+    const csv = ["DepthMm,VolumeLiters", "100,250", "200,520", "300,810"].join("\n")
+    await page
+      .getByLabel(/Dip chart CSV/i)
+      .setInputFiles({ name: "chart.csv", mimeType: "text/csv", buffer: Buffer.from(csv) })
+    await expect(page.getByText(/Parsed 3 entries/)).toBeVisible()
+    await page.getByRole("button", { name: /^Add tank$/, exact: true }).last().click()
+
+    const newRow = page.getByRole("row", { name: /Tank With Chart/ })
+    await expect(newRow).toContainText("20,000 L")
+    // The "Yes (3)" dip-chart chip appears because the mock updated the tank
+    // record on POST /…/dip-chart.
+    await expect(newRow).toContainText(/Yes/)
+  })
+
+  test("Dip — Dip chart dialog views existing + replaces", async ({ page }) => {
+    const fts = seedFuelTypes()
+    const tks = seedTanks()
+    const charts = new Map([
+      [
+        tks[0].id,
+        {
+          id: "d-existing",
+          tankId: tks[0].id,
+          entryCount: 2,
+          entries: [
+            { id: "e1", depthCm: 10, volumeLiters: 250 },
+            { id: "e2", depthCm: 20, volumeLiters: 520 },
+          ],
+        },
+      ],
+    ])
+    await injectAuth(page)
+    await mockApi(page, fts, tks, charts)
+    await page.goto(TANKS_URL)
+
+    const tank1 = page.getByRole("row", { name: /Tank 1/ })
+    await tank1.getByRole("button", { name: /Dip chart/ }).click()
+
+    const dialog = page.getByRole("dialog", { name: /Dip chart.*Tank 1/ })
+    await expect(dialog).toBeVisible()
+    // Existing entries visible
+    await expect(dialog).toContainText("250")
+    await expect(dialog).toContainText("520")
+    // Replace with a new CSV
+    const csv = ["DepthMm,VolumeLiters", "50,100", "150,400"].join("\n")
+    await dialog
+      .getByLabel(/Replace with CSV/i)
+      .setInputFiles({ name: "new.csv", mimeType: "text/csv", buffer: Buffer.from(csv) })
+    await expect(dialog.getByText(/Parsed 2 entries/)).toBeVisible()
+    await dialog.getByRole("button", { name: /Replace dip chart/ }).click()
+    await expect(dialog).not.toBeVisible()
   })
 })

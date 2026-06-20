@@ -21,6 +21,7 @@ import { toast } from "sonner"
 import {
   IconAlertTriangle,
   IconBarrel,
+  IconChartHistogram,
   IconPencil,
   IconPlus,
   IconTrash,
@@ -46,12 +47,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { DataTable } from "@/components/data-table"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { ConfigPanelCard } from "@/components/station-config/config-panel-card"
 import { SourceBadge } from "@/components/station-config/badges"
 import { formatLiters } from "@/lib/format/number"
 import { tankFormSchema } from "@/lib/validators/fuel-tank"
+import { parseDipChartCsv } from "@/lib/parse/dip-chart-csv"
 import {
   createFuelTank,
   deleteFuelTank,
@@ -60,12 +70,19 @@ import {
   type FuelTankDto,
 } from "@/lib/api/stations/fuel-tanks"
 import {
+  getDipChart,
+  uploadDipChart,
+  type UploadDipChartEntry,
+} from "@/lib/api/stations/dip-chart"
+import {
   getFuelTypesByStation,
   type FuelTypeDto,
 } from "@/lib/api/stations/fuel-types"
 
 const FUEL_TANKS_KEY = (stationId: string) => ["stations", stationId, "fuel-tanks"]
 const FUEL_TYPES_KEY = (stationId: string) => ["stations", stationId, "fuel-types"]
+const DIP_CHART_KEY = (stationId: string, tankId: string) =>
+  ["stations", stationId, "fuel-tanks", tankId, "dip-chart"]
 
 /**
  * The Axios client wraps non-401 failures in a plain `Error` whose `message`
@@ -146,16 +163,57 @@ export function FuelTanksPanel({ stationId }: { stationId: string }) {
   const [editTarget, setEditTarget] = useState<FuelTankDto | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<FuelTankDto | null>(null)
   const [blockReferences, setBlockReferences] = useState<string[] | null>(null)
+  const [dipChartTarget, setDipChartTarget] = useState<FuelTankDto | null>(null)
 
+  /**
+   * Add-tank chains create → optional dip-chart upload. The dip chart isn't
+   * a tank column on the backend (it's a separate `…/dip-chart` POST), so we
+   * sequence the two requests here. If the dip-chart upload fails, the tank
+   * still exists — surface that as a partial-success warning so the user
+   * knows to retry from the row's "Dip chart" action.
+   */
   const createMutation = useMutation({
-    mutationFn: (payload: {
+    mutationFn: async (payload: {
       name?: string
       capacityLiters: number
       fuelTypeId: string
-    }) => createFuelTank(stationId, payload),
-    onSuccess: () => {
+      dipChartEntries?: UploadDipChartEntry[]
+    }) => {
+      const created = await createFuelTank(stationId, {
+        name: payload.name,
+        capacityLiters: payload.capacityLiters,
+        fuelTypeId: payload.fuelTypeId,
+      })
+      const tankId = created.data.id
+      if (payload.dipChartEntries && payload.dipChartEntries.length > 0) {
+        try {
+          await uploadDipChart(stationId, tankId, {
+            entries: payload.dipChartEntries,
+          })
+          return { created, dipChartUploaded: true as const }
+        } catch (err) {
+          // Tank was created; only the chart upload failed. Bubble a structured
+          // shape so onSuccess can warn the user without losing the new tank.
+          return {
+            created,
+            dipChartUploaded: false as const,
+            dipChartError: serverError(err, "Dip chart upload failed."),
+          }
+        }
+      }
+      return { created, dipChartUploaded: undefined }
+    },
+    onSuccess: (result) => {
       invalidateTanks()
-      toast.success("Tank added.")
+      if (result.dipChartUploaded === true) {
+        toast.success("Tank added with dip chart.")
+      } else if (result.dipChartUploaded === false) {
+        toast.warning(
+          `Tank added — but dip chart upload failed: ${result.dipChartError ?? ""}. Use the Dip chart action to retry.`
+        )
+      } else {
+        toast.success("Tank added.")
+      }
       setAddOpen(false)
     },
     onError: (err) => toast.error(serverError(err, "Failed to add tank.")),
@@ -204,6 +262,7 @@ export function FuelTanksPanel({ stationId }: { stationId: string }) {
 
   const handleOpenAdd = () => setAddOpen(true)
   const handleOpenEdit = (tank: FuelTankDto) => setEditTarget(tank)
+  const handleOpenDipChart = (tank: FuelTankDto) => setDipChartTarget(tank)
   const handleOpenDelete = (tank: FuelTankDto) => {
     setBlockReferences(null)
     setDeleteTarget(tank)
@@ -296,6 +355,14 @@ export function FuelTanksPanel({ stationId }: { stationId: string }) {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => handleOpenDipChart(row.original)}
+            >
+              <IconChartHistogram className="size-4" />
+              Dip chart
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => handleOpenDelete(row.original)}
             >
               <IconTrash className="size-4" />
@@ -339,7 +406,7 @@ export function FuelTanksPanel({ stationId }: { stationId: string }) {
           <DipChartBadge tank={t} />
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
           <Button
             variant="outline"
             size="sm"
@@ -348,6 +415,15 @@ export function FuelTanksPanel({ stationId }: { stationId: string }) {
           >
             <IconPencil className="size-4" />
             Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleOpenDipChart(t)}
+            className="flex-1"
+          >
+            <IconChartHistogram className="size-4" />
+            Dip chart
           </Button>
           <Button
             variant="outline"
@@ -504,6 +580,17 @@ export function FuelTanksPanel({ stationId }: { stationId: string }) {
           deleteMutation.mutate(deleteTarget.id)
         }}
       />
+
+      <DipChartDialog
+        stationId={stationId}
+        target={dipChartTarget}
+        onOpenChange={(o) => !o && setDipChartTarget(null)}
+        onUploaded={() => {
+          // Tanks query carries hasDipChart + dipChartEntryCount; refetch so
+          // the chip in the table updates immediately.
+          queryClient.invalidateQueries({ queryKey: FUEL_TANKS_KEY(stationId) })
+        }}
+      />
     </ConfigPanelCard>
   )
 }
@@ -540,6 +627,7 @@ function TankFormDialog({
     name?: string
     capacityLiters: number
     fuelTypeId: string
+    dipChartEntries?: UploadDipChartEntry[]
   }) => void
 }) {
   const [name, setName] = useState("")
@@ -547,6 +635,11 @@ function TankFormDialog({
   const [fuelTypeId, setFuelTypeId] = useState<string>("")
   const [confirmedReassign, setConfirmedReassign] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Optional dip-chart upload (Add mode only). Edit-mode users go through the
+  // dedicated Dip chart action button on the row.
+  const [dipFileName, setDipFileName] = useState<string>("")
+  const [dipEntries, setDipEntries] = useState<UploadDipChartEntry[]>([])
+  const [dipErrors, setDipErrors] = useState<string[]>([])
 
   // Pre-fill on each open. For Add, the deps are stable (mode="add" only fires
   // when `open` toggles); for Edit, key on the target's id.
@@ -557,6 +650,9 @@ function TankFormDialog({
       setFuelTypeId("")
       setConfirmedReassign(false)
       setError(null)
+      setDipFileName("")
+      setDipEntries([])
+      setDipErrors([])
       return
     }
     if (mode === "edit" && target) {
@@ -570,6 +666,9 @@ function TankFormDialog({
     }
     setConfirmedReassign(false)
     setError(null)
+    setDipFileName("")
+    setDipEntries([])
+    setDipErrors([])
   }, [open, mode, target?.id, fuelTypes])
 
   const isReassign = mode === "edit" && !!target && fuelTypeId !== target.fuelTypeId
@@ -599,12 +698,41 @@ function TankFormDialog({
       setError(null)
       return
     }
+    if (mode === "add" && dipErrors.length > 0) {
+      setError("Fix the dip-chart CSV before saving.")
+      return
+    }
     setError(null)
     onSubmit({
       name: trimmedName ? trimmedName : undefined,
       capacityLiters: parsed.data.capacityLiters,
       fuelTypeId: parsed.data.fuelTypeId,
+      dipChartEntries:
+        mode === "add" && dipEntries.length > 0 ? dipEntries : undefined,
     })
+  }
+
+  const handleDipFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) {
+      setDipFileName("")
+      setDipEntries([])
+      setDipErrors([])
+      return
+    }
+    setDipFileName(file.name)
+    const reader = new FileReader()
+    reader.onload = () => {
+      const text = String(reader.result ?? "")
+      const { rows, errors } = parseDipChartCsv(text)
+      setDipEntries(rows)
+      setDipErrors(errors)
+    }
+    reader.onerror = () => {
+      setDipEntries([])
+      setDipErrors(["Failed to read CSV file."])
+    }
+    reader.readAsText(file)
   }
 
   const titleText = mode === "add" ? "Add tank" : `Edit ${tankLabel(target ?? { capacityLiters: 0 })}`
@@ -689,6 +817,48 @@ function TankFormDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {mode === "add" && (
+            <div className="grid gap-1.5">
+              <Label htmlFor="tank-dip-csv" className="text-sm font-semibold">
+                Dip chart CSV <span className="font-normal text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="tank-dip-csv"
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleDipFile}
+                className="w-full file:me-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
+              />
+              <span className="text-xs text-muted-foreground">
+                Two columns: <code>DepthMm,VolumeLiters</code>. Optional first
+                line starting with <code>#</code> is treated as a comment.
+                Upload later from the row's Dip chart action if you skip now.
+              </span>
+              {dipFileName && dipErrors.length === 0 && dipEntries.length > 0 && (
+                <span className="text-xs text-success">
+                  Parsed {dipEntries.length}{" "}
+                  {dipEntries.length === 1 ? "entry" : "entries"} from{" "}
+                  {dipFileName}.
+                </span>
+              )}
+              {dipErrors.length > 0 && (
+                <Alert variant="destructive" className="[&>svg+div]:translate-y-0">
+                  <IconAlertTriangle className="size-4" />
+                  <AlertDescription>
+                    <ul className="list-inside list-disc">
+                      {dipErrors.slice(0, 3).map((err, i) => (
+                        <li key={i}>{err}</li>
+                      ))}
+                      {dipErrors.length > 3 ? (
+                        <li>…and {dipErrors.length - 3} more.</li>
+                      ) : null}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
 
           {isReassign && (
             <Alert variant="destructive" className="[&>svg+div]:translate-y-0">
@@ -791,6 +961,227 @@ function DeleteTankDialog({
               {isPending ? "Deleting…" : "Delete tank"}
             </Button>
           )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ── Dip chart dialog (view + replace) ───────────────────────────────────────
+/**
+ * Per-tank dip-chart manager. Lazy-loads the current chart on open (the
+ * panel's list query doesn't carry the full entries, just `hasDipChart` +
+ * `dipChartEntryCount`). Renders:
+ *  - A summary line + collapsible table of the existing entries (or
+ *    "Not uploaded" if none).
+ *  - A CSV file input + parsed-preview / errors.
+ *  - A single Save button that POSTs `…/dip-chart` — the backend handler
+ *    is upsert (deletes the prior chart first), so this is also the
+ *    "replace" path.
+ */
+function DipChartDialog({
+  stationId,
+  target,
+  onOpenChange,
+  onUploaded,
+}: {
+  stationId: string
+  target: FuelTankDto | null
+  onOpenChange: (open: boolean) => void
+  onUploaded: () => void
+}) {
+  const queryClient = useQueryClient()
+  const open = !!target
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: target ? DIP_CHART_KEY(stationId, target.id) : ["dip-chart", "noop"],
+    queryFn: () => getDipChart(stationId, target!.id),
+    enabled: open && !!target,
+  })
+  const chart = data?.data ?? null
+
+  const [fileName, setFileName] = useState<string>("")
+  const [entries, setEntries] = useState<UploadDipChartEntry[]>([])
+  const [parseErrors, setParseErrors] = useState<string[]>([])
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      setFileName("")
+      setEntries([])
+      setParseErrors([])
+      setShowAll(false)
+    }
+  }, [open])
+
+  const uploadMutation = useMutation({
+    mutationFn: (payload: { entries: UploadDipChartEntry[] }) =>
+      uploadDipChart(stationId, target!.id, payload),
+    onSuccess: () => {
+      if (target) {
+        queryClient.invalidateQueries({
+          queryKey: DIP_CHART_KEY(stationId, target.id),
+        })
+      }
+      onUploaded()
+      toast.success("Dip chart updated.")
+      onOpenChange(false)
+    },
+    onError: (err) => toast.error(serverError(err, "Failed to upload dip chart.")),
+  })
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) {
+      setFileName("")
+      setEntries([])
+      setParseErrors([])
+      return
+    }
+    setFileName(file.name)
+    const reader = new FileReader()
+    reader.onload = () => {
+      const text = String(reader.result ?? "")
+      const { rows, errors } = parseDipChartCsv(text)
+      setEntries(rows)
+      setParseErrors(errors)
+    }
+    reader.onerror = () => {
+      setEntries([])
+      setParseErrors(["Failed to read CSV file."])
+    }
+    reader.readAsText(file)
+  }
+
+  const canSave = entries.length > 0 && parseErrors.length === 0
+  const existingEntries = chart?.entries ?? []
+  const visibleEntries = showAll ? existingEntries : existingEntries.slice(0, 8)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className="gap-4 p-6 sm:max-w-lg"
+      >
+        <DialogHeader>
+          <DialogTitle className="text-base font-semibold">
+            Dip chart — {target ? tankLabel(target) : "tank"}
+          </DialogTitle>
+          <DialogDescription>
+            Depth-to-volume table for this tank. Uploading a new CSV replaces
+            the existing chart.
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Current chart */}
+        <div className="space-y-2">
+          <div className="text-sm font-semibold">Current chart</div>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : error ? (
+            <p className="text-sm text-destructive">
+              Failed to load dip chart.
+            </p>
+          ) : existingEntries.length === 0 ? (
+            <p className="rounded-md border border-dashed border-border px-3 py-4 text-center text-sm text-muted-foreground">
+              No dip chart uploaded yet.
+            </p>
+          ) : (
+            <div className="-mx-6 overflow-hidden border-y border-border">
+              <Table>
+                <TableHeader className="bg-muted/60 [&_th]:font-semibold [&_th]:text-foreground">
+                  <TableRow className="hover:bg-muted/60 [&_th:first-child]:ps-6 [&_th:last-child]:pe-6">
+                    <TableHead className="text-end">Depth (cm)</TableHead>
+                    <TableHead className="text-end">Volume (L)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&_tr:nth-child(even)]:bg-muted/30 [&_td:first-child]:ps-6 [&_td:last-child]:pe-6">
+                  {visibleEntries.map((e) => (
+                    <TableRow key={e.id}>
+                      <TableCell className="text-end tabular-nums">
+                        {e.depthCm}
+                      </TableCell>
+                      <TableCell className="text-end tabular-nums">
+                        {e.volumeLiters}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {existingEntries.length > 8 && (
+                <div className="px-6 py-2 text-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAll((s) => !s)}
+                  >
+                    {showAll
+                      ? "Show fewer"
+                      : `Show all ${existingEntries.length} entries`}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Replace / upload */}
+        <div className="grid gap-1.5">
+          <Label htmlFor="dip-replace-csv" className="text-sm font-semibold">
+            {existingEntries.length > 0 ? "Replace with CSV" : "Upload CSV"}
+          </Label>
+          <Input
+            id="dip-replace-csv"
+            type="file"
+            accept=".csv,text/csv"
+            onChange={handleFile}
+            className="w-full file:me-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
+          />
+          <span className="text-xs text-muted-foreground">
+            Two columns: <code>DepthMm,VolumeLiters</code>. Optional first
+            line starting with <code>#</code> is treated as a comment.
+          </span>
+          {fileName && parseErrors.length === 0 && entries.length > 0 && (
+            <span className="text-xs text-success">
+              Parsed {entries.length}{" "}
+              {entries.length === 1 ? "entry" : "entries"} from {fileName}.
+            </span>
+          )}
+          {parseErrors.length > 0 && (
+            <Alert variant="destructive" className="[&>svg+div]:translate-y-0">
+              <IconAlertTriangle className="size-4" />
+              <AlertDescription>
+                <ul className="list-inside list-disc">
+                  {parseErrors.slice(0, 3).map((err, i) => (
+                    <li key={i}>{err}</li>
+                  ))}
+                  {parseErrors.length > 3 ? (
+                    <li>…and {parseErrors.length - 3} more.</li>
+                  ) : null}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <div className="mt-2 flex justify-end gap-2">
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Close
+            </Button>
+          </DialogClose>
+          <Button
+            type="button"
+            onClick={() => uploadMutation.mutate({ entries })}
+            disabled={!canSave || uploadMutation.isPending}
+          >
+            {uploadMutation.isPending
+              ? "Uploading…"
+              : existingEntries.length > 0
+              ? "Replace dip chart"
+              : "Upload dip chart"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
