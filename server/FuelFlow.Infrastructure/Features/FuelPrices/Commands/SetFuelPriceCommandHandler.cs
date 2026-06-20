@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using FuelFlow.Application.Common;
 using FuelFlow.Application.DTOs.FuelPrices;
 using FuelFlow.Application.Features.FuelPrices.Commands;
@@ -13,19 +14,22 @@ public class SetFuelPriceCommandHandler : IRequestHandler<SetFuelPriceCommand, R
     private readonly IFuelTypeRepository _fuelTypeRepo;
     private readonly IFuelPricesRepository _fuelPricesRepo;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<SetFuelPriceCommandHandler> _logger;
 
     public SetFuelPriceCommandHandler(
         ICurrentUserService currentUser,
         IStationRepository stationRepo,
         IFuelTypeRepository fuelTypeRepo,
         IFuelPricesRepository fuelPricesRepo,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<SetFuelPriceCommandHandler> logger)
     {
         _currentUser = currentUser;
         _stationRepo = stationRepo;
         _fuelTypeRepo = fuelTypeRepo;
         _fuelPricesRepo = fuelPricesRepo;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<Result<FuelPricesDto>> Handle(SetFuelPriceCommand request, CancellationToken cancellationToken)
@@ -45,6 +49,20 @@ public class SetFuelPriceCommandHandler : IRequestHandler<SetFuelPriceCommand, R
             return Result<FuelPricesDto>.Failure("Fuel type not found.");
 
         var current = await _fuelPricesRepo.GetCurrentByStationAndFuelTypeAsync(request.StationId, request.Request.FuelTypeId, cancellationToken);
+
+        // M06-F01: defensive belt-and-braces beyond the validator's 5-minute slop.
+        // EffectiveFrom must not precede the current active row's EffectiveFrom —
+        // otherwise we'd rewrite the price history's chronological order. The
+        // validator catches "more than 5 min in the past"; this catches "after a
+        // future-effective row was already set, then someone tries to slip an
+        // even-older row underneath".
+        if (current != null && current.EffectiveTo == null && request.Request.EffectiveFrom < current.EffectiveFrom)
+        {
+            return Result<FuelPricesDto>.Failure("Effective date cannot precede the current price's effective date.");
+        }
+
+        var oldPrice = current?.Price;
+
         if (current != null && current.EffectiveTo == null)
         {
             current.EffectiveTo = request.Request.EffectiveFrom;
@@ -65,6 +83,11 @@ public class SetFuelPriceCommandHandler : IRequestHandler<SetFuelPriceCommand, R
         };
         await _fuelPricesRepo.AddAsync(price);
         await _unitOfWork.SaveChangesAsync();
+
+        // M06-F01-R04: Serilog audit. Persistent AuditLog table arrives with M01-F08.
+        _logger.LogInformation(
+            "AUDIT FuelPrice.Set: user {UserId} set {FuelTypeName} ({FuelTypeId}) at station {StationId} to {NewPrice} (was {OldPrice}, effective {EffectiveFrom:O})",
+            _currentUser.UserId, fuelType.Name, fuelType.Id, request.StationId, price.Price, oldPrice, price.EffectiveFrom);
 
         return Result<FuelPricesDto>.Success(new FuelPricesDto
         {
