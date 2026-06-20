@@ -231,7 +231,7 @@ test.describe("M06-F01 — Price Configuration", () => {
     await expect(hobcRow).toContainText("Custom")
   })
 
-  test("AC2 — Set price → row refreshes with new value", async ({ page }) => {
+  test("AC2 — Set price → row refreshes with new value (Enter submits)", async ({ page }) => {
     const fts = seedFuelTypes()
     const prices = seedPrices()
     await injectAuth(page)
@@ -242,8 +242,11 @@ test.describe("M06-F01 — Price Configuration", () => {
     await hsdRow.getByRole("button", { name: /Set price/ }).click()
 
     await expect(page.getByRole("heading", { name: /Set price for HSD/ })).toBeVisible()
-    await page.getByLabel(/Price.*L/).fill("290.25")
-    await page.getByRole("button", { name: /Save price/ }).click()
+    // Date input defaults to today; price input has autofocus. Pressing Enter
+    // here submits the form (verifies the form-submit wiring).
+    const priceInput = page.getByLabel(/Price.*L/)
+    await priceInput.fill("290.25")
+    await priceInput.press("Enter")
 
     // Dialog closes; row now shows the new price.
     await expect(page.getByRole("heading", { name: /Set price for HSD/ })).not.toBeVisible()

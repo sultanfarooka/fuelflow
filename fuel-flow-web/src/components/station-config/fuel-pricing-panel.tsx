@@ -167,11 +167,20 @@ export function FuelPricingPanel({ stationId }: { stationId: string }) {
           new Date(a.effectiveFrom).getTime()
       )
     }
+    const nowMs = Date.now()
     return fuelTypes
       .filter((ft) => ft.isActive) // Inactive types are hidden from new pricing per M08-F08-R04
       .map((ft) => {
         const bucket = byFuelType.get(ft.id) ?? []
-        const current = bucket.find((p) => p.effectiveTo == null) ?? null
+        // Active row at this instant: EffectiveFrom <= now < (EffectiveTo ?? +Inf).
+        // We can't just use `effectiveTo == null`: a scheduled-future row also
+        // has no EffectiveTo and would shadow the actually-active row.
+        const current =
+          bucket.find((p) => {
+            const from = new Date(p.effectiveFrom).getTime()
+            const to = p.effectiveTo ? new Date(p.effectiveTo).getTime() : Infinity
+            return from <= nowMs && nowMs < to
+          }) ?? null
         return {
           fuelTypeId: ft.id,
           fuelTypeName: ft.name,
@@ -489,9 +498,18 @@ export function FuelPricingPanel({ stationId }: { stationId: string }) {
  * Standard minimal style matching M08-F08 dialogs: no top-right X,
  * semibold title, plain right-aligned div instead of `<DialogFooter />`.
  * Pre-fills the price with the current value (or empty if none).
- * `EffectiveFrom` defaults to "now" — a `datetime-local` input value
- * scoped to the user's local time (the API parses it as UTC because the
- * Date constructor on the resulting ISO string is locale-aware).
+ *
+ * Effective From is **date-only**. Prices take effect from the start of
+ * the chosen day:
+ *  - Today selected   → effective immediately (`now` ISO). Picking
+ *    local-midnight-today would fail the backend's 5-minute past-slop
+ *    validator on any clock that's already past midnight by more than
+ *    5 minutes — i.e. always after the first 5 minutes of any day.
+ *  - Future date      → effective at local midnight of that date,
+ *    converted to UTC for the API.
+ *
+ * Wrapped in a `<form>` so pressing **Enter** in either input submits.
+ * Cancel is `type="button"` so Space/Enter on it doesn't double-submit.
  */
 function SetPriceDialog({
   target,
@@ -517,7 +535,7 @@ function SetPriceDialog({
       setPriceStr(
         target.currentPrice ? formatPkrPlain(target.currentPrice.price) : ""
       )
-      setEffectiveStr(toDatetimeLocalNow())
+      setEffectiveStr(toDateInputToday())
       setError(null)
     } else {
       setPriceStr("")
@@ -526,19 +544,18 @@ function SetPriceDialog({
     }
   }, [target?.fuelTypeId])
 
-  const handleSave = () => {
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault()
     const price = Number(priceStr)
-    // `datetime-local` value is naive (no zone) — Date treats it as local time
-    // and toISOString converts to UTC, matching the backend's UTC contract.
-    const effectiveDate = new Date(effectiveStr)
-    if (Number.isNaN(effectiveDate.getTime())) {
-      setError("Pick an effective date and time.")
+    const effectiveIso = effectiveDateToIso(effectiveStr)
+    if (!effectiveIso) {
+      setError("Pick an effective date.")
       return
     }
     const parsed = setFuelPriceSchema.safeParse({
       fuelTypeId: target?.fuelTypeId ?? "",
       price,
-      effectiveFrom: effectiveDate.toISOString(),
+      effectiveFrom: effectiveIso,
     })
     if (!parsed.success) {
       setError(parsed.error.issues[0].message)
@@ -559,64 +576,70 @@ function SetPriceDialog({
             Set price for {target?.fuelTypeName}
           </DialogTitle>
           <DialogDescription>
-            The current price (if any) closes at the effective moment you
+            The current price (if any) closes at the start of the date you
             choose, and the new price becomes active.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="set-price" className="text-sm font-semibold">
-            Price (Rs / {target?.unit ?? "L"})
-          </Label>
-          <div className="relative">
-            <span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-              Rs
-            </span>
+        <form onSubmit={handleSubmit} className="contents">
+          <div className="grid gap-1.5">
+            <Label htmlFor="set-price" className="text-sm font-semibold">
+              Price (Rs / {target?.unit ?? "L"})
+            </Label>
+            <div className="relative">
+              <span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                Rs
+              </span>
+              <Input
+                id="set-price"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={priceStr}
+                onChange={(e) => setPriceStr(e.target.value)}
+                className="w-full ps-9 tabular-nums"
+                placeholder="0.00"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="set-effective-from" className="text-sm font-semibold">
+              Effective from
+            </Label>
             <Input
-              id="set-price"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={priceStr}
-              onChange={(e) => setPriceStr(e.target.value)}
-              className="w-full ps-9 tabular-nums"
-              placeholder="0.00"
-              autoFocus
+              id="set-effective-from"
+              type="date"
+              min={toDateInputToday()}
+              value={effectiveStr}
+              onChange={(e) => setEffectiveStr(e.target.value)}
+              className="w-full"
             />
+            <span className="text-xs text-muted-foreground">
+              Today applies immediately. A future date takes effect at the
+              start of that day.
+            </span>
           </div>
-        </div>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="set-effective-from" className="text-sm font-semibold">
-            Effective from
-          </Label>
-          <Input
-            id="set-effective-from"
-            type="datetime-local"
-            value={effectiveStr}
-            onChange={(e) => setEffectiveStr(e.target.value)}
-            className="w-full"
-          />
-          <span className="text-xs text-muted-foreground">
-            Local time. Defaults to now; backdated prices are rejected.
-          </span>
-        </div>
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
-        {error && (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {error}
+          <div className="mt-2 flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="submit" disabled={isPending || !priceStr}>
+              {isPending ? "Saving…" : "Save price"}
+            </Button>
           </div>
-        )}
-
-        <div className="mt-2 flex justify-end gap-2">
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button onClick={handleSave} disabled={isPending || !priceStr}>
-            {isPending ? "Saving…" : "Save price"}
-          </Button>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   )
@@ -723,12 +746,29 @@ function PriceHistoryDialog({
   )
 }
 
-/** "YYYY-MM-DDTHH:mm" for the `datetime-local` input, scoped to the user's local zone. */
-function toDatetimeLocalNow(): string {
+/** "YYYY-MM-DD" for today in the user's local timezone — `<input type="date">` value. */
+function toDateInputToday(): string {
   const d = new Date()
   const pad = (n: number) => n.toString().padStart(2, "0")
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
-  )
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/**
+ * Convert a `<input type="date">` value (`YYYY-MM-DD`) to the ISO instant
+ * we send to the API:
+ *   - Today  → `now` (avoids the "midnight today is hours in the past"
+ *              failure path through the backend's 5-min slop validator).
+ *   - Future → local midnight of the chosen date, converted to UTC ISO.
+ * Returns `null` for empty / unparseable input.
+ */
+function effectiveDateToIso(dateStr: string): string | null {
+  if (!dateStr) return null
+  // Compare YYYY-MM-DD lexically — same shape, identical to date equality.
+  if (dateStr === toDateInputToday()) return new Date().toISOString()
+  const [y, m, d] = dateStr.split("-").map(Number)
+  if (!y || !m || !d) return null
+  // Local midnight on the chosen calendar day; toISOString converts to UTC.
+  const localMidnight = new Date(y, m - 1, d, 0, 0, 0, 0)
+  if (Number.isNaN(localMidnight.getTime())) return null
+  return localMidnight.toISOString()
 }
