@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-20 (M06-F01 — Price Configuration, Done)
+**Last Updated:** 2026-06-20 (M08-F02 — Tank Configuration, In Progress)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
