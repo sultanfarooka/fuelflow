@@ -375,8 +375,9 @@ test.describe("M08-F02 — Tank Configuration", () => {
     await page.getByRole("button", { name: /Add tank/ }).click()
     await page.getByLabel(/^Name/).fill("Tank With Chart")
     await page.getByLabel(/Capacity/).fill("20000")
-    // Upload a CSV in-memory — Playwright's setInputFiles accepts a buffer.
-    const csv = ["DepthMm,VolumeLiters", "100,250", "200,520", "300,810"].join("\n")
+    // Lenient parser — no header line required; col1=cm, col2=L go straight
+    // through.
+    const csv = ["10,250", "20,520", "30,810"].join("\n")
     await page
       .getByLabel(/Dip chart CSV/i)
       .setInputFiles({ name: "chart.csv", mimeType: "text/csv", buffer: Buffer.from(csv) })
@@ -390,7 +391,7 @@ test.describe("M08-F02 — Tank Configuration", () => {
     await expect(newRow).toContainText(/Yes/)
   })
 
-  test("Dip — Dip chart dialog views existing + replaces", async ({ page }) => {
+  test("Dip — Dip chart dialog is view-only with indexed scrollable table", async ({ page }) => {
     const fts = seedFuelTypes()
     const tks = seedTanks()
     const charts = new Map([
@@ -416,16 +417,40 @@ test.describe("M08-F02 — Tank Configuration", () => {
 
     const dialog = page.getByRole("dialog", { name: /Dip chart.*Tank 1/ })
     await expect(dialog).toBeVisible()
-    // Existing entries visible
+    // Indexed table — # column header + the values from the seeded chart.
+    await expect(dialog.getByRole("columnheader", { name: "#" })).toBeVisible()
     await expect(dialog).toContainText("250")
     await expect(dialog).toContainText("520")
-    // Replace with a new CSV
-    const csv = ["DepthMm,VolumeLiters", "50,100", "150,400"].join("\n")
-    await dialog
-      .getByLabel(/Replace with CSV/i)
-      .setInputFiles({ name: "new.csv", mimeType: "text/csv", buffer: Buffer.from(csv) })
-    await expect(dialog.getByText(/Parsed 2 entries/)).toBeVisible()
-    await dialog.getByRole("button", { name: /Replace dip chart/ }).click()
-    await expect(dialog).not.toBeVisible()
+    // View-only — no upload UI here. Only Close.
+    await expect(dialog.getByRole("button", { name: /Replace dip chart/ })).toHaveCount(0)
+    await expect(dialog.getByRole("button", { name: /Upload dip chart/ })).toHaveCount(0)
+    await expect(dialog.getByRole("button", { name: /^Close$/ })).toBeVisible()
+  })
+
+  test("Dip — Replace happens in the Edit dialog (chained update→upload)", async ({ page }) => {
+    const fts = seedFuelTypes()
+    const tks = seedTanks()
+    const charts = new Map<string, ServerDipChart>()
+    await injectAuth(page)
+    await mockApi(page, fts, tks, charts)
+    await page.goto(TANKS_URL)
+
+    // Tank 2 starts with no dip chart (seed says hasDipChart=false).
+    const tank2 = page.getByRole("row", { name: /Tank 2/ })
+    await tank2.getByRole("button", { name: /Edit/ }).click()
+
+    // The Edit dialog now carries the Dip chart CSV input. Parser is lenient
+    // — no DepthMm header required, first col is cm, second col is L.
+    const csv = ["0,0", "5,210", "10,430"].join("\n")
+    await page
+      .getByLabel(/Dip chart CSV|Replace dip chart/i)
+      .setInputFiles({ name: "chart.csv", mimeType: "text/csv", buffer: Buffer.from(csv) })
+    await expect(page.getByText(/Parsed 3 entries/)).toBeVisible()
+    await page.getByRole("button", { name: /^Save$/ }).click()
+
+    // Edit dialog closes; row's Dip chart chip flips to Yes via the chained
+    // update → upload sequence (mockApi stamps hasDipChart=true on POST).
+    await expect(page.getByRole("heading", { name: /Edit/ })).not.toBeVisible()
+    await expect(tank2).toContainText(/Yes/)
   })
 })

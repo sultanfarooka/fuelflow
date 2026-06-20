@@ -219,17 +219,62 @@ export function FuelTanksPanel({ stationId }: { stationId: string }) {
     onError: (err) => toast.error(serverError(err, "Failed to add tank.")),
   })
 
+  /**
+   * Edit mutation chains the tank update with an optional dip-chart upload
+   * (same shape as the create chain). If the metadata update succeeds but
+   * the chart upload fails, we keep the metadata change and warn the user
+   * — the chart can be retried; the panel doesn't lose the rename or
+   * capacity change.
+   */
   const updateMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       tankId,
       payload,
     }: {
       tankId: string
-      payload: { name?: string; capacityLiters: number; fuelTypeId: string }
-    }) => updateFuelTank(stationId, tankId, payload),
-    onSuccess: () => {
+      payload: {
+        name?: string
+        capacityLiters: number
+        fuelTypeId: string
+        dipChartEntries?: UploadDipChartEntry[]
+      }
+    }) => {
+      await updateFuelTank(stationId, tankId, {
+        name: payload.name,
+        capacityLiters: payload.capacityLiters,
+        fuelTypeId: payload.fuelTypeId,
+      })
+      if (payload.dipChartEntries && payload.dipChartEntries.length > 0) {
+        try {
+          await uploadDipChart(stationId, tankId, {
+            entries: payload.dipChartEntries,
+          })
+          return { tankId, dipChartUploaded: true as const }
+        } catch (err) {
+          return {
+            tankId,
+            dipChartUploaded: false as const,
+            dipChartError: serverError(err, "Dip chart upload failed."),
+          }
+        }
+      }
+      return { tankId, dipChartUploaded: undefined }
+    },
+    onSuccess: (result) => {
       invalidateTanks()
-      toast.success("Tank updated.")
+      if (result.dipChartUploaded === true) {
+        // The dip-chart view cache for this tank is now stale.
+        queryClient.invalidateQueries({
+          queryKey: DIP_CHART_KEY(stationId, result.tankId),
+        })
+        toast.success("Tank updated and dip chart replaced.")
+      } else if (result.dipChartUploaded === false) {
+        toast.warning(
+          `Tank updated — but dip chart upload failed: ${result.dipChartError ?? ""}.`
+        )
+      } else {
+        toast.success("Tank updated.")
+      }
       setEditTarget(null)
     },
     onError: (err) => toast.error(serverError(err, "Failed to update tank.")),
@@ -585,11 +630,6 @@ export function FuelTanksPanel({ stationId }: { stationId: string }) {
         stationId={stationId}
         target={dipChartTarget}
         onOpenChange={(o) => !o && setDipChartTarget(null)}
-        onUploaded={() => {
-          // Tanks query carries hasDipChart + dipChartEntryCount; refetch so
-          // the chip in the table updates immediately.
-          queryClient.invalidateQueries({ queryKey: FUEL_TANKS_KEY(stationId) })
-        }}
       />
     </ConfigPanelCard>
   )
@@ -698,7 +738,7 @@ function TankFormDialog({
       setError(null)
       return
     }
-    if (mode === "add" && dipErrors.length > 0) {
+    if (dipErrors.length > 0) {
       setError("Fix the dip-chart CSV before saving.")
       return
     }
@@ -707,8 +747,7 @@ function TankFormDialog({
       name: trimmedName ? trimmedName : undefined,
       capacityLiters: parsed.data.capacityLiters,
       fuelTypeId: parsed.data.fuelTypeId,
-      dipChartEntries:
-        mode === "add" && dipEntries.length > 0 ? dipEntries : undefined,
+      dipChartEntries: dipEntries.length > 0 ? dipEntries : undefined,
     })
   }
 
@@ -818,47 +857,52 @@ function TankFormDialog({
             </Select>
           </div>
 
-          {mode === "add" && (
-            <div className="grid gap-1.5">
-              <Label htmlFor="tank-dip-csv" className="text-sm font-semibold">
-                Dip chart CSV <span className="font-normal text-muted-foreground">(optional)</span>
-              </Label>
-              <Input
-                id="tank-dip-csv"
-                type="file"
-                accept=".csv,text/csv"
-                onChange={handleDipFile}
-                className="w-full file:me-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
-              />
-              <span className="text-xs text-muted-foreground">
-                Two columns: <code>DepthMm,VolumeLiters</code>. Optional first
-                line starting with <code>#</code> is treated as a comment.
-                Upload later from the row's Dip chart action if you skip now.
+          <div className="grid gap-1.5">
+            <Label htmlFor="tank-dip-csv" className="text-sm font-semibold">
+              {mode === "add" || !target?.hasDipChart
+                ? "Dip chart CSV "
+                : "Replace dip chart "}
+              <span className="font-normal text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="tank-dip-csv"
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleDipFile}
+              className="w-full file:me-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
+            />
+            <span className="text-xs text-muted-foreground">
+              Two columns: <strong>depth (cm)</strong>, <strong>volume (litres)</strong>.
+              Header rows and lines starting with <code>#</code> are skipped
+              automatically.
+              {mode === "edit" && target?.hasDipChart
+                ? ` Uploading replaces the current ${target.dipChartEntryCount}-entry chart.`
+                : null}
+            </span>
+            {dipFileName && dipErrors.length === 0 && dipEntries.length > 0 && (
+              <span className="text-xs text-success">
+                Parsed {dipEntries.length}{" "}
+                {dipEntries.length === 1 ? "entry" : "entries"} from{" "}
+                {dipFileName}.
               </span>
-              {dipFileName && dipErrors.length === 0 && dipEntries.length > 0 && (
-                <span className="text-xs text-success">
-                  Parsed {dipEntries.length}{" "}
-                  {dipEntries.length === 1 ? "entry" : "entries"} from{" "}
-                  {dipFileName}.
-                </span>
-              )}
-              {dipErrors.length > 0 && (
-                <Alert variant="destructive" className="[&>svg+div]:translate-y-0">
-                  <IconAlertTriangle className="size-4" />
-                  <AlertDescription>
-                    <ul className="list-inside list-disc">
-                      {dipErrors.slice(0, 3).map((err, i) => (
-                        <li key={i}>{err}</li>
-                      ))}
-                      {dipErrors.length > 3 ? (
-                        <li>…and {dipErrors.length - 3} more.</li>
-                      ) : null}
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          )}
+            )}
+            {dipErrors.length > 0 && (
+              <Alert variant="destructive" className="[&>svg+div]:translate-y-0">
+                <IconAlertTriangle className="size-4" />
+                <AlertDescription>
+                  <ul className="list-inside list-disc">
+                    {dipErrors.slice(0, 3).map((err, i) => (
+                      <li key={i}>{err}</li>
+                    ))}
+                    {dipErrors.length > 3 ? (
+                      <li>…and {dipErrors.length - 3} more.</li>
+                    ) : null}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
 
           {isReassign && (
             <Alert variant="destructive" className="[&>svg+div]:translate-y-0">
@@ -967,30 +1011,24 @@ function DeleteTankDialog({
   )
 }
 
-// ── Dip chart dialog (view + replace) ───────────────────────────────────────
+// ── Dip chart dialog (view-only) ────────────────────────────────────────────
 /**
- * Per-tank dip-chart manager. Lazy-loads the current chart on open (the
- * panel's list query doesn't carry the full entries, just `hasDipChart` +
- * `dipChartEntryCount`). Renders:
- *  - A summary line + collapsible table of the existing entries (or
- *    "Not uploaded" if none).
- *  - A CSV file input + parsed-preview / errors.
- *  - A single Save button that POSTs `…/dip-chart` — the backend handler
- *    is upsert (deletes the prior chart first), so this is also the
- *    "replace" path.
+ * Per-tank dip-chart **viewer**. Lazy-loads the chart on open (the panel's
+ * list query carries only `hasDipChart` + `dipChartEntryCount`, not the
+ * full entries). Renders an indexed table inside a scrollable container so
+ * a 200-entry chart stays inside the modal without forcing it to scroll
+ * the whole dialog. Upload / replace lives in the **Edit tank** dialog
+ * (post-review revision) so this surface stays read-only.
  */
 function DipChartDialog({
   stationId,
   target,
   onOpenChange,
-  onUploaded,
 }: {
   stationId: string
   target: FuelTankDto | null
   onOpenChange: (open: boolean) => void
-  onUploaded: () => void
 }) {
-  const queryClient = useQueryClient()
   const open = !!target
 
   const { data, isLoading, error } = useQuery({
@@ -998,64 +1036,7 @@ function DipChartDialog({
     queryFn: () => getDipChart(stationId, target!.id),
     enabled: open && !!target,
   })
-  const chart = data?.data ?? null
-
-  const [fileName, setFileName] = useState<string>("")
-  const [entries, setEntries] = useState<UploadDipChartEntry[]>([])
-  const [parseErrors, setParseErrors] = useState<string[]>([])
-  const [showAll, setShowAll] = useState(false)
-
-  useEffect(() => {
-    if (!open) {
-      setFileName("")
-      setEntries([])
-      setParseErrors([])
-      setShowAll(false)
-    }
-  }, [open])
-
-  const uploadMutation = useMutation({
-    mutationFn: (payload: { entries: UploadDipChartEntry[] }) =>
-      uploadDipChart(stationId, target!.id, payload),
-    onSuccess: () => {
-      if (target) {
-        queryClient.invalidateQueries({
-          queryKey: DIP_CHART_KEY(stationId, target.id),
-        })
-      }
-      onUploaded()
-      toast.success("Dip chart updated.")
-      onOpenChange(false)
-    },
-    onError: (err) => toast.error(serverError(err, "Failed to upload dip chart.")),
-  })
-
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) {
-      setFileName("")
-      setEntries([])
-      setParseErrors([])
-      return
-    }
-    setFileName(file.name)
-    const reader = new FileReader()
-    reader.onload = () => {
-      const text = String(reader.result ?? "")
-      const { rows, errors } = parseDipChartCsv(text)
-      setEntries(rows)
-      setParseErrors(errors)
-    }
-    reader.onerror = () => {
-      setEntries([])
-      setParseErrors(["Failed to read CSV file."])
-    }
-    reader.readAsText(file)
-  }
-
-  const canSave = entries.length > 0 && parseErrors.length === 0
-  const existingEntries = chart?.entries ?? []
-  const visibleEntries = showAll ? existingEntries : existingEntries.slice(0, 8)
+  const entries = data?.data?.entries ?? []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1068,102 +1049,48 @@ function DipChartDialog({
             Dip chart — {target ? tankLabel(target) : "tank"}
           </DialogTitle>
           <DialogDescription>
-            Depth-to-volume table for this tank. Uploading a new CSV replaces
-            the existing chart.
+            Depth-to-volume table for this tank.
+            {entries.length > 0 ? ` ${entries.length} entries.` : ""}
+            {" "}To upload or replace the chart, use the tank's <strong>Edit</strong> action.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Current chart */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold">Current chart</div>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : error ? (
-            <p className="text-sm text-destructive">
-              Failed to load dip chart.
-            </p>
-          ) : existingEntries.length === 0 ? (
-            <p className="rounded-md border border-dashed border-border px-3 py-4 text-center text-sm text-muted-foreground">
-              No dip chart uploaded yet.
-            </p>
-          ) : (
-            <div className="-mx-6 overflow-hidden border-y border-border">
-              <Table>
-                <TableHeader className="bg-muted/60 [&_th]:font-semibold [&_th]:text-foreground">
-                  <TableRow className="hover:bg-muted/60 [&_th:first-child]:ps-6 [&_th:last-child]:pe-6">
-                    <TableHead className="text-end">Depth (cm)</TableHead>
-                    <TableHead className="text-end">Volume (L)</TableHead>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : error ? (
+          <p className="text-sm text-destructive">Failed to load dip chart.</p>
+        ) : entries.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
+            No dip chart uploaded yet. Edit this tank to upload one.
+          </p>
+        ) : (
+          <div className="-mx-6 max-h-[60vh] overflow-y-auto border-y border-border">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur supports-backdrop-filter:bg-muted/60 [&_th]:font-semibold [&_th]:text-foreground">
+                <TableRow className="hover:bg-muted/60 [&_th:first-child]:ps-6 [&_th:last-child]:pe-6">
+                  <TableHead className="w-12 text-end">#</TableHead>
+                  <TableHead className="text-end">Depth (cm)</TableHead>
+                  <TableHead className="text-end">Volume (L)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="[&_tr:nth-child(even)]:bg-muted/30 [&_td:first-child]:ps-6 [&_td:last-child]:pe-6">
+                {entries.map((e, i) => (
+                  <TableRow key={e.id}>
+                    <TableCell className="text-end tabular-nums text-muted-foreground">
+                      {i + 1}
+                    </TableCell>
+                    <TableCell className="text-end tabular-nums">
+                      {e.depthCm}
+                    </TableCell>
+                    <TableCell className="text-end tabular-nums">
+                      {e.volumeLiters}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody className="[&_tr:nth-child(even)]:bg-muted/30 [&_td:first-child]:ps-6 [&_td:last-child]:pe-6">
-                  {visibleEntries.map((e) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="text-end tabular-nums">
-                        {e.depthCm}
-                      </TableCell>
-                      <TableCell className="text-end tabular-nums">
-                        {e.volumeLiters}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {existingEntries.length > 8 && (
-                <div className="px-6 py-2 text-center">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAll((s) => !s)}
-                  >
-                    {showAll
-                      ? "Show fewer"
-                      : `Show all ${existingEntries.length} entries`}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Replace / upload */}
-        <div className="grid gap-1.5">
-          <Label htmlFor="dip-replace-csv" className="text-sm font-semibold">
-            {existingEntries.length > 0 ? "Replace with CSV" : "Upload CSV"}
-          </Label>
-          <Input
-            id="dip-replace-csv"
-            type="file"
-            accept=".csv,text/csv"
-            onChange={handleFile}
-            className="w-full file:me-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
-          />
-          <span className="text-xs text-muted-foreground">
-            Two columns: <code>DepthMm,VolumeLiters</code>. Optional first
-            line starting with <code>#</code> is treated as a comment.
-          </span>
-          {fileName && parseErrors.length === 0 && entries.length > 0 && (
-            <span className="text-xs text-success">
-              Parsed {entries.length}{" "}
-              {entries.length === 1 ? "entry" : "entries"} from {fileName}.
-            </span>
-          )}
-          {parseErrors.length > 0 && (
-            <Alert variant="destructive" className="[&>svg+div]:translate-y-0">
-              <IconAlertTriangle className="size-4" />
-              <AlertDescription>
-                <ul className="list-inside list-disc">
-                  {parseErrors.slice(0, 3).map((err, i) => (
-                    <li key={i}>{err}</li>
-                  ))}
-                  {parseErrors.length > 3 ? (
-                    <li>…and {parseErrors.length - 3} more.</li>
-                  ) : null}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
         <div className="mt-2 flex justify-end gap-2">
           <DialogClose asChild>
@@ -1171,17 +1098,6 @@ function DipChartDialog({
               Close
             </Button>
           </DialogClose>
-          <Button
-            type="button"
-            onClick={() => uploadMutation.mutate({ entries })}
-            disabled={!canSave || uploadMutation.isPending}
-          >
-            {uploadMutation.isPending
-              ? "Uploading…"
-              : existingEntries.length > 0
-              ? "Replace dip chart"
-              : "Upload dip chart"}
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
