@@ -14,6 +14,19 @@ export interface FuelTankDto {
   fuelTypeName?: string | null
   hasDipChart: boolean
   dipChartEntryCount: number
+  /** M08-F02: number of nozzles linked to this tank. */
+  nozzleCount: number
+}
+
+/**
+ * M08-F02: success-response payload for DELETE. Mirrors the M08-F08 deactivate
+ * shape. On 409 (blocked by references), the axios client throws and the error
+ * carries `.response.data.references` — see DeleteTankDialog.
+ */
+export interface DeleteFuelTankResponse {
+  tankId: string
+  blocked: boolean
+  blockingReferences: string[]
 }
 
 export interface CreateFuelTankRequest {
@@ -53,6 +66,7 @@ export interface UpdateFuelTankApiResponse {
 
 export interface DeleteFuelTankApiResponse {
   success: boolean
+  data?: DeleteFuelTankResponse
 }
 
 /**
