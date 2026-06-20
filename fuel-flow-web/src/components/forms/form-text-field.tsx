@@ -1,38 +1,38 @@
-import * as React from 'react'
+import * as React from "react";
 
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldLabel,
-} from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 type FieldApi = {
-  name: string
+  name: string;
   state: {
-    value: string
+    value: string;
     meta: {
-      isTouched: boolean
-      isValid: boolean
-      errors: ({ message?: string } | undefined)[]
-    }
-  }
-  handleBlur: () => void
-  handleChange: (value: string) => void
-}
+      isTouched: boolean;
+      isValid: boolean;
+      errors: ({ message?: string } | undefined)[];
+    };
+  };
+  handleBlur: () => void;
+  handleChange: (value: string) => void;
+};
 
 export interface FormTextFieldProps {
-  field: FieldApi
-  label: string
-  type?: 'text' | 'email' | 'tel' | 'password'
-  placeholder?: string
-  autoComplete?: string
-  inputMode?: 'email' | 'tel' | 'numeric'
-  description?: React.ReactNode
-  size?: 'default' | 'lg'
+  field: FieldApi;
+  label: string;
+  type?: "text" | "email" | "tel" | "password";
+  placeholder?: string;
+  autoComplete?: string;
+  inputMode?: "email" | "tel" | "numeric";
+  description?: React.ReactNode;
+  size?: "default" | "lg";
   /** Called on blur before handleBlur. If it returns a different value, the field is updated first. */
-  onNormalize?: (value: string) => string
+  onNormalize?: (value: string) => string;
 }
 
 /**
@@ -42,26 +42,25 @@ export interface FormTextFieldProps {
 export function FormTextField({
   field,
   label,
-  type = 'text',
+  type = "text",
   placeholder,
   autoComplete,
   inputMode,
   description,
-  size = 'default',
+  //size = "default",
   onNormalize,
 }: FormTextFieldProps) {
-  const isInvalid =
-    field.state.meta.isTouched && !field.state.meta.isValid
-  const errorId = `${field.name}-error`
-  const descriptionId = `${field.name}-description`
+  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+  const errorId = `${field.name}-error`;
+  const descriptionId = `${field.name}-description`;
 
   const handleBlur = () => {
     if (onNormalize) {
-      const normalized = onNormalize(field.state.value)
-      if (normalized !== field.state.value) field.handleChange(normalized)
+      const normalized = onNormalize(field.state.value);
+      if (normalized !== field.state.value) field.handleChange(normalized);
     }
-    field.handleBlur()
-  }
+    field.handleBlur();
+  };
 
   return (
     <Field data-invalid={isInvalid}>
@@ -70,7 +69,7 @@ export function FormTextField({
         id={field.name}
         name={field.name}
         type={type}
-        size={size}
+        //size={size}
         inputMode={inputMode}
         value={field.state.value}
         onBlur={handleBlur}
@@ -89,5 +88,5 @@ export function FormTextField({
         <FieldError id={errorId} errors={field.state.meta.errors} />
       )}
     </Field>
-  )
+  );
 }

@@ -1,29 +1,42 @@
-import { useTheme } from "next-themes"
+"use client"
+
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { IconCircleCheck, IconInfoCircle, IconAlertTriangle, IconAlertOctagon, IconLoader } from "@tabler/icons-react"
+import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+
+import { useTheme } from "@/lib/theme-context"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  // The app ships its own ThemeProvider (not next-themes), so read from that.
+  // Resolve "system" to a concrete light/dark so Sonner's rich colors render
+  // against the right surface.
+  const { theme } = useTheme()
+  const resolvedTheme: ToasterProps["theme"] =
+    theme === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : theme
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={resolvedTheme}
+      richColors
       className="toaster group"
       icons={{
         success: (
-          <IconCircleCheck className="size-4" />
+          <CircleCheckIcon className="size-4" />
         ),
         info: (
-          <IconInfoCircle className="size-4" />
+          <InfoIcon className="size-4" />
         ),
         warning: (
-          <IconAlertTriangle className="size-4" />
+          <TriangleAlertIcon className="size-4" />
         ),
         error: (
-          <IconAlertOctagon className="size-4" />
+          <OctagonXIcon className="size-4" />
         ),
         loading: (
-          <IconLoader className="size-4 animate-spin" />
+          <Loader2Icon className="size-4 animate-spin" />
         ),
       }}
       style={

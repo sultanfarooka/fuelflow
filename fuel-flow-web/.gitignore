@@ -30,3 +30,9 @@ dist-ssr
 /playwright/.cache/
 /playwright/.auth/
 /.playwright-mcp/
+
+# design-sync tool: internal workspace + build output (not source of truth).
+# Source config lives in design-sync.config.json + .design-sync/NOTES.md.
+.ds-sync/
+ds-bundle/
+.design-sync/previews/

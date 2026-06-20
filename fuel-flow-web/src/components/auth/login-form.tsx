@@ -21,7 +21,11 @@ import {
   type LoginRequest,
 } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth-store";
-import { normalizePhone, loginSchema, type LoginFormData } from "@/lib/validators/auth";
+import {
+  normalizePhone,
+  loginSchema,
+  type LoginFormData,
+} from "@/lib/validators/auth";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 const PHONE_VERIFICATION_PREFIX = "phone_verification_required";
@@ -83,8 +87,12 @@ export function LoginForm() {
       const apiMessage =
         error.response?.data?.error ?? error.response?.data?.message;
       if (apiMessage?.startsWith(PHONE_VERIFICATION_PREFIX)) {
-        const friendly = apiMessage.slice(PHONE_VERIFICATION_PREFIX.length).replace(/^:\s*/, "");
-        setLoginMutationError(friendly || "Please verify your phone before signing in.");
+        const friendly = apiMessage
+          .slice(PHONE_VERIFICATION_PREFIX.length)
+          .replace(/^:\s*/, "");
+        setLoginMutationError(
+          friendly || "Please verify your phone before signing in.",
+        );
         // Only offer the resend link when the identifier actually looks like a phone we can pass through.
         const pendingPhone = phoneRegex.test(variables.identifier)
           ? variables.identifier
@@ -123,7 +131,7 @@ export function LoginForm() {
               size="lg"
               placeholder="03XXXXXXXXXX or m@example.com"
               autoComplete="username"
-              description="Pakistani phone (03XXXXXXXXXX or +92XXXXXXXXXX) or verified email."
+              //description="Mobile format: (03XXX...X or +92XXX...X) or verified email."
               onNormalize={normalizePhone}
             />
           )}
@@ -137,7 +145,7 @@ export function LoginForm() {
                 label="Password"
                 type="password"
                 size="lg"
-                placeholder=""
+                placeholder="********"
                 autoComplete="current-password"
               />
               <div className="flex justify-end">

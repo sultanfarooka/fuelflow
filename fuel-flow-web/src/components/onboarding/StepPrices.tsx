@@ -154,7 +154,7 @@ export function StepPrices({ stationId, onNext, onBack }: Props) {
                     </span>
                     <Input
                       type="number"
-                      size="lg"
+                      //size="lg"
                       inputMode="decimal"
                       placeholder="0.00"
                       value={currentVal}
