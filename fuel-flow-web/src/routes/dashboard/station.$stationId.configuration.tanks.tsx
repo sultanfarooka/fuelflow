@@ -1,13 +1,12 @@
 /**
- * [M08-F07-R06] Fuel Tanks child route of the Station Configuration hub.
- * Placeholder until M08-F02 ships. Owner/Manager guard inherited from parent.
+ * [M08-F02] Fuel Tanks child route of the Station Configuration hub
+ * (M08-F07-R06). Owner/Manager guard inherited from the parent layout.
  */
 import { createFileRoute } from "@tanstack/react-router"
-import { IconBarrel } from "@tabler/icons-react"
 import { useTranslation } from "react-i18next"
 
 import { ConfigBreadcrumb } from "@/components/station-config/config-breadcrumb"
-import { UnderDevelopment } from "@/components/common/under-development"
+import { FuelTanksPanel } from "@/components/station-config/fuel-tanks-panel"
 
 export const Route = createFileRoute(
   "/dashboard/station/$stationId/configuration/tanks"
@@ -31,7 +30,7 @@ function TanksPage() {
           { label: t("nav.fuelTanks") },
         ]}
       />
-      <UnderDevelopment moduleName={t("nav.fuelTanks")} icon={IconBarrel} />
+      <FuelTanksPanel stationId={stationId} />
     </div>
   )
 }
