@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-18 (M08-F08 Fuel Type Management — Done: management surface on the Station Configuration Fuel Types tab)
+**Last Updated:** 2026-06-19 (M08-F07-R06 — Station Configuration list-menu hub + child routes, In Progress)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -1268,25 +1268,28 @@ Server-side daily backup.
 
 ---
 
-### M08-F07 — Station Configuration   [Status: Done]
+### M08-F07 — Station Configuration   [Status: Done · refined by M08-F07-R06]
 
 > _Discovery (2026-06-09): Owner request — station dashboard sidebar is sparse; fuel types, tanks, prices, and nozzles have no dedicated nav entry · outcome = Owner and Manager can reach Fuel Types, Tanks, Fuel Pricing, and Nozzles from a single persistent nav path; Fuel Pricing moves out of the Commercial group · maps to ProjectOverView §7.7 and new §8.7 (platform UI + settings) · cost-of-not-building: configuration screens exist but are only reachable via the Setup Wizard — no persistent nav path_
 >
-> _Redesign (2026-06-13): Owner request — replaced the dedicated collapsible "Station Management" sidebar group with a single **"Station Configuration"** item under the **Admin** group that opens a single tabbed page (`/dashboard/station/:stationId/configuration`) with tabs for Fuel Types, Fuel Pricing, Fuel Tanks, and Nozzles. R01–R05 below describe the current (tabbed) design; the original four-`/manage/*`-routes-in-a-collapsible-group shape is superseded._
+> _Redesign (2026-06-13): Owner request — replaced the dedicated collapsible "Station Management" sidebar group with a single **"Station Configuration"** item under the **Admin** group that opens a single tabbed page (`/dashboard/station/:stationId/configuration`) with tabs for Fuel Types, Fuel Pricing, Fuel Tanks, and Nozzles. R01–R05 below describe the (now superseded) tabbed design; the original four-`/manage/*`-routes-in-a-collapsible-group shape is also superseded._
+>
+> _Refinement (2026-06-19, [M08-F07-R06](#m08-f07--station-configuration)): Owner request — replace the tabbed page with an iOS-Settings / Monzo-Payments-style **list-menu hub**: `/configuration` renders a stacked list of four navigation cards (icon + title + description + chevron); each card navigates to its own child URL (`…/configuration/fuel-types`, `/pricing`, `/tanks`, `/nozzles`). R02 (tabbed page) and R04 (default tab) are superseded by R06; R01, R03, R05 are unchanged in spirit (R03 now reads "each child route renders the placeholder until its backing feature ships")._
 
 **Tags:** tenant-scope=per-station; tier=All; capacity-impact=none; locale=locale-agnostic; sensitive-action=no; notification-trigger=no; money-touch=none; shift-lifecycle-touch=none
 
-Adds a single **"Station Configuration"** item to the **Admin** sidebar group (Owner + Manager only, hidden from Custom Users) that opens a tabbed page at `/dashboard/station/:stationId/configuration`. The page has four tabs — Fuel Types, Fuel Pricing, Fuel Tanks, Nozzles — each rendering the shared `<UnderDevelopment />` placeholder until its backing feature ships its UI in place. Extends [M07-F10-R01](#m07-f10--complete-navigation-catalog--module-placeholder-pages) and removes Fuel Pricing from the Commercial nav group. Tab contents are owned by [M08-F08](#m08-f08--fuel-type-management) (Fuel Types), [M06-F01](#m06-f01--price-configuration) (Fuel Pricing), [M08-F02](#m08-f02--tank-configuration) (Fuel Tanks), and [M08-F03](#m08-f03--nozzle-configuration) (Nozzles).
+Adds a single **"Station Configuration"** item to the **Admin** sidebar group (Owner + Manager only, hidden from Custom Users) that opens a list-menu hub at `/dashboard/station/:stationId/configuration`. The hub renders four stacked navigation cards — Fuel Types, Fuel Pricing, Fuel Tanks, Nozzles — each linking to its own child route under `/configuration/<slug>`. Each child route renders its area's UI in place, or the shared `<UnderDevelopment />` placeholder until its backing feature ships. Extends [M07-F10-R01](#m07-f10--complete-navigation-catalog--module-placeholder-pages) and removes Fuel Pricing from the Commercial nav group. Child-route contents are owned by [M08-F08](#m08-f08--fuel-type-management) (Fuel Types), [M06-F01](#m06-f01--price-configuration) (Fuel Pricing), [M08-F02](#m08-f02--tank-configuration) (Fuel Tanks), and [M08-F03](#m08-f03--nozzle-configuration) (Nozzles).
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
 | M08-F07-R01 | Sidebar's **Admin** group contains a single "Station Configuration" item visible only to Owner and Manager; it is absent for Custom Users regardless of M01-F06 grants | — | Done |
-| M08-F07-R02 | The item opens a tabbed page at `/dashboard/station/:stationId/configuration` with four tabs in order: Fuel Types, Fuel Pricing, Fuel Tanks, Nozzles | — | Done |
-| M08-F07-R03 | Each tab renders the shared `<UnderDevelopment />` placeholder until its backing feature ships a real UI (Fuel Types→M08-F08, Fuel Pricing→M06-F01, Fuel Tanks→M08-F02, Nozzles→M08-F03), which replaces the placeholder in place | — | Done |
-| M08-F07-R04 | The Fuel Types tab is the default selected tab on load | — | Done |
-| M08-F07-R05 | Fuel Pricing is removed from the Commercial nav group and is reachable only via the Station Configuration → Fuel Pricing tab | — | Done |
+| M08-F07-R02 | The item opens a tabbed page at `/dashboard/station/:stationId/configuration` with four tabs in order: Fuel Types, Fuel Pricing, Fuel Tanks, Nozzles | — | Done · superseded by [M08-F07-R06](#m08-f07--station-configuration) |
+| M08-F07-R03 | Each tab renders the shared `<UnderDevelopment />` placeholder until its backing feature ships a real UI (Fuel Types→M08-F08, Fuel Pricing→M06-F01, Fuel Tanks→M08-F02, Nozzles→M08-F03), which replaces the placeholder in place | — | Done · refined by [M08-F07-R06](#m08-f07--station-configuration) (now "each child route" instead of "each tab") |
+| M08-F07-R04 | The Fuel Types tab is the default selected tab on load | — | Done · superseded by [M08-F07-R06](#m08-f07--station-configuration) (no tabs; hub is the landing page) |
+| M08-F07-R05 | Fuel Pricing is removed from the Commercial nav group and is reachable only via the Station Configuration → Fuel Pricing tab | — | Done · refined by [M08-F07-R06](#m08-f07--station-configuration) (reachable via the hub's Fuel Pricing card) |
+| M08-F07-R06 | `/configuration` renders a list-menu hub: a stacked list of four navigation cards (Fuel Types, Fuel Pricing, Fuel Tanks, Nozzles), each with an icon, title, description and chevron, linking to its own child route at `…/configuration/fuel-types`, `/pricing`, `/tanks`, `/nozzles`; each child URL is deep-linkable behind the Owner+Manager guard | — | In Progress |
 
 **Acceptance Criteria:**
 - **AC1** Given an Owner or Manager on the station dashboard, when they view the sidebar, then the Admin group shows a single "Station Configuration" item (no separate "Station Management" group).

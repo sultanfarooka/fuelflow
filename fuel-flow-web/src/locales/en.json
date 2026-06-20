@@ -64,6 +64,13 @@
     "body": "{{featureName}} requires the Professional plan.",
     "cta": "Upgrade to Professional"
   },
+  "stationConfig": {
+    "hubDescription": "Manage how this station is configured. Pick an area to view or edit its settings.",
+    "fuelTypesDesc": "Add, rename, or activate the fuel types this station sells.",
+    "pricingDesc": "Set per-fuel prices and review pricing history.",
+    "tanksDesc": "Configure storage tanks and their capacities.",
+    "nozzlesDesc": "Map nozzles to their tanks and assign them to dispensers."
+  },
   "dashboard": {
     "devBypass": {
       "bannerTitle": "Dev bypass active",
