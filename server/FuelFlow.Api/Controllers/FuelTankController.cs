@@ -66,7 +66,8 @@ public class FuelTankController : ControllerBase
 
     /// <summary>
     /// DELETE /api/v1/stations/{stationId}/fuel-tanks/{tankId}
-    /// Deletes a fuel tank from the station.
+    /// [M08-F02] Deletes a fuel tank. Blocked (409) while the tank has any
+    /// nozzles attached. Station must belong to the current user's organization.
     /// </summary>
     [HttpDelete("{tankId:guid}")]
     public async Task<IActionResult> Delete(Guid stationId, Guid tankId, CancellationToken cancellationToken)
@@ -76,6 +77,14 @@ public class FuelTankController : ControllerBase
         if (!result.IsSuccess)
             return BadRequest(new { success = false, error = result.Error });
 
-        return Ok(new { success = true });
+        if (result.Data!.Blocked)
+            return Conflict(new
+            {
+                success = false,
+                error = $"Cannot delete: in use by {string.Join(" and ", result.Data.BlockingReferences)}.",
+                references = result.Data.BlockingReferences,
+            });
+
+        return Ok(new { success = true, data = result.Data });
     }
 }
