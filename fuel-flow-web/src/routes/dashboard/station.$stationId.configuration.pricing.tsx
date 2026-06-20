@@ -1,13 +1,12 @@
 /**
- * [M08-F07-R06] Fuel Pricing child route of the Station Configuration hub.
- * Placeholder until M06-F01 ships. Owner/Manager guard inherited from parent.
+ * [M06-F01] Fuel Pricing child route of the Station Configuration hub
+ * (M08-F07-R06). Owner/Manager guard inherited from the parent layout.
  */
 import { createFileRoute } from "@tanstack/react-router"
-import { IconTag } from "@tabler/icons-react"
 import { useTranslation } from "react-i18next"
 
 import { ConfigBreadcrumb } from "@/components/station-config/config-breadcrumb"
-import { UnderDevelopment } from "@/components/common/under-development"
+import { FuelPricingPanel } from "@/components/station-config/fuel-pricing-panel"
 
 export const Route = createFileRoute(
   "/dashboard/station/$stationId/configuration/pricing"
@@ -31,7 +30,7 @@ function PricingPage() {
           { label: t("nav.pricing") },
         ]}
       />
-      <UnderDevelopment moduleName={t("nav.pricing")} icon={IconTag} />
+      <FuelPricingPanel stationId={stationId} />
     </div>
   )
 }
