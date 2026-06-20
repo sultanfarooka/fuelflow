@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-20 (M08-F02 — Tank Configuration, In Progress)
+**Last Updated:** 2026-06-20 (M08-F02 — Tank Configuration, Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -1200,15 +1200,15 @@ Station name, address, phone, tank/nozzle counts. Operating hours assumed 24/7.
 
 ---
 
-### M08-F02 — Tank Configuration   [Status: In Progress]
+### M08-F02 — Tank Configuration   [Status: Done]
 
-CRUD for tanks per station (see also [M02-F03](#m02-f03--underground-tank-management)).
+CRUD for tanks per station (see also [M02-F03](#m02-f03--underground-tank-management)). Renders at `/dashboard/station/:stationId/configuration/tanks` (the M08-F07-R06 hub's Fuel Tanks child route). Closes the other half of the M08-F08 sellable loop together with M06-F01 — a fuel type with an active price + at least one tank now flips to Sellable.
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M08-F02-R01 | Tank CRUD endpoints scoped to station | — | In Progress |
+| M08-F02-R01 | Tank CRUD endpoints scoped to station | — | Done |
 | M08-F02-R02 | Tank name uniqueness validated per station | — | Done |
 
 ---
