@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-19 (M08-F07-R06 — Station Configuration list-menu hub + child routes, In Progress)
+**Last Updated:** 2026-06-20 (M06-F01 — Price Configuration, Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -883,18 +883,18 @@ Single `FinancialEntries` table that all financial events write to. Every row is
 
 **Purpose:** Per-station fuel pricing with effective-date logging, double-confirmation workflow, mid-shift change handling, margins, customer special rates, and promotions.
 
-### M06-F01 — Price Configuration   [Status: Planned]
+### M06-F01 — Price Configuration   [Status: Done]
 
-One active price per fuel type per station; manual entry with effective date/time and full history.
+One active price per fuel type per station; manual entry with effective date/time and full history. Renders at `/dashboard/station/:stationId/configuration/pricing` (the M08-F07-R06 hub's Fuel Pricing child route). Closes the M08-F08 sellable loop: a fuel type with an active price + a tank flips to Sellable on the Fuel Types panel.
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M06-F01-R01 | Only one active price per fuel type per station at any time | PR-001 | Planned |
-| M06-F01-R02 | Price entered manually with explicit effective date/time | — | Planned |
-| M06-F01-R03 | Prices may differ across stations within the same organization | — | Planned |
-| M06-F01-R04 | Complete price history retained (for audits — see [M01-F08-R01](#m01-f08--audit-trail)) | — | Planned |
+| M06-F01-R01 | Only one active price per fuel type per station at any time | PR-001 | Done |
+| M06-F01-R02 | Price entered manually with explicit effective date/time | — | Done |
+| M06-F01-R03 | Prices may differ across stations within the same organization | — | Done |
+| M06-F01-R04 | Complete price history retained (for audits — see [M01-F08-R01](#m01-f08--audit-trail)) | — | Done |
 
 ---
 

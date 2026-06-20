@@ -19,15 +19,9 @@ import {
 } from "@tabler/icons-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { ConfigPanelCard } from "@/components/station-config/config-panel-card"
+import { SourceBadge, StatusBadge, SellableBadge } from "@/components/station-config/badges"
 import {
   Dialog,
   DialogClose,
@@ -101,40 +95,9 @@ const multiSelectFilter: FilterFn<FuelTypeDto> = (row, columnId, value) => {
   return value.includes(row.getValue(columnId))
 }
 
-// ── Reusable badge renderers (shared by table cells + mobile cards) ─────────
-function SourceBadge({ ft }: { ft: FuelTypeDto }) {
-  return ft.isCustom ? (
-    <Badge className="border-transparent bg-primary/10 text-primary hover:bg-primary/10">
-      Custom
-    </Badge>
-  ) : (
-    <Badge variant="outline">OMC</Badge>
-  )
-}
-
-function StatusBadge({ ft }: { ft: FuelTypeDto }) {
-  return ft.isActive ? (
-    <Badge className="border-transparent bg-success/10 text-success hover:bg-success/10">
-      Active
-    </Badge>
-  ) : (
-    <Badge className="border-transparent bg-destructive/10 text-destructive hover:bg-destructive/10">
-      Inactive
-    </Badge>
-  )
-}
-
-function SellableBadge({ ft }: { ft: FuelTypeDto }) {
-  return ft.isSellable ? (
-    <Badge className="border-transparent bg-success/10 text-success hover:bg-success/10">
-      Sellable
-    </Badge>
-  ) : (
-    <Badge className="border-transparent bg-muted text-muted-foreground hover:bg-muted">
-      Not yet sellable
-    </Badge>
-  )
-}
+// Badge renderers moved to `components/station-config/badges.tsx` so
+// sibling panels (M06-F01 Pricing, future Tanks/Nozzles) compose the
+// same chips.
 
 /**
  * Active/Inactive toggle — a real Switch reflecting `ft.isActive`. Flipping it
@@ -338,7 +301,7 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
         header: "Source",
         enableSorting: false,
         filterFn: multiSelectFilter,
-        cell: ({ row }) => <SourceBadge ft={row.original} />,
+        cell: ({ row }) => <SourceBadge isCustom={row.original.isCustom} />,
       },
       {
         id: "status",
@@ -348,7 +311,7 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
           <DataTableColumnHeader column={column} title="Status" />
         ),
         filterFn: multiSelectFilter,
-        cell: ({ row }) => <StatusBadge ft={row.original} />,
+        cell: ({ row }) => <StatusBadge isActive={row.original.isActive} />,
       },
       {
         accessorKey: "tankCount",
@@ -367,7 +330,7 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
         header: "Sellable",
         enableSorting: false,
         filterFn: multiSelectFilter,
-        cell: ({ row }) => <SellableBadge ft={row.original} />,
+        cell: ({ row }) => <SellableBadge isSellable={row.original.isSellable} />,
       },
       {
         id: "actions",
@@ -407,12 +370,12 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
               Sold per {ft.unit}
             </span>
           </div>
-          <SourceBadge ft={ft} />
+          <SourceBadge isCustom={ft.isCustom} />
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <StatusBadge ft={ft} />
-          <SellableBadge ft={ft} />
+          <StatusBadge isActive={ft.isActive} />
+          <SellableBadge isSellable={ft.isSellable} />
           <span className="ms-auto text-xs text-muted-foreground">
             {ft.tankCount} {ft.tankCount === 1 ? "tank" : "tanks"}
           </span>
@@ -440,29 +403,18 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1.5">
-          <CardTitle className="flex items-center gap-2">
-            <IconFlame className="size-5 shrink-0 text-primary" />
-            Fuel Types
-          </CardTitle>
-          <CardDescription>
-            Manage the fuel types this station sells. A type is sellable once it has an
-            active price and at least one tank.
-          </CardDescription>
-        </div>
-        <Button
-          onClick={handleOpenAdd}
-          className="w-full shrink-0 sm:w-auto"
-        >
+    <ConfigPanelCard
+      icon={IconFlame}
+      title="Fuel Types"
+      description="Manage the fuel types this station sells. A type is sellable once it has an active price and at least one tank."
+      action={
+        <Button onClick={handleOpenAdd} className="w-full sm:w-auto">
           <IconPlus className="size-4" />
           Add fuel type
         </Button>
-      </CardHeader>
-
-      <CardContent className="p-0">
-        <DataTable
+      }
+    >
+      <DataTable
           columns={columns}
           data={fuelTypes}
           isLoading={isLoading}
@@ -505,7 +457,6 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
             },
           ]}
         />
-      </CardContent>
 
       <AddFuelTypeDialog
         open={addOpen}
@@ -561,7 +512,7 @@ export function FuelTypesPanel({ stationId }: { stationId: string }) {
           activeMutation.mutate({ id: deactivateTarget.id, isActive: false })
         }
       />
-    </Card>
+    </ConfigPanelCard>
   )
 }
 
