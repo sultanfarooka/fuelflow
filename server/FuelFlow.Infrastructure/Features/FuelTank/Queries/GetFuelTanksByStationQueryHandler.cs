@@ -13,17 +13,20 @@ public class GetFuelTanksByStationQueryHandler : IRequestHandler<GetFuelTanksByS
     private readonly IStationRepository _stationRepo;
     private readonly IFuelTankRepository _fuelTankRepo;
     private readonly IFuelTypeRepository _fuelTypeRepo;
+    private readonly IFuelNozzleRepository _fuelNozzleRepo;
 
     public GetFuelTanksByStationQueryHandler(
         ICurrentUserService currentUser,
         IStationRepository stationRepo,
         IFuelTankRepository fuelTankRepo,
-        IFuelTypeRepository fuelTypeRepo)
+        IFuelTypeRepository fuelTypeRepo,
+        IFuelNozzleRepository fuelNozzleRepo)
     {
         _currentUser = currentUser;
         _stationRepo = stationRepo;
         _fuelTankRepo = fuelTankRepo;
         _fuelTypeRepo = fuelTypeRepo;
+        _fuelNozzleRepo = fuelNozzleRepo;
     }
 
     public async Task<Result<List<FuelTankDto>>> Handle(
@@ -47,6 +50,13 @@ public class GetFuelTanksByStationQueryHandler : IRequestHandler<GetFuelTanksByS
         var fuelTypes = await _fuelTypeRepo.GetAllForStationAsync(request.StationId, cancellationToken);
         var fuelTypeMap = fuelTypes.ToDictionary(ft => ft.Id, ft => ft.Name);
 
+        // M08-F02: load all nozzles for the station once, count per tank in-memory.
+        // Same single-pass shape as M08-F08's per-fuel-type tank count.
+        var nozzles = await _fuelNozzleRepo.GetByStationIdAsync(request.StationId, cancellationToken);
+        var nozzleCountByTank = nozzles
+            .GroupBy(n => n.TankId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         var dtos = tanks.Select(t => new FuelTankDto
         {
             Id = t.Id,
@@ -56,6 +66,7 @@ public class GetFuelTanksByStationQueryHandler : IRequestHandler<GetFuelTanksByS
             FuelTypeName = fuelTypeMap.GetValueOrDefault(t.FuelTypeId),
             HasDipChart = t.DipChart != null,
             DipChartEntryCount = t.DipChart?.Entries?.Count ?? 0,
+            NozzleCount = nozzleCountByTank.TryGetValue(t.Id, out var count) ? count : 0,
         }).ToList();
 
         return Result<List<FuelTankDto>>.Success(dtos);

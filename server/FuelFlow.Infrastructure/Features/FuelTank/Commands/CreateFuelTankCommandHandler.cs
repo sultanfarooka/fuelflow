@@ -91,6 +91,11 @@ public class CreateFuelTankCommandHandler : IRequestHandler<CreateFuelTankComman
             return Result<CreateFuelTankResponse>.Failure("Failed to save fuel tank in the database.");
         }
 
+        // M08-F02-R01: audit. Persistent AuditLog table arrives with M01-F08.
+        _logger.LogInformation(
+            "AUDIT FuelTank.Create: user {UserId} created tank {TankId} \"{Name}\" (capacity {Capacity} L, fuelType {FuelTypeName} / {FuelTypeId}) at station {StationId}",
+            _currentUser.UserId, newFuelTank.Id, newFuelTank.Name ?? "(unnamed)", newFuelTank.CapacityLiters, fuelType.Name, fuelType.Id, request.StationId);
+
         return Result<CreateFuelTankResponse>.Success(new CreateFuelTankResponse
         {
             Id = newFuelTank.Id,

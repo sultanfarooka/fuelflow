@@ -70,6 +70,11 @@ public class UpdateFuelTankCommandHandler : IRequestHandler<UpdateFuelTankComman
                 return Result<FuelTankDto>.Failure("A tank with this name already exists at this station.");
         }
 
+        // M08-F02-R01: capture before-state for audit before mutating.
+        var oldName = tank.Name;
+        var oldCapacity = tank.CapacityLiters;
+        var oldFuelTypeId = tank.FuelTypeId;
+
         tank.Name = string.IsNullOrWhiteSpace(request.Request.Name) ? null : request.Request.Name.Trim();
         tank.CapacityLiters = request.Request.CapacityLiters;
         tank.FuelTypeId = request.Request.FuelTypeId;
@@ -83,6 +88,13 @@ public class UpdateFuelTankCommandHandler : IRequestHandler<UpdateFuelTankComman
             _logger.LogError(ex, "Failed to update fuel tank {TankId}", request.TankId);
             return Result<FuelTankDto>.Failure("Failed to update fuel tank.");
         }
+
+        _logger.LogInformation(
+            "AUDIT FuelTank.Update: user {UserId} updated tank {TankId} at station {StationId}: name {OldName} -> {NewName}, capacity {OldCapacity} -> {NewCapacity} L, fuelType {OldFuelTypeId} -> {NewFuelTypeId}",
+            _currentUser.UserId, tank.Id, request.StationId,
+            oldName ?? "(unnamed)", tank.Name ?? "(unnamed)",
+            oldCapacity, tank.CapacityLiters,
+            oldFuelTypeId, tank.FuelTypeId);
 
         return Result<FuelTankDto>.Success(new FuelTankDto
         {
