@@ -4,5 +4,5 @@ using MediatR;
 
 namespace FuelFlow.Application.Features.FuelNozzle.Commands;
 
-public record DeleteFuelNozzleCommand(Guid StationId, Guid NozzleId) : IRequest<Result<bool>>;
+public record DeleteFuelNozzleCommand(Guid StationId, Guid NozzleId) : IRequest<Result<DeleteFuelNozzleResponse>>;
 

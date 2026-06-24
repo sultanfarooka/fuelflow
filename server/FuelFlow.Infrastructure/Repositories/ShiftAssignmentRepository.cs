@@ -37,4 +37,28 @@ public class ShiftAssignmentRepository : IShiftAssignmentRepository
         var ctx = await _accessor.GetContextAsync();
         await ctx.ShiftAssignments.AddAsync(shiftAssignment);
     }
+
+    public async Task<int> CountByNozzleIdAsync(Guid nozzleId, CancellationToken cancellationToken = default)
+    {
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        return await ctx.ShiftAssignments
+            .AsNoTracking()
+            .CountAsync(s => s.FuelNozzleId == nozzleId, cancellationToken);
+    }
+
+    public async Task<Dictionary<Guid, int>> CountByNozzleIdsAsync(IEnumerable<Guid> nozzleIds, CancellationToken cancellationToken = default)
+    {
+        var idSet = nozzleIds.Distinct().ToList();
+        if (idSet.Count == 0) return new Dictionary<Guid, int>();
+
+        var ctx = await _accessor.GetContextAsync(cancellationToken);
+        var pairs = await ctx.ShiftAssignments
+            .AsNoTracking()
+            .Where(s => idSet.Contains(s.FuelNozzleId))
+            .GroupBy(s => s.FuelNozzleId)
+            .Select(g => new { NozzleId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        return pairs.ToDictionary(p => p.NozzleId, p => p.Count);
+    }
 }
