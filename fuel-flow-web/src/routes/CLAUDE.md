@@ -34,6 +34,9 @@ Authoritative mapping of routes to the role(s) allowed to see them. Reference [`
 | Subscription | `/settings/subscription` (planned) | Owner | [M11-F01..F07](../../../docs/MODULES.md#m11--subscription--billing) |
 | Audit log viewer | `/settings/audit` (planned) | Owner | [M01-F08-R06](../../../docs/MODULES.md#m01-f08--audit-trail) |
 | Admin: Payment verification | `/admin/payments` (planned) | SuperAdmin | [M11-F03](../../../docs/MODULES.md#m11-f03--payment--verification) |
+| Design playground (catalogue) | `/design` | **DEV-ONLY** (redirects to `/` in prod) | — |
+| Design playground (module view) | `/design/$module` | **DEV-ONLY** | — |
+| Design playground (screen view) | `/design/$module/$feature` | **DEV-ONLY** | — |
 
 **Role enforcement** is two-layered:
 
@@ -97,10 +100,35 @@ routes/
 ├── settings/
 │   ├── route.tsx                    # Renders <AppShell /> (M07-F07), Owner+Manager guard [M07-F10]
 │   └── index.tsx                    # /settings (M08 stub)
-└── onboarding/
-    ├── route.tsx                    # Onboarding layout (header + branding)
-    └── index.tsx                    # /onboarding (first-time org/station creation)
+├── onboarding/
+│   ├── route.tsx                    # Onboarding layout (header + branding)
+│   └── index.tsx                    # /onboarding (first-time org/station creation)
+└── design/                          # DEV-ONLY playground (see root CLAUDE.md "Design Phase")
+    ├── route.tsx                    # Dev guard (redirects to / in prod) + layout
+    ├── index.tsx                    # /design — module catalogue
+    ├── $module.tsx                  # /design/:module — feature list for a module
+    └── $module.$feature.tsx         # /design/:module/:feature — designed screen (or placeholder)
 ```
+
+## Design Playground (`routes/design/`)
+
+The `/design` tree is the UI-first canvas for designing every `MXX-FXX` screen before
+implementation. It is **dev-only** — `routes/design/route.tsx`'s `beforeLoad` throws a
+`redirect({ to: "/" })` when `import.meta.env.DEV` is false. Screens consume mock data
+from [`src/design/mocks/`](../design/mocks/), never the real API client, and never touch
+the auth store. The list of screens (one per feature) is sourced from
+[`src/design/catalogue.ts`](../design/catalogue.ts). When designing a module:
+
+1. Replace the placeholder body of `$module.$feature.tsx` (or branch on the param) with
+   the designed screen for each feature.
+2. Maintain mock fixtures under `src/design/mocks/<mxx>/<fxx>.ts` typed against the real
+   DTOs from [`src/lib/api/`](../lib/api/).
+3. Flip `designStatus` in `catalogue.ts` as screens move `todo` → `in-progress` →
+   `in-review` → `approved`.
+
+When implementation begins for that module (`/module-implementation MXX`), the approved
+screens are lifted out of `design/` into the real routes and wired to TanStack Query
+against the real API.
 
 ## App Shell (M07-F07)
 

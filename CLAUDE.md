@@ -97,6 +97,34 @@ These apply to BOTH frontend and backend — no exceptions:
 - **KISS**: Prefer simple, direct solutions — no premature abstractions or speculative features
 - **YAGNI**: Only build what the current task requires
 
+## Design Phase (UI-First)
+
+Before features in a module are implemented end-to-end, their screens are designed in the
+**`/design` playground** at [`fuel-flow-web/src/routes/design/`](fuel-flow-web/src/routes/design/).
+The playground is dev-only (gated by `import.meta.env.DEV` in `routes/design/route.tsx`),
+renders one screen per `MXX-FXX` from [`docs/MODULES.md`](docs/MODULES.md), and uses mock
+data only (no API calls, no auth, no Zustand).
+
+**Per-module design loop:**
+
+1. Branch off `main`: `design-<mxx>-<short-name>` (e.g. `design-m01-auth-onboarding`).
+2. Walk every `MXX-FXX` in the module's section of `MODULES.md`. For each, build the
+   screen under `routes/design/$module.$feature.tsx` with mocks at
+   `src/design/mocks/<mxx>/<fxx>.ts`, covering empty / loading / error / populated.
+3. New screens or requirements discovered during design get added to `MODULES.md` as
+   `Planned` in the **same commit** that surfaces them (per Rule 1 in the Workflow below),
+   and added to `src/design/catalogue.ts`.
+4. Flip the per-screen `designStatus` in `src/design/catalogue.ts` as work progresses
+   (`todo` → `in-progress` → `in-review` → `approved`). This is a design-only state
+   and does **not** flip MODULES.md status.
+5. Push, review on the branch (do not open a PR until the module's UI is approved).
+6. After review, open the PR `design(<mxx>): UI pass for <module name>`. Then start
+   `/module-implementation MXX`, which lifts approved screens out of the playground
+   into the real route tree, swapping mocks for API calls.
+
+**Mocks must use real DTO shapes** wherever the DTO exists in `fuel-flow-web/src/lib/api/`,
+so the screens carry forward without rework.
+
 ## Modules, Features & Requirements — Single Source of Truth
 
 **[`docs/MODULES.md`](docs/MODULES.md) is the authoritative registry** of every module, feature, and requirement, each with a stable hierarchical ID (`MXX-FXX-RXX`). Reference these IDs in commits, PR titles, GitHub Issues, test names, and code comments.
@@ -180,6 +208,9 @@ git checkout -b feat-<module-feature-id>-<short-name>
 | Audit trail for price changes (M01-F08-R01) | `feat-m01-f08-r01-audit-price-changes` |
 
 For fixes use `fix-<id>-<name>`, for docs use `docs-<id>-<name>` — same shape, different prefix.
+For **design passes** (UI-first, before implementation), use `design-<mxx>-<name>` (e.g.
+`design-m01-auth-onboarding`); these live entirely under `fuel-flow-web/src/routes/design/`
+and are reviewed on-branch before a PR is opened (see the "Design Phase" section above).
 
 **Module-scoped work** is the one exception to the per-item branch shape. When a whole module (`MXX`) is planned with `/module-planning` and built with `/module-implementation`, all of its features are built on a single long-lived **integration branch** named `module/<MXX>` (e.g. `module/M08`), cut off `main`, in dependency order, and shipped as **one** `module/<MXX> → main` PR. The constituent features do **not** get their own `feat-` branches or PRs in this flow. Plain feature/requirement work continues to use the per-item `feat-/fix-/docs-<id>-<name>` branches above.
 

@@ -12,12 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as OnboardingRouteRouteImport } from './routes/onboarding/route'
+import { Route as DesignRouteRouteImport } from './routes/design/route'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
+import { Route as DesignIndexRouteImport } from './routes/design/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DesignModuleRouteImport } from './routes/design/$module'
 import { Route as AuthVerifyPhoneRouteImport } from './routes/auth/verify-phone'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth/verify-email'
 import { Route as AuthResetPasswordSuccessRouteImport } from './routes/auth/reset-password-success'
@@ -28,6 +31,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthCheckEmailResetRouteImport } from './routes/auth/check-email-reset'
 import { Route as AuthCheckEmailRegisterRouteImport } from './routes/auth/check-email-register'
+import { Route as DesignModuleFeatureRouteImport } from './routes/design/$module.$feature'
 import { Route as DashboardStationStationIdRouteImport } from './routes/dashboard/station.$stationId'
 import { Route as DashboardAccountPhoneRouteImport } from './routes/dashboard/account.phone'
 import { Route as DashboardStationStationIdShiftsRouteImport } from './routes/dashboard/station.$stationId.shifts'
@@ -62,6 +66,11 @@ const OnboardingRouteRoute = OnboardingRouteRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DesignRouteRoute = DesignRouteRouteImport.update({
+  id: '/design',
+  path: '/design',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -87,10 +96,20 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
   path: '/',
   getParentRoute: () => OnboardingRouteRoute,
 } as any)
+const DesignIndexRoute = DesignIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DesignRouteRoute,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DesignModuleRoute = DesignModuleRouteImport.update({
+  id: '/$module',
+  path: '/$module',
+  getParentRoute: () => DesignRouteRoute,
 } as any)
 const AuthVerifyPhoneRoute = AuthVerifyPhoneRouteImport.update({
   id: '/verify-phone',
@@ -142,6 +161,11 @@ const AuthCheckEmailRegisterRoute = AuthCheckEmailRegisterRouteImport.update({
   id: '/check-email-register',
   path: '/check-email-register',
   getParentRoute: () => AuthRouteRoute,
+} as any)
+const DesignModuleFeatureRoute = DesignModuleFeatureRouteImport.update({
+  id: '/$feature',
+  path: '/$feature',
+  getParentRoute: () => DesignModuleRoute,
 } as any)
 const DashboardStationStationIdRoute =
   DashboardStationStationIdRouteImport.update({
@@ -255,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/design': typeof DesignRouteRouteWithChildren
   '/onboarding': typeof OnboardingRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/about': typeof AboutRoute
@@ -268,11 +293,14 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/design/$module': typeof DesignModuleRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
+  '/design/': typeof DesignIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/design/$module/$feature': typeof DesignModuleFeatureRoute
   '/dashboard/station/$stationId/configuration': typeof DashboardStationStationIdConfigurationRouteWithChildren
   '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
@@ -304,11 +332,14 @@ export interface FileRoutesByTo {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/design/$module': typeof DesignModuleRouteWithChildren
   '/dashboard': typeof DashboardIndexRoute
+  '/design': typeof DesignIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/design/$module/$feature': typeof DesignModuleFeatureRoute
   '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
   '/dashboard/station/$stationId/inventory': typeof DashboardStationStationIdInventoryRoute
@@ -330,6 +361,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/design': typeof DesignRouteRouteWithChildren
   '/onboarding': typeof OnboardingRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/about': typeof AboutRoute
@@ -343,11 +375,14 @@ export interface FileRoutesById {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/design/$module': typeof DesignModuleRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
+  '/design/': typeof DesignIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
   '/dashboard/station/$stationId': typeof DashboardStationStationIdRouteWithChildren
+  '/design/$module/$feature': typeof DesignModuleFeatureRoute
   '/dashboard/station/$stationId/configuration': typeof DashboardStationStationIdConfigurationRouteWithChildren
   '/dashboard/station/$stationId/credit': typeof DashboardStationStationIdCreditRoute
   '/dashboard/station/$stationId/finance': typeof DashboardStationStationIdFinanceRoute
@@ -371,6 +406,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/design'
     | '/onboarding'
     | '/settings'
     | '/about'
@@ -384,11 +420,14 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/design/$module'
     | '/dashboard/'
+    | '/design/'
     | '/onboarding/'
     | '/settings/'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/design/$module/$feature'
     | '/dashboard/station/$stationId/configuration'
     | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
@@ -420,11 +459,14 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/design/$module'
     | '/dashboard'
+    | '/design'
     | '/onboarding'
     | '/settings'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/design/$module/$feature'
     | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
     | '/dashboard/station/$stationId/inventory'
@@ -445,6 +487,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/design'
     | '/onboarding'
     | '/settings'
     | '/about'
@@ -458,11 +501,14 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/design/$module'
     | '/dashboard/'
+    | '/design/'
     | '/onboarding/'
     | '/settings/'
     | '/dashboard/account/phone'
     | '/dashboard/station/$stationId'
+    | '/design/$module/$feature'
     | '/dashboard/station/$stationId/configuration'
     | '/dashboard/station/$stationId/credit'
     | '/dashboard/station/$stationId/finance'
@@ -485,6 +531,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
+  DesignRouteRoute: typeof DesignRouteRouteWithChildren
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
@@ -511,6 +558,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design': {
+      id: '/design'
+      path: '/design'
+      fullPath: '/design'
+      preLoaderRoute: typeof DesignRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -548,12 +602,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof OnboardingRouteRoute
     }
+    '/design/': {
+      id: '/design/'
+      path: '/'
+      fullPath: '/design/'
+      preLoaderRoute: typeof DesignIndexRouteImport
+      parentRoute: typeof DesignRouteRoute
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
+    }
+    '/design/$module': {
+      id: '/design/$module'
+      path: '/$module'
+      fullPath: '/design/$module'
+      preLoaderRoute: typeof DesignModuleRouteImport
+      parentRoute: typeof DesignRouteRoute
     }
     '/auth/verify-phone': {
       id: '/auth/verify-phone'
@@ -624,6 +692,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/check-email-register'
       preLoaderRoute: typeof AuthCheckEmailRegisterRouteImport
       parentRoute: typeof AuthRouteRoute
+    }
+    '/design/$module/$feature': {
+      id: '/design/$module/$feature'
+      path: '/$feature'
+      fullPath: '/design/$module/$feature'
+      preLoaderRoute: typeof DesignModuleFeatureRouteImport
+      parentRoute: typeof DesignModuleRoute
     }
     '/dashboard/station/$stationId': {
       id: '/dashboard/station/$stationId'
@@ -869,6 +944,32 @@ const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
   DashboardRouteRouteChildren,
 )
 
+interface DesignModuleRouteChildren {
+  DesignModuleFeatureRoute: typeof DesignModuleFeatureRoute
+}
+
+const DesignModuleRouteChildren: DesignModuleRouteChildren = {
+  DesignModuleFeatureRoute: DesignModuleFeatureRoute,
+}
+
+const DesignModuleRouteWithChildren = DesignModuleRoute._addFileChildren(
+  DesignModuleRouteChildren,
+)
+
+interface DesignRouteRouteChildren {
+  DesignModuleRoute: typeof DesignModuleRouteWithChildren
+  DesignIndexRoute: typeof DesignIndexRoute
+}
+
+const DesignRouteRouteChildren: DesignRouteRouteChildren = {
+  DesignModuleRoute: DesignModuleRouteWithChildren,
+  DesignIndexRoute: DesignIndexRoute,
+}
+
+const DesignRouteRouteWithChildren = DesignRouteRoute._addFileChildren(
+  DesignRouteRouteChildren,
+)
+
 interface OnboardingRouteRouteChildren {
   OnboardingIndexRoute: typeof OnboardingIndexRoute
 }
@@ -897,6 +998,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
+  DesignRouteRoute: DesignRouteRouteWithChildren,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AboutRoute: AboutRoute,
