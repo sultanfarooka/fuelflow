@@ -1,0 +1,44 @@
+{
+  "shape": "package",
+  "pkg": "fuel-flow-web",
+  "globalName": "FlowDS",
+  "projectId": "c2c4f413-7887-4ab3-b95d-ac2800408263",
+  "srcDir": "src",
+  "tsconfig": "tsconfig.app.json",
+  "cssEntry": ".design-sync/compiled.css",
+  "readmeHeader": ".design-sync/conventions.md",
+  "componentSrcMap": {
+    "Button": "src/components/ui/button.tsx",
+    "Input": "src/components/ui/input.tsx",
+    "Select": "src/components/ui/select.tsx",
+    "Card": "src/components/ui/card.tsx",
+    "Dialog": "src/components/ui/dialog.tsx",
+    "Alert": "src/components/ui/alert.tsx",
+    "Badge": "src/components/ui/badge.tsx",
+    "Checkbox": "src/components/ui/checkbox.tsx",
+    "DropdownMenu": "src/components/ui/dropdown-menu.tsx",
+    "Field": "src/components/ui/field.tsx",
+    "Label": "src/components/ui/label.tsx",
+    "Separator": "src/components/ui/separator.tsx",
+    "Sheet": "src/components/ui/sheet.tsx",
+    "Sidebar": "src/components/ui/sidebar.tsx",
+    "Skeleton": "src/components/ui/skeleton.tsx",
+    "Toaster": "src/components/ui/sonner.tsx",
+    "Table": "src/components/ui/table.tsx",
+    "Tabs": "src/components/ui/tabs.tsx",
+    "Tooltip": "src/components/ui/tooltip.tsx",
+    "UpgradePrompt": "src/components/subscription/upgrade-prompt.tsx",
+    "FormTextField": "src/components/forms/form-text-field.tsx",
+    "FormSelectField": "src/components/forms/form-select-field.tsx",
+    "UnderDevelopment": "src/components/common/under-development.tsx"
+  },
+  "provider": {
+    "component": "ThemeProvider",
+    "props": { "defaultTheme": "light" }
+  },
+  "overrides": {
+    "DropdownMenu": { "cardMode": "single", "primaryStory": "Default" },
+    "Select": { "cardMode": "single", "primaryStory": "Default" },
+    "Tooltip": { "cardMode": "single", "primaryStory": "Default" }
+  }
+}
