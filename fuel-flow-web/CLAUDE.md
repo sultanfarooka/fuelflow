@@ -272,9 +272,16 @@ When making any change touching the service worker or manifest, bump the build t
 ## Environment
 
 ```env
-VITE_API_BASE_URL=http://localhost:5035/api/v1
+VITE_API_BASE_URL=/api/v1
 VITE_ENV=development
 ```
+
+The dev server proxies `/api` to `http://localhost:5035` (see `vite.config.ts` →
+`server.proxy`), so the relative base keeps the SPA and API on the same origin.
+That's load-bearing: auth cookies are `SameSite=Lax`, so the API's `Set-Cookie`
+would be dropped if the browser saw the call as cross-site (Tailscale IP, LAN,
+phone hitting `vite --host`, …). Only swap in an absolute URL when pointing
+the SPA at a non-proxied API (e.g. a deployed environment).
 
 ## Scripts
 
