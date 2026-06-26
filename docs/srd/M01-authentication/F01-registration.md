@@ -41,7 +41,7 @@ after the user can log in.
 | M01-F01-R02 | Phone number is unique across all users; duplicate returns `409 Conflict` | Planned |
 | M01-F01-R03 | Email is optional; when provided, format must be valid and unique across all users | Planned |
 | M01-F01-R04 | Password minimum 6 characters, must include at least one number | Planned |
-| M01-F01-R05 | Full name is required; 2–100 characters; trimmed; no leading/trailing whitespace | Planned |
+| M01-F01-R05 | `firstName` is required (1–50 chars, trimmed); `lastName` is required (1–50 chars, trimmed); leading/trailing whitespace stripped | Planned |
 | M01-F01-R06 | Registration creates an account in `phone-unverified` state; login is blocked until verification (see [M01-F02](./F02-phone-otp-verification.md)) | Planned |
 | M01-F01-R07 | On success, an SMS OTP is queued via [M10-F03](../../MODULES.md#m10-f03--notification-channels) and the user is routed to the verification screen | Planned |
 | M01-F01-R08 | Registration creates an **Owner** user only; no organisation, no station — those are deferred to [M12](../../MODULES.md#m12--onboarding--first-run-experience) | Planned |
@@ -62,9 +62,9 @@ after the user can log in.
 
 ## 5. Acceptance criteria
 
-- **AC1** Given a valid `{ fullName, phone, password }` payload (no email), when posted to `POST /auth/register`, then the API returns `201 Created`, a row is inserted with `PhoneNumberConfirmed = false`, an SMS OTP is queued, and the response carries the unverified-account session signal that the SPA uses to route into F02.
-- **AC2** Given a phone number already on file, when a new registration uses it, then the API returns `409 Conflict` with error code `phone_already_registered` and no SMS is sent.
-- **AC3** Given an email already on file, when a new registration uses it, then the API returns `409 Conflict` with error code `email_already_registered` and no row is inserted.
+- **AC1** Given a valid `{ firstName, lastName, phone, password }` payload (no email), when posted to `POST /auth/register`, then the API returns `201 Created`, a row is inserted with `PhoneNumberConfirmed = false`, an SMS OTP is queued, and the response carries the unverified-account session signal that the SPA uses to route into F02.
+- **AC2** Given a phone number already on file, when a new registration uses it, then the API returns `409 Conflict` with error code `phone_already_registered`, no SMS is sent, no row is inserted, and the SPA surfaces an inline error with a "Sign in with this number" link to `/auth/login` (no phone enumeration — same error shape for both registered and rate-limited cases).
+- **AC3** Given an email already on file, when a new registration uses it, then the API returns `409 Conflict` with error code `email_already_registered`, no row is inserted, and the SPA surfaces the same "Sign in with this email" affordance as AC2.
 - **AC4** Given a phone number that doesn't match `+92XXXXXXXXXX` after normalisation, when registration is submitted, then the API returns `400 Bad Request` with field-level error on `phone`.
 - **AC5** Given a password shorter than 6 characters OR missing a number, when registration is submitted, then the API returns `400 Bad Request` with field-level error on `password`.
 - **AC6** Given the per-IP rate-limit is exceeded, when another registration is attempted from that IP, then the API returns `429 Too Many Requests` with `Retry-After` header and no row is inserted.
@@ -107,19 +107,21 @@ States covered by the design file:
 ## 9. API surface
 
 - `POST /api/v1/auth/register`
-  - Body: `{ fullName, phone, email?, password }`
-  - Responses: `201` (created), `400` (validation), `409` (duplicate phone or email), `429` (rate limit)
+  - Body: `{ firstName, lastName, phone, email?, password }`
+  - Responses: `201` (created), `400` (validation), `409` (duplicate phone or email — see AC2 / AC3 for the SPA-side affordance), `429` (rate limit)
   - Side effect: enqueues SMS OTP via M10-F03
 
 Full request / response schemas live in Swagger at `/swagger`.
 
 ## 10. Open questions
 
-- **OQ1** — When a duplicate phone is detected, do we soft-redirect to login with the phone pre-filled, or hard-fail with 409 and a "go to login" link? Defaults to hard-fail for clarity; product call needed.
-- **OQ2** — Should CAPTCHA be enforced on the first registration attempt or only after the per-IP rate-limit threshold is crossed? Affects friction vs. bot exposure trade-off.
-- **OQ3** — Do we want a "register on behalf of" admin path for sales-assisted signups? Currently not in scope; revisit when sales onboarding starts.
-- **OQ4** — Should `fullName` be split into `firstName` / `lastName` at signup or kept as a single field? Single field matches current implementation; split would simplify formal correspondence later.
+_None._ All initial open questions resolved 2026-06-27 — see section 11.
 
 ## 11. Change history
 
 - **2026-06-27** — Initial draft. Carries forward today's M01-F01 (registration) + relevant rules from M01-F09 (phone-first auth: phone required, +92 format, unique). Section 7 explicitly defers OTP entry to M01-F02, email link verification to M01-F03, and org/station creation to M12.
+- **2026-06-27** — Resolved OQ1–OQ4:
+  - **OQ1 (duplicate phone):** chose hard-fail 409 + "Sign in with this number" link. AC2 updated to specify the SPA-side affordance. AC3 mirrors the same shape for duplicate email.
+  - **OQ2 (CAPTCHA):** deferred. Removed from R10's wording; R10 now covers rate-limiting only. CAPTCHA will be tracked as a follow-up feature if bot signups become a real problem.
+  - **OQ3 (sales-assisted signup):** out of scope for M01. Will revisit when a sales motion exists.
+  - **OQ4 (name field):** split into `firstName` / `lastName` instead of `fullName`. R05 covers both. API payload + AC1 + section 9 API surface updated. Carries an obligation to update the design playground file ([F01-registration.tsx](../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx)) in the same PR that lands this spec.
