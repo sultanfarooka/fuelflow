@@ -20,6 +20,7 @@ import {
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { ActiveToggle } from "@/components/station-config/active-toggle"
 import { ConfigPanelCard } from "@/components/station-config/config-panel-card"
 import { SourceBadge, StatusBadge, SellableBadge } from "@/components/station-config/badges"
 import {
@@ -39,13 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { DataTable } from "@/components/data-table"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import {
@@ -100,52 +95,11 @@ const multiSelectFilter: FilterFn<FuelTypeDto> = (row, columnId, value) => {
 // same chips.
 
 /**
- * Active/Inactive toggle — a real Switch reflecting `ft.isActive`. Flipping it
- * ON activates immediately; flipping it OFF opens the confirm dialog (which can
- * surface a 409 "still in use" block), so the switch is *controlled* by the
- * query data and snaps back automatically if the user cancels. Wrapped in a
- * tooltip that spells out what the toggle will do.
- */
-function FuelTypeToggle({
-  ft,
-  isPending,
-  onActivate,
-  onDeactivate,
-}: {
-  ft: FuelTypeDto
-  isPending: boolean
-  onActivate: (ft: FuelTypeDto) => void
-  onDeactivate: (ft: FuelTypeDto) => void
-}) {
-  return (
-    <Tooltip>
-      {/* Span wrapper: keeps the tooltip's data-state off the Switch, so the
-          Switch's own checked/unchecked data-state drives its styling. */}
-      <TooltipTrigger asChild>
-        <span className="inline-flex">
-          <Switch
-            checked={ft.isActive}
-            disabled={isPending}
-            onCheckedChange={(checked) =>
-              checked ? onActivate(ft) : onDeactivate(ft)
-            }
-            aria-label={
-              ft.isActive ? `Deactivate ${ft.name}` : `Activate ${ft.name}`
-            }
-          />
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        {ft.isActive ? "Active — turn off to deactivate" : "Inactive — turn on to activate"}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
-/**
- * Row/card actions — a proper Rename button plus the Active/Inactive toggle, so
- * both primary actions are always visible on wide screens and inside the mobile
- * card footer (no kebab menu).
+ * Row/card actions — a proper Rename button plus the shared `<ActiveToggle>`,
+ * so both primary actions are always visible on wide screens and inside the
+ * mobile card footer (no kebab menu). The toggle is *controlled* by the query
+ * data and snaps back automatically if the user cancels the deactivate
+ * confirm dialog.
  */
 function FuelTypeActions({
   ft,
@@ -168,11 +122,12 @@ function FuelTypeActions({
         <IconPencil className="size-4" />
         Rename
       </Button>
-      <FuelTypeToggle
-        ft={ft}
+      <ActiveToggle
+        isActive={ft.isActive}
+        entityLabel={ft.name}
         isPending={isPending}
-        onActivate={onActivate}
-        onDeactivate={onDeactivate}
+        onActivate={() => onActivate(ft)}
+        onDeactivate={() => onDeactivate(ft)}
       />
     </div>
   )

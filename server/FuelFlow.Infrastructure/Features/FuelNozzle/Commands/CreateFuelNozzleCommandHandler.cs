@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using FuelFlow.Application.Common;
 using FuelFlow.Application.DTOs.FuelNozzle;
 using FuelFlow.Application.Features.FuelNozzle.Commands;
@@ -17,19 +18,22 @@ public class CreateFuelNozzleCommandHandler : IRequestHandler<CreateFuelNozzleCo
     private readonly IFuelTankRepository _fuelTankRepo;
     private readonly IFuelNozzleRepository _fuelNozzleRepo;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<CreateFuelNozzleCommandHandler> _logger;
 
     public CreateFuelNozzleCommandHandler(
         ICurrentUserService currentUser,
         IStationRepository stationRepo,
         IFuelTankRepository fuelTankRepo,
         IFuelNozzleRepository fuelNozzleRepo,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<CreateFuelNozzleCommandHandler> logger)
     {
         _currentUser = currentUser;
         _stationRepo = stationRepo;
         _fuelTankRepo = fuelTankRepo;
         _fuelNozzleRepo = fuelNozzleRepo;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     /// <summary>
@@ -75,6 +79,11 @@ public class CreateFuelNozzleCommandHandler : IRequestHandler<CreateFuelNozzleCo
         };
         await _fuelNozzleRepo.AddAsync(newFuelNozzle);
         await _unitOfWork.SaveChangesAsync();
+
+        // M08-F03-R01: audit. Persistent AuditLog table arrives with M01-F08.
+        _logger.LogInformation(
+            "AUDIT FuelNozzle.Create: user {UserId} created nozzle {NozzleId} \"{NozzleNumber}\" on tank {TankId} \"{TankName}\" at station {StationId}",
+            _currentUser.UserId, newFuelNozzle.Id, newFuelNozzle.NozzleNumber, tank.Id, tank.Name ?? "(unnamed)", request.StationId);
 
         // --- Step 6: Map to DTO and return ---
         return Result<FuelNozzleDto>.Success(new FuelNozzleDto

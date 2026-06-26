@@ -44,4 +44,9 @@ public class FuelNozzleRepository : IFuelNozzleRepository
         _accessor.Context.FuelNozzles.Remove(fuelNozzle);
         return Task.CompletedTask;
     }
+
+    public void Update(FuelNozzle fuelNozzle)
+    {
+        _accessor.Context.FuelNozzles.Update(fuelNozzle);
+    }
 }

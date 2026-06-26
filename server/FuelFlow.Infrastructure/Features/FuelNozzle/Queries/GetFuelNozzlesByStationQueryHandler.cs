@@ -12,15 +12,18 @@ public class GetFuelNozzlesByStationQueryHandler : IRequestHandler<GetFuelNozzle
     private readonly ICurrentUserService _currentUser;
     private readonly IStationRepository _stationRepo;
     private readonly IFuelNozzleRepository _fuelNozzleRepo;
+    private readonly IShiftAssignmentRepository _shiftAssignmentRepo;
 
     public GetFuelNozzlesByStationQueryHandler(
         ICurrentUserService currentUser,
         IStationRepository stationRepo,
-        IFuelNozzleRepository fuelNozzleRepo)
+        IFuelNozzleRepository fuelNozzleRepo,
+        IShiftAssignmentRepository shiftAssignmentRepo)
     {
         _currentUser = currentUser;
         _stationRepo = stationRepo;
         _fuelNozzleRepo = fuelNozzleRepo;
+        _shiftAssignmentRepo = shiftAssignmentRepo;
     }
 
     public async Task<Result<List<FuelNozzleDto>>> Handle(GetFuelNozzlesByStationQuery request, CancellationToken cancellationToken)
@@ -36,6 +39,12 @@ public class GetFuelNozzlesByStationQueryHandler : IRequestHandler<GetFuelNozzle
             return Result<List<FuelNozzleDto>>.Failure("You do not have access to this station.");
 
         var list = await _fuelNozzleRepo.GetByStationIdAsync(request.StationId, cancellationToken);
+
+        // M08-F03: batch-count assignments per nozzle (single query) — used by
+        // the panel's "Assignments" column + the delete reference-guard.
+        var assignmentCounts = await _shiftAssignmentRepo
+            .CountByNozzleIdsAsync(list.Select(n => n.Id), cancellationToken);
+
         var dtos = list.Select(n => new FuelNozzleDto
         {
             Id = n.Id,
@@ -44,6 +53,7 @@ public class GetFuelNozzlesByStationQueryHandler : IRequestHandler<GetFuelNozzle
             TankName = n.FuelTank?.Name,
             StationId = n.StationId,
             IsActive = n.IsActive,
+            ShiftAssignmentCount = assignmentCounts.TryGetValue(n.Id, out var c) ? c : 0,
         }).ToList();
 
         return Result<List<FuelNozzleDto>>.Success(dtos);

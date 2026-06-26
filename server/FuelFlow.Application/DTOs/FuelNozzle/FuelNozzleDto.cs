@@ -8,4 +8,8 @@ public class FuelNozzleDto
     public string? TankName { get; set; }
     public Guid StationId { get; set; }
     public bool IsActive { get; set; }
+
+    /// <summary>M08-F03: number of ShiftAssignments referencing this nozzle.
+    /// Drives the delete reference-guard and the panel's "Assignments" column.</summary>
+    public int ShiftAssignmentCount { get; set; }
 }
