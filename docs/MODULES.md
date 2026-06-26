@@ -3,7 +3,7 @@
 > Single source of truth for all modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
-**Last Updated:** 2026-06-24 (M08-F03 — Nozzle Configuration, In Progress)
+**Last Updated:** 2026-06-26 (M08-F03 — Nozzle Configuration, Done)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---
@@ -1213,15 +1213,15 @@ CRUD for tanks per station (see also [M02-F03](#m02-f03--underground-tank-manage
 
 ---
 
-### M08-F03 — Nozzle Configuration   [Status: In Progress]
+### M08-F03 — Nozzle Configuration   [Status: Done]
 
-CRUD for nozzles per station (see also [M03-F01](#m03-f01--nozzle-setup)).
+CRUD for nozzles per station (see also [M03-F01](#m03-f01--nozzle-setup)). Replaces the `<UnderDevelopment />` placeholder on the Nozzles child route of the Station Configuration hub ([M08-F07-R06](#m08-f07--station-configuration)) with the full management UI — Owner + Manager can add a nozzle (number + tank required), edit number / tank assignment (with second-click confirm on reassign), toggle Active/Inactive via a Switch (with confirm before deactivating), and delete with a structured 409 reference-guard listing blocking shift assignments. Fourth adopter of `ConfigPanelCard` + `DataTable` + the extracted badges + the shared `ActiveToggle`.
 
 **Requirements:**
 
 | ID | Requirement | Legacy | Status |
 |---|---|---|---|
-| M08-F03-R01 | Nozzle CRUD endpoints scoped to station | — | In Progress |
+| M08-F03-R01 | Nozzle CRUD endpoints scoped to station | — | Done |
 | M08-F03-R02 | Nozzle number uniqueness validated per station | — | Done |
 
 ---
@@ -2185,7 +2185,7 @@ order as [Priority & Implementation Order](#priority--implementation-order)).
 |---|---|---|---|---|---|---|
 | 6.1 | M08-F01 | Station Profile | P1 | Done | — | |
 | 6.2 | M08-F02 | Tank Configuration | P1 | In Progress | — | |
-| 6.3 | M08-F03 | Nozzle Configuration | P1 | In Progress | — | |
+| 6.3 | M08-F03 | Nozzle Configuration | P1 | Done | — | |
 | 6.4 | M08-F07 | Station Management Navigation Hub | P1 | Done | — | |
 | 6.5 | M08-F05 | System Preferences | P1 | Planned | — (i18n foundation ✓; R05 sweep) | ★ |
 | 6.6 | M08-F04 | Dip Chart Management | P1 | Planned | M02-F04 | |
