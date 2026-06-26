@@ -1,13 +1,13 @@
 /**
- * [M08-F07-R06] Nozzles child route of the Station Configuration hub.
- * Placeholder until M08-F03 ships. Owner/Manager guard inherited from parent.
+ * [M08-F07-R06 + M08-F03] Nozzles child route of the Station Configuration
+ * hub. Renders the <FuelNozzlesPanel /> under the shared breadcrumb.
+ * Owner/Manager guard inherited from the parent layout.
  */
 import { createFileRoute } from "@tanstack/react-router"
-import { IconGasStation } from "@tabler/icons-react"
 import { useTranslation } from "react-i18next"
 
 import { ConfigBreadcrumb } from "@/components/station-config/config-breadcrumb"
-import { UnderDevelopment } from "@/components/common/under-development"
+import { FuelNozzlesPanel } from "@/components/station-config/fuel-nozzles-panel"
 
 export const Route = createFileRoute(
   "/dashboard/station/$stationId/configuration/nozzles"
@@ -31,7 +31,7 @@ function NozzlesPage() {
           { label: t("nav.nozzlesConfig") },
         ]}
       />
-      <UnderDevelopment moduleName={t("nav.nozzlesConfig")} icon={IconGasStation} />
+      <FuelNozzlesPanel stationId={stationId} />
     </div>
   )
 }
