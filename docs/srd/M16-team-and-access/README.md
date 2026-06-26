@@ -1,7 +1,7 @@
 ---
 id: M16
 title: Team & Access Management
-status: Stub
+lifecycle: drafting
 last-updated: 2026-06-27
 ---
 

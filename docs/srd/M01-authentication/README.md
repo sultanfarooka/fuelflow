@@ -1,7 +1,7 @@
 ---
 id: M01
 title: Authentication
-status: Drafting
+lifecycle: drafting
 last-updated: 2026-06-27
 ---
 
@@ -50,24 +50,29 @@ Features are ordered by **the user's lifecycle**, not by domain:
 
 ## Feature index
 
-| ID | Feature | Status | File |
-|---|---|---|---|
-| M01-F01 | Self-Service Registration | Drafting | [F01-registration.md](./F01-registration.md) |
-| M01-F02 | Phone OTP Verification | Planned | [F02-phone-otp-verification.md](./F02-phone-otp-verification.md) |
-| M01-F03 | Email Verification | Planned | [F03-email-verification.md](./F03-email-verification.md) |
-| M01-F04 | Login | Planned | [F04-login.md](./F04-login.md) |
-| M01-F05 | Logout & Session Revocation | Planned | [F05-logout-and-session-revocation.md](./F05-logout-and-session-revocation.md) |
-| M01-F06 | Password Recovery | Planned | [F06-password-recovery.md](./F06-password-recovery.md) |
-| M01-F07 | PIN Quick Login | Planned | [F07-pin-quick-login.md](./F07-pin-quick-login.md) |
-| M01-F08 | Device & Session Management | Planned | [F08-device-and-session-management.md](./F08-device-and-session-management.md) |
-| M01-F09 | Phone Number Change | Planned | [F09-phone-number-change.md](./F09-phone-number-change.md) |
-| M01-F10 | Email Add / Change / Remove | Planned | [F10-email-add-change-remove.md](./F10-email-add-change-remove.md) |
-| M01-F11 | Password Change (authenticated) | Planned | [F11-password-change.md](./F11-password-change.md) |
-| M01-F12 | Two-Factor Authentication (TOTP) | Planned | [F12-two-factor-authentication.md](./F12-two-factor-authentication.md) |
-| M01-F13 | Account Lockout & Unlock | Planned | [F13-account-lockout-and-unlock.md](./F13-account-lockout-and-unlock.md) |
-| M01-F14 | Password Policy | Planned | [F14-password-policy.md](./F14-password-policy.md) |
-| M01-F15 | Suspicious-Activity Alerts | Planned | [F15-suspicious-activity-alerts.md](./F15-suspicious-activity-alerts.md) |
-| M01-F16 | Terms & Privacy Acceptance | Planned | [F16-terms-and-privacy-acceptance.md](./F16-terms-and-privacy-acceptance.md) |
+The `Lifecycle` column is read directly from each feature file's
+`lifecycle:` frontmatter — it's denormalised here for a single-page glance.
+Keep it in sync when you flip a feature's lifecycle. The `Design` column
+references the design playground component file (or `—` if not yet drawn).
+
+| ID | Feature | Lifecycle | Design | File |
+|---|---|---|---|---|
+| M01-F01 | Self-Service Registration | `drafting` | [F01-registration.tsx](../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx) | [F01-registration.md](./F01-registration.md) |
+| M01-F02 | Phone OTP Verification | `drafting` | — | [F02-phone-otp-verification.md](./F02-phone-otp-verification.md) |
+| M01-F03 | Email Verification | `drafting` | — | [F03-email-verification.md](./F03-email-verification.md) |
+| M01-F04 | Login | `drafting` | — | [F04-login.md](./F04-login.md) |
+| M01-F05 | Logout & Session Revocation | `drafting` | — | [F05-logout-and-session-revocation.md](./F05-logout-and-session-revocation.md) |
+| M01-F06 | Password Recovery | `drafting` | — | [F06-password-recovery.md](./F06-password-recovery.md) |
+| M01-F07 | PIN Quick Login | `drafting` | — | [F07-pin-quick-login.md](./F07-pin-quick-login.md) |
+| M01-F08 | Device & Session Management | `drafting` | — | [F08-device-and-session-management.md](./F08-device-and-session-management.md) |
+| M01-F09 | Phone Number Change | `drafting` | — | [F09-phone-number-change.md](./F09-phone-number-change.md) |
+| M01-F10 | Email Add / Change / Remove | `drafting` | — | [F10-email-add-change-remove.md](./F10-email-add-change-remove.md) |
+| M01-F11 | Password Change (authenticated) | `drafting` | — | [F11-password-change.md](./F11-password-change.md) |
+| M01-F12 | Two-Factor Authentication (TOTP) | `drafting` | — | [F12-two-factor-authentication.md](./F12-two-factor-authentication.md) |
+| M01-F13 | Account Lockout & Unlock | `drafting` | — | [F13-account-lockout-and-unlock.md](./F13-account-lockout-and-unlock.md) |
+| M01-F14 | Password Policy | `drafting` | — | [F14-password-policy.md](./F14-password-policy.md) |
+| M01-F15 | Suspicious-Activity Alerts | `drafting` | — | [F15-suspicious-activity-alerts.md](./F15-suspicious-activity-alerts.md) |
+| M01-F16 | Terms & Privacy Acceptance | `drafting` | — | [F16-terms-and-privacy-acceptance.md](./F16-terms-and-privacy-acceptance.md) |
 
 ## Non-functional requirements (module-wide)
 

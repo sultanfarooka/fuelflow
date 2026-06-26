@@ -2,7 +2,7 @@
 id: M01-F01
 module: M01-authentication
 title: Self-Service Registration
-status: Drafting
+lifecycle: drafting
 design: ../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx
 legacy: M01-F01 (MODULES.md)
 last-updated: 2026-06-27
@@ -37,16 +37,16 @@ after the user can log in.
 
 | ID | Requirement | Status |
 |---|---|---|
-| M01-F01-R01 | Phone number is required; format must be `+92XXXXXXXXXX` (E.164) | Drafting |
-| M01-F01-R02 | Phone number is unique across all users; duplicate returns `409 Conflict` | Drafting |
-| M01-F01-R03 | Email is optional; when provided, format must be valid and unique across all users | Drafting |
-| M01-F01-R04 | Password minimum 6 characters, must include at least one number | Drafting |
-| M01-F01-R05 | Full name is required; 2–100 characters; trimmed; no leading/trailing whitespace | Drafting |
-| M01-F01-R06 | Registration creates an account in `phone-unverified` state; login is blocked until verification (see [M01-F02](./F02-phone-otp-verification.md)) | Drafting |
-| M01-F01-R07 | On success, an SMS OTP is queued via [M10-F03](../../MODULES.md#m10-f03--notification-channels) and the user is routed to the verification screen | Drafting |
-| M01-F01-R08 | Registration creates an **Owner** user only; no organisation, no station — those are deferred to [M12](../../MODULES.md#m12--onboarding--first-run-experience) | Drafting |
-| M01-F01-R09 | T&C + Privacy version-id at signup time is recorded on the user row (see [M01-F16](./F16-terms-and-privacy-acceptance.md)) | Drafting |
-| M01-F01-R10 | Per-IP sliding-window rate limit on `POST /auth/register`; per-phone daily cap on OTP issuance | Drafting |
+| M01-F01-R01 | Phone number is required; format must be `+92XXXXXXXXXX` (E.164) | Planned |
+| M01-F01-R02 | Phone number is unique across all users; duplicate returns `409 Conflict` | Planned |
+| M01-F01-R03 | Email is optional; when provided, format must be valid and unique across all users | Planned |
+| M01-F01-R04 | Password minimum 6 characters, must include at least one number | Planned |
+| M01-F01-R05 | Full name is required; 2–100 characters; trimmed; no leading/trailing whitespace | Planned |
+| M01-F01-R06 | Registration creates an account in `phone-unverified` state; login is blocked until verification (see [M01-F02](./F02-phone-otp-verification.md)) | Planned |
+| M01-F01-R07 | On success, an SMS OTP is queued via [M10-F03](../../MODULES.md#m10-f03--notification-channels) and the user is routed to the verification screen | Planned |
+| M01-F01-R08 | Registration creates an **Owner** user only; no organisation, no station — those are deferred to [M12](../../MODULES.md#m12--onboarding--first-run-experience) | Planned |
+| M01-F01-R09 | T&C + Privacy version-id at signup time is recorded on the user row (see [M01-F16](./F16-terms-and-privacy-acceptance.md)) | Planned |
+| M01-F01-R10 | Per-IP sliding-window rate limit on `POST /auth/register`; per-phone daily cap on OTP issuance | Planned |
 
 ## 4. Non-functional requirements
 
@@ -119,3 +119,7 @@ Full request / response schemas live in Swagger at `/swagger`.
 - **OQ2** — Should CAPTCHA be enforced on the first registration attempt or only after the per-IP rate-limit threshold is crossed? Affects friction vs. bot exposure trade-off.
 - **OQ3** — Do we want a "register on behalf of" admin path for sales-assisted signups? Currently not in scope; revisit when sales onboarding starts.
 - **OQ4** — Should `fullName` be split into `firstName` / `lastName` at signup or kept as a single field? Single field matches current implementation; split would simplify formal correspondence later.
+
+## 11. Change history
+
+- **2026-06-27** — Initial draft. Carries forward today's M01-F01 (registration) + relevant rules from M01-F09 (phone-first auth: phone required, +92 format, unique). Section 7 explicitly defers OTP entry to M01-F02, email link verification to M01-F03, and org/station creation to M12.

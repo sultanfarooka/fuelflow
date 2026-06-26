@@ -1,7 +1,7 @@
 ---
 id: M17
 title: Audit & Compliance
-status: Stub
+lifecycle: drafting
 last-updated: 2026-06-27
 ---
 

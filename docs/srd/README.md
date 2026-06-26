@@ -29,10 +29,16 @@ written as `_None._` — never omitted, so consumers always know to look.
 id: M01-F01
 module: M01-authentication
 title: <feature title>
-status: Planned                                  # see status legend in SRD.md
+lifecycle: drafting                              # see "Lifecycle" below
 design: ../../../fuel-flow-web/src/design/screens/MXX/FXX-<slug>.tsx
 legacy: <MODULES.md ID(s), or "none">
 last-updated: 2026-06-27
+# Optional, only when the feature is on a lifecycle off-ramp:
+# superseded_by: M01-F17
+# superseded_at: 2026-08-15
+# supersedes: [M01-F12]
+# removed_at: 2026-08-15
+# removed_reason: "<one-line why>"
 ---
 
 # M01-F01 — <feature title>
@@ -77,6 +83,10 @@ Endpoints touched; reference Swagger for full schemas.
 
 ## 10. Open questions
 Decisions still to be made. Each question should be claimable by a person + date.
+
+## 11. Change history
+Append-only log of material changes. Format: `- **YYYY-MM-DD** — <change>. <reason / cross-link>.`
+Trivial edits (typos, link fixes) don't go here — `git log` covers those.
 ```
 
 ### Section-level rules
@@ -103,18 +113,74 @@ Decisions still to be made. Each question should be claimable by a person + date
 - Requirement IDs (`RXX`) are append-only inside each feature.
 - Cross-references between features use the full link: `[M16-F01 Invite User](../M16-team-and-access/F01-invite-user.md)`.
 
-## Status states
+## Lifecycle
 
-| State | When |
+The `lifecycle:` frontmatter field is the single source of truth for *where a
+feature is in the workflow*. Monotonic for healthy features; two off-ramps
+(`superseded`, `removed`) for the lifecycle edges.
+
+| State | Meaning | Gate to advance |
+|---|---|---|
+| `drafting` | SRD file is being written; sections may shift | Spec sections 1–10 frozen |
+| `spec-locked` | Spec is committed; design hasn't been built | Design playground file exists + flipped to `approved` in [`catalogue.ts`](../../fuel-flow-web/src/design/catalogue.ts) |
+| `design-approved` | Design is locked; implementation hasn't started | First implementation PR opens |
+| `in-implementation` | At least one PR touching this feature is open / merged | Backend + frontend + E2E all merged to `main` |
+| `shipped` | Every in-scope R is `Done` and the E2E spec is green | — (terminal) |
+| `superseded` | Replaced by another feature; reference stays valid forever | — (terminal; set `superseded_by:`) |
+| `removed` | Dropped before shipping; spec kept for traceability | — (terminal; set `removed_reason:`) |
+
+**Lifecycle changes happen in the same PR as the work** (per root [`CLAUDE.md`](../../CLAUDE.md) Rule 2). Don't bump `lifecycle` ahead of the underlying state.
+
+## Requirement-row statuses
+
+Inside section 3 (Functional requirements), individual `RXX` rows track their own
+state. These are independent of the feature `lifecycle:` — a feature can be
+`in-implementation` with some R rows `Done`, others `Planned`.
+
+| State | Meaning |
 |---|---|
-| `Planned` | Spec locked, no implementation has started |
-| `In Progress` | At least one R-level requirement is being built |
-| `Done` | Every in-scope R is shipped + E2E test in place |
-| `Out of Scope` | Captured in spec but explicitly will not be built — kept for traceability |
-| `Removed` | Used only on dropped requirements; never on features/modules |
+| `Drafting` | R-row wording still being negotiated; feature is `drafting` |
+| `Planned` | R-row spec is locked, hasn't been implemented |
+| `In Progress` | At least one PR is in flight for this R |
+| `Done` | Implemented + tested + on `main` |
+| `Removed` | R was dropped; row kept (never renumbered) with a one-line reason |
 
-Status changes happen in the same PR as the work — see [root CLAUDE.md](../../CLAUDE.md)
-Rule 2.
+## ID-reuse rule
+
+**Never reuse an ID.** Removed `RXX` rows keep their slots; removed/superseded
+`FXX` files keep their filenames. The next R / feature gets the next free
+number. This keeps every historical reference (branches, commits, code
+comments, PR titles) valid forever.
+
+## Changing or replacing a feature
+
+Three mechanisms, used together depending on the change size:
+
+| Change size | Mechanism |
+|---|---|
+| Edit a few words, fix a link | Just edit the file; `git log` is the record. Skip the changelog. |
+| Add an R, remove an R, change an AC | Edit in place, flip the R-row to `Removed` if dropped (never delete), and **add a section-11 entry** explaining the why. |
+| Wholesale replace the feature | Keep the old file. Set old file's `lifecycle: superseded` + `superseded_by: <new-id>`. Create the new feature file with the next free FXX and `supersedes: [<old-id>]`. Both stay forever. |
+| Drop the feature entirely | Keep the file. Set `lifecycle: removed` + `removed_reason:` + `removed_at:`. Module README index shows it struck through with the link still working. |
+
+## Relationship to `docs/implementation/`
+
+The SRD and the implementation plan answer different questions:
+
+| Document | Answers | Lifecycle |
+|---|---|---|
+| SRD feature file (this directory) | *What* must it do, *why*, what is "done" (AC). | Stable — rarely changes after `spec-locked`. |
+| [`docs/implementation/<MXX>/<feature>.md`](../implementation/) | *How* will we build it: phase order, file list, migrations, test plan, sequencing. | Disposable — discarded after the PR ships. |
+
+Both are useful for non-trivial work:
+
+- **Skip the implementation plan** for trivial features (single file, copy-only changes, one new endpoint reusing existing patterns).
+- **Generate one** via the `feature-planning` skill for anything that crosses Domain → Application → Infrastructure → Api → Frontend.
+- The SRD makes the plan shorter (acceptance criteria, API surface, design link are all in the spec — the plan just orders the work).
+
+When a feature is `shipped`, archive its implementation plan inline (no need to
+delete) — it's a useful artefact for understanding why the code looks the way
+it does.
 
 ## How design files link to SRDs
 
