@@ -53,6 +53,18 @@ export default defineConfig({
   ],
   server: {
     host: true,
+    // Same-origin proxy so the SPA can be reached over any host (localhost,
+    // LAN, Tailscale, mobile) without the API's auth cookies being dropped as
+    // cross-site. Pair this with `VITE_API_BASE_URL=/api/v1` (no host) so the
+    // axios client hits `<current-origin>/api/v1/*` and Vite forwards to the
+    // backend. Without this, `SameSite=Lax` cookies set by /auth/login never
+    // make it back to the browser when SPA-host ≠ API-host.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5035',
+        changeOrigin: true,
+      },
+    },
   },
   resolve: {
     alias: {

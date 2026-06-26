@@ -10,7 +10,7 @@ Single file that orchestrates all dependency injection and middleware. Key regis
 2. **Infrastructure** — `builder.Services.AddInfrastructure(config)` (single call registers everything)
 3. **JWT Authentication** — reads tokens from HTTP-only cookies only (NOT Authorization header)
 4. **FluentValidation** — `AddFluentValidationAutoValidation()` auto-discovers validators from Application assembly
-5. **CORS** — allows `http://localhost:5173` (Vite frontend) with credentials
+5. **CORS** — Production allows only `http://localhost:5173` with credentials; Development opens any origin (`SetIsOriginAllowed(_ => true)` + credentials) so the SPA reaches the API over localhost, LAN, Tailscale, or a phone on `vite --host` without per-IP allowlist edits. Production keeps the strict explicit-origin list.
 6. **Swagger** — OpenAPI docs in development at `/swagger`
 7. **Controllers** — camelCase JSON serialization via `JsonStringEnumConverter`
 

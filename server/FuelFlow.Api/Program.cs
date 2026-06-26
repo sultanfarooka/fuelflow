@@ -124,14 +124,30 @@ builder.Services.AddRateLimiter(options =>
 // ── 5. CORS ──────────────────────────────────────────────────────
 // Cross-Origin Resource Sharing: allows the React frontend (different port)
 // to call our API. Without this, browsers block the requests.
+//
+// Development: any origin is allowed so the SPA reaches the API over
+// localhost, LAN IPs, Tailscale, and mobile devices on `vite --host` without
+// per-IP allowlist edits. Credentials are kept on, so we must use
+// `SetIsOriginAllowed` (the CORS spec forbids `AllowAnyOrigin` together with
+// `AllowCredentials`). Production keeps the strict explicit-origin list.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // Vite dev server
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            policy.WithOrigins("http://localhost:5173") // Vite dev server
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
 
