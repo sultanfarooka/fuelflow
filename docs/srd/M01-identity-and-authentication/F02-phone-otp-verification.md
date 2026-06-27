@@ -1,14 +1,10 @@
----
-id: M01-F02
-module: M01-identity-and-authentication
-title: Phone OTP Verification
-lifecycle: drafting
-design: ../../../fuel-flow-web/src/design/screens/M01/F02-phone-otp-verification.tsx
-legacy: M01-F09-R03/R04/R10/R12 (MODULES.md)
-last-updated: 2026-06-27
----
-
 # M01-F02 — Phone OTP Verification
+
+| | |
+|---|---|
+| **Lifecycle** | `drafting` |
+| **Design** | [`F02-phone-otp-verification.tsx`](../../../fuel-flow-web/src/design/screens/M01/F02-phone-otp-verification.tsx) |
+| **Last updated** | 2026-06-27 |
 
 ## 1. Purpose
 

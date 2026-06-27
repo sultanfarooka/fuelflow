@@ -1,14 +1,10 @@
----
-id: M01-F01
-module: M01-identity-and-authentication
-title: Self-Service Registration
-lifecycle: drafting
-design: ../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx
-legacy: M01-F01 (MODULES.md)
-last-updated: 2026-06-27
----
-
 # M01-F01 — Self-Service Registration
+
+| | |
+|---|---|
+| **Lifecycle** | `drafting` |
+| **Design** | [`F01-registration.tsx`](../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx) |
+| **Last updated** | 2026-06-27 |
 
 ## 1. Purpose
 

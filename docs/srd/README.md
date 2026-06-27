@@ -24,23 +24,19 @@ docs/
 Sections 1–11 in order. Empty sections write `_None._` — never omit.
 
 ```markdown
----
-id: M01-F01
-module: M01-identity-and-authentication
-title: <title>
-lifecycle: drafting                # see Lifecycle below
-design: ../../../fuel-flow-web/src/design/screens/MXX/FXX-<slug>.tsx
-legacy: <MODULES.md ID(s) | none>
-last-updated: 2026-06-27
-# Off-ramp only — uncomment when applicable:
-# superseded_by: M01-F17
-# superseded_at: 2026-08-15
-# supersedes: [M01-F12]
-# removed_at: 2026-08-15
-# removed_reason: "<one-line why>"
----
+# MXX-FXX — <title>
 
-# M01-F01 — <title>
+| | |
+|---|---|
+| **Lifecycle** | `drafting`                                                            <!-- see Lifecycle below -->
+| **Design**    | [`FXX-<slug>.tsx`](../../../fuel-flow-web/src/design/screens/MXX/FXX-<slug>.tsx)
+| **Last updated** | 2026-06-27
+
+<!-- Off-ramp only — replace the Lifecycle row above and append:
+| **Superseded by** | [MXX-FYY](./FYY-<slug>.md) (2026-08-15)
+| **Supersedes**    | [MXX-FAA](./FAA-<slug>.md)
+| **Removed**       | 2026-08-15 — <one-line why>
+-->
 
 ## 1. Purpose
 2–3 sentences. Trigger, success state, why it exists.
