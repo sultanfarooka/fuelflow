@@ -1,6 +1,6 @@
 ---
 id: M01-F01
-module: M01-authentication
+module: M01-identity-and-authentication
 title: Self-Service Registration
 lifecycle: drafting
 design: ../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx

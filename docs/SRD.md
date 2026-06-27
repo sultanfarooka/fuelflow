@@ -11,7 +11,7 @@ feature indexes. Each feature flow lives in its own file at
 
 - [Conventions](#conventions) — how to write a feature file
 - [Module index](#module-index)
-- Module specs — [M01](#m01--authentication) · [M16](#m16--team--access-management-stub) · [M17](#m17--audit--compliance-stub)
+- Module specs — [M01](#m01--identity--authentication) · [M16](#m16--team--access-management-stub) · [M17](#m17--audit--compliance-stub)
 - [Transition rules](#transition-rules) — MODULES.md interaction
 
 ---
@@ -28,7 +28,7 @@ docs/
         └── FXX-<kebab>.md    # one file per feature flow
 ```
 
-- Module dirs: `MXX-<kebab>` — `M01-authentication`, `M16-team-and-access`.
+- Module dirs: `MXX-<kebab>` — `M01-identity-and-authentication`, `M16-team-and-access`.
 - Feature files: `FXX-<kebab>.md` — `F01-registration.md`, `F04-login.md`.
 - One feature flow per file. Split into N features if a "feature" turns into N flows.
 
@@ -39,7 +39,7 @@ Sections 1–11 in order. Empty sections write `_None._` — never omit.
 ```markdown
 ---
 id: M01-F01
-module: M01-authentication
+module: M01-identity-and-authentication
 title: <title>
 lifecycle: drafting                # see Lifecycle below
 design: ../../../fuel-flow-web/src/design/screens/MXX/FXX-<slug>.tsx
@@ -163,7 +163,7 @@ Independent of feature `lifecycle:` — a feature can be `in-implementation` wit
 
 | ID | Title | Lifecycle | Folder |
 |---|---|---|---|
-| M01 | [Authentication](#m01--authentication) | `drafting` | [`srd/M01-authentication/`](srd/M01-authentication/) |
+| M01 | [Identity & Authentication](#m01--identity--authentication) | `drafting` | [`srd/M01-identity-and-authentication/`](srd/M01-identity-and-authentication/) |
 | M02 | Fuel Inventory & Tank Control | _MODULES.md_ | _unmigrated_ |
 | M03 | Pump & Nozzle Operations | _MODULES.md_ | _unmigrated_ |
 | M04 | Shift Management | _MODULES.md_ | _unmigrated_ |
@@ -183,7 +183,7 @@ Independent of feature `lifecycle:` — a feature can be `in-implementation` wit
 
 ---
 
-## M01 — Authentication
+## M01 — Identity & Authentication
 
 Everything a user does to **prove who they are** to Fuel Flow: sign up, verify
 channels, log in / out, recover access, change credentials, and harden access
@@ -234,22 +234,22 @@ session control → credential modification → security hardening → complianc
 
 | ID | Feature | Lifecycle | Design | File |
 |---|---|---|---|---|
-| M01-F01 | Self-Service Registration | `drafting` | [↗](../fuel-flow-web/src/design/screens/M01/F01-registration.tsx) | [F01](srd/M01-authentication/F01-registration.md) |
-| M01-F02 | Phone OTP Verification | `drafting` | — | [F02](srd/M01-authentication/F02-phone-otp-verification.md) |
-| M01-F03 | Email Verification | `drafting` | — | [F03](srd/M01-authentication/F03-email-verification.md) |
-| M01-F04 | Login | `drafting` | — | [F04](srd/M01-authentication/F04-login.md) |
-| M01-F05 | Logout & Session Revocation | `drafting` | — | [F05](srd/M01-authentication/F05-logout-and-session-revocation.md) |
-| M01-F06 | Password Recovery | `drafting` | — | [F06](srd/M01-authentication/F06-password-recovery.md) |
-| M01-F07 | PIN Quick Login | `drafting` | — | [F07](srd/M01-authentication/F07-pin-quick-login.md) |
-| M01-F08 | Device & Session Management | `drafting` | — | [F08](srd/M01-authentication/F08-device-and-session-management.md) |
-| M01-F09 | Phone Number Change | `drafting` | — | [F09](srd/M01-authentication/F09-phone-number-change.md) |
-| M01-F10 | Email Add / Change / Remove | `drafting` | — | [F10](srd/M01-authentication/F10-email-add-change-remove.md) |
-| M01-F11 | Password Change (authenticated) | `drafting` | — | [F11](srd/M01-authentication/F11-password-change.md) |
-| M01-F12 | Two-Factor Authentication (TOTP) | `drafting` | — | [F12](srd/M01-authentication/F12-two-factor-authentication.md) |
-| M01-F13 | Account Lockout & Unlock | `drafting` | — | [F13](srd/M01-authentication/F13-account-lockout-and-unlock.md) |
-| M01-F14 | Password Policy | `drafting` | — | [F14](srd/M01-authentication/F14-password-policy.md) |
-| M01-F15 | Suspicious-Activity Alerts | `drafting` | — | [F15](srd/M01-authentication/F15-suspicious-activity-alerts.md) |
-| M01-F16 | Terms & Privacy Acceptance | `drafting` | — | [F16](srd/M01-authentication/F16-terms-and-privacy-acceptance.md) |
+| M01-F01 | Self-Service Registration | `drafting` | [↗](../fuel-flow-web/src/design/screens/M01/F01-registration.tsx) | [F01](srd/M01-identity-and-authentication/F01-registration.md) |
+| M01-F02 | Phone OTP Verification | `drafting` | — | [F02](srd/M01-identity-and-authentication/F02-phone-otp-verification.md) |
+| M01-F03 | Email Verification | `drafting` | — | [F03](srd/M01-identity-and-authentication/F03-email-verification.md) |
+| M01-F04 | Login | `drafting` | — | [F04](srd/M01-identity-and-authentication/F04-login.md) |
+| M01-F05 | Logout & Session Revocation | `drafting` | — | [F05](srd/M01-identity-and-authentication/F05-logout-and-session-revocation.md) |
+| M01-F06 | Password Recovery | `drafting` | — | [F06](srd/M01-identity-and-authentication/F06-password-recovery.md) |
+| M01-F07 | PIN Quick Login | `drafting` | — | [F07](srd/M01-identity-and-authentication/F07-pin-quick-login.md) |
+| M01-F08 | Device & Session Management | `drafting` | — | [F08](srd/M01-identity-and-authentication/F08-device-and-session-management.md) |
+| M01-F09 | Phone Number Change | `drafting` | — | [F09](srd/M01-identity-and-authentication/F09-phone-number-change.md) |
+| M01-F10 | Email Add / Change / Remove | `drafting` | — | [F10](srd/M01-identity-and-authentication/F10-email-add-change-remove.md) |
+| M01-F11 | Password Change (authenticated) | `drafting` | — | [F11](srd/M01-identity-and-authentication/F11-password-change.md) |
+| M01-F12 | Two-Factor Authentication (TOTP) | `drafting` | — | [F12](srd/M01-identity-and-authentication/F12-two-factor-authentication.md) |
+| M01-F13 | Account Lockout & Unlock | `drafting` | — | [F13](srd/M01-identity-and-authentication/F13-account-lockout-and-unlock.md) |
+| M01-F14 | Password Policy | `drafting` | — | [F14](srd/M01-identity-and-authentication/F14-password-policy.md) |
+| M01-F15 | Suspicious-Activity Alerts | `drafting` | — | [F15](srd/M01-identity-and-authentication/F15-suspicious-activity-alerts.md) |
+| M01-F16 | Terms & Privacy Acceptance | `drafting` | — | [F16](srd/M01-identity-and-authentication/F16-terms-and-privacy-acceptance.md) |
 
 > `Lifecycle` is denormalised from each feature's frontmatter — keep in sync when you flip.
 
@@ -259,7 +259,7 @@ session control → credential modification → security hardening → complianc
 
 > Module ID reserved. Feature shapes not yet drafted; folder gets created when the first feature file lands.
 
-People-administration **inside** an organisation — once they've authenticated via [M01](#m01--authentication). Invite, role assignment, granular permissions, multi-station scoping, edit / deactivate, owner-initiated password resets.
+People-administration **inside** an organisation — once they've authenticated via [M01](#m01--identity--authentication). Invite, role assignment, granular permissions, multi-station scoping, edit / deactivate, owner-initiated password resets.
 
 ### Provisional feature list
 
@@ -273,9 +273,9 @@ People-administration **inside** an organisation — once they've authenticated 
 | M16-F06 | Owner-Initiated Password Reset | from M01-F04-R03 |
 | M16-F07 | Team Directory & Search | new |
 
-**Out of scope:** authentication (→ [M01](#m01--authentication)) · cross-org user mobility · seat enforcement (→ [M11](MODULES.md#m11--subscription--billing)) · audit-log emission consumers (→ [M17](#m17--audit--compliance-stub)).
+**Out of scope:** authentication (→ [M01](#m01--identity--authentication)) · cross-org user mobility · seat enforcement (→ [M11](MODULES.md#m11--subscription--billing)) · audit-log emission consumers (→ [M17](#m17--audit--compliance-stub)).
 
-**Hard deps:** [M01](#m01--authentication), [M11](MODULES.md#m11--subscription--billing). **Soft:** [M17](#m17--audit--compliance-stub).
+**Hard deps:** [M01](#m01--identity--authentication), [M11](MODULES.md#m11--subscription--billing). **Soft:** [M17](#m17--audit--compliance-stub).
 
 ---
 
