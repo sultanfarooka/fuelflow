@@ -15,46 +15,46 @@ High-level index. For detail:
 
 | ID | Feature | Lifecycle |
 |---|---|---|
-| M01-F01 | Self-Service Registration | `drafting` |
-| M01-F02 | Phone OTP Verification | `drafting` |
-| M01-F03 | Email Verification | `drafting` |
-| M01-F04 | Login | `drafting` |
-| M01-F05 | Logout & Session Revocation | `drafting` |
-| M01-F06 | Password Recovery | `drafting` |
-| M01-F07 | PIN Quick Login | `drafting` |
-| M01-F08 | Device & Session Management | `drafting` |
-| M01-F09 | Phone Number Change | `drafting` |
-| M01-F10 | Email Add / Change / Remove | `drafting` |
-| M01-F11 | Password Change (authenticated) | `drafting` |
-| M01-F12 | Two-Factor Authentication (TOTP) | `drafting` |
-| M01-F13 | Account Lockout & Unlock | `drafting` |
-| M01-F14 | Password Policy | `drafting` |
-| M01-F15 | Suspicious-Activity Alerts | `drafting` |
-| M01-F16 | Terms & Privacy Acceptance | `drafting` |
+| [M01-F01](srd/M01-identity-and-authentication/F01-registration.md) | Self-Service Registration | `drafting` |
+| [M01-F02](srd/M01-identity-and-authentication/F02-phone-otp-verification.md) | Phone OTP Verification | `drafting` |
+| [M01-F03](srd/M01-identity-and-authentication/F03-email-verification.md) | Email Verification | `drafting` |
+| [M01-F04](srd/M01-identity-and-authentication/F04-login.md) | Login | `drafting` |
+| [M01-F05](srd/M01-identity-and-authentication/F05-logout-and-session-revocation.md) | Logout & Session Revocation | `drafting` |
+| [M01-F06](srd/M01-identity-and-authentication/F06-password-recovery.md) | Password Recovery | `drafting` |
+| [M01-F07](srd/M01-identity-and-authentication/F07-pin-quick-login.md) | PIN Quick Login | `drafting` |
+| [M01-F08](srd/M01-identity-and-authentication/F08-device-and-session-management.md) | Device & Session Management | `drafting` |
+| [M01-F09](srd/M01-identity-and-authentication/F09-phone-number-change.md) | Phone Number Change | `drafting` |
+| [M01-F10](srd/M01-identity-and-authentication/F10-email-add-change-remove.md) | Email Add / Change / Remove | `drafting` |
+| [M01-F11](srd/M01-identity-and-authentication/F11-password-change.md) | Password Change (authenticated) | `drafting` |
+| [M01-F12](srd/M01-identity-and-authentication/F12-two-factor-authentication.md) | Two-Factor Authentication (TOTP) | `drafting` |
+| [M01-F13](srd/M01-identity-and-authentication/F13-account-lockout-and-unlock.md) | Account Lockout & Unlock | `drafting` |
+| [M01-F14](srd/M01-identity-and-authentication/F14-password-policy.md) | Password Policy | `drafting` |
+| [M01-F15](srd/M01-identity-and-authentication/F15-suspicious-activity-alerts.md) | Suspicious-Activity Alerts | `drafting` |
+| [M01-F16](srd/M01-identity-and-authentication/F16-terms-and-privacy-acceptance.md) | Terms & Privacy Acceptance | `drafting` |
 
 ### M16 — Team & Access Management
 **Lifecycle:** `drafting` (stub) · **Spec:** [README](srd/M16-team-and-access/README.md)
 
 | ID | Feature | Lifecycle |
 |---|---|---|
-| M16-F01 | Invite User (Manager / Custom) | _not drafted_ |
-| M16-F02 | Roles & Hierarchy | _not drafted_ |
-| M16-F03 | Granular Permissions Matrix | _not drafted_ |
-| M16-F04 | Multi-Station Access Assignment | _not drafted_ |
-| M16-F05 | Edit / Deactivate / Reactivate Member | _not drafted_ |
-| M16-F06 | Owner-Initiated Password Reset | _not drafted_ |
-| M16-F07 | Team Directory & Search | _not drafted_ |
+| [M16-F01](srd/M16-team-and-access/F01-invite-user.md) | Invite User (Manager / Custom) | _not drafted_ |
+| [M16-F02](srd/M16-team-and-access/F02-roles-and-hierarchy.md) | Roles & Hierarchy | _not drafted_ |
+| [M16-F03](srd/M16-team-and-access/F03-granular-permissions-matrix.md) | Granular Permissions Matrix | _not drafted_ |
+| [M16-F04](srd/M16-team-and-access/F04-multi-station-access-assignment.md) | Multi-Station Access Assignment | _not drafted_ |
+| [M16-F05](srd/M16-team-and-access/F05-edit-deactivate-reactivate-member.md) | Edit / Deactivate / Reactivate Member | _not drafted_ |
+| [M16-F06](srd/M16-team-and-access/F06-owner-initiated-password-reset.md) | Owner-Initiated Password Reset | _not drafted_ |
+| [M16-F07](srd/M16-team-and-access/F07-team-directory-and-search.md) | Team Directory & Search | _not drafted_ |
 
 ### M17 — Audit & Compliance
 **Lifecycle:** `drafting` (stub) · **Spec:** [README](srd/M17-audit-and-compliance/README.md)
 
 | ID | Feature | Lifecycle |
 |---|---|---|
-| M17-F01 | Audit Event Schema & Emission Contract | _not drafted_ |
-| M17-F02 | Append-Only Sink & Retention | _not drafted_ |
-| M17-F03 | Audit Viewer UI (Owner-only) | _not drafted_ |
-| M17-F04 | Export (CSV / JSON) | _not drafted_ |
-| M17-F05 | Anomaly Highlights | _not drafted_ |
+| [M17-F01](srd/M17-audit-and-compliance/F01-audit-event-schema-and-emission-contract.md) | Audit Event Schema & Emission Contract | _not drafted_ |
+| [M17-F02](srd/M17-audit-and-compliance/F02-append-only-sink-and-retention.md) | Append-Only Sink & Retention | _not drafted_ |
+| [M17-F03](srd/M17-audit-and-compliance/F03-audit-viewer-ui.md) | Audit Viewer UI (Owner-only) | _not drafted_ |
+| [M17-F04](srd/M17-audit-and-compliance/F04-export.md) | Export (CSV / JSON) | _not drafted_ |
+| [M17-F05](srd/M17-audit-and-compliance/F05-anomaly-highlights.md) | Anomaly Highlights | _not drafted_ |
 
 ### Unmigrated
 
