@@ -40,10 +40,10 @@ F-IDs finalised when the module is drafted.
 
 | ID | Feature | Source |
 |---|---|---|
-| M16-F01 | Invite User (Manager / Custom) | new |
-| M16-F02 | Roles & Hierarchy | from M01-F05 in MODULES.md |
-| M16-F03 | Granular Permissions Matrix | from M01-F06 |
-| M16-F04 | Multi-Station Access Assignment | from M01-F07 |
-| M16-F05 | Edit / Deactivate / Reactivate Member | new |
-| M16-F06 | Owner-Initiated Password Reset | from M01-F04-R03 |
-| M16-F07 | Team Directory & Search | new |
+| [M16-F01](./F01-invite-user.md) | Invite User (Manager / Custom) | new |
+| [M16-F02](./F02-roles-and-hierarchy.md) | Roles & Hierarchy | from M01-F05 in MODULES.md |
+| [M16-F03](./F03-granular-permissions-matrix.md) | Granular Permissions Matrix | from M01-F06 |
+| [M16-F04](./F04-multi-station-access-assignment.md) | Multi-Station Access Assignment | from M01-F07 |
+| [M16-F05](./F05-edit-deactivate-reactivate-member.md) | Edit / Deactivate / Reactivate Member | new |
+| [M16-F06](./F06-owner-initiated-password-reset.md) | Owner-Initiated Password Reset | from M01-F04-R03 |
+| [M16-F07](./F07-team-directory-and-search.md) | Team Directory & Search | new |

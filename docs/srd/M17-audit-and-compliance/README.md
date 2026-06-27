@@ -35,8 +35,8 @@ F-IDs finalised when the module is drafted.
 
 | ID | Feature | Source |
 |---|---|---|
-| M17-F01 | Audit Event Schema & Emission Contract | new (cross-cutting) |
-| M17-F02 | Append-Only Sink & Retention | from M01-F08 in MODULES.md |
-| M17-F03 | Audit Viewer UI (Owner-only) | from M01-F08-R06 |
-| M17-F04 | Export (CSV / JSON) | new |
-| M17-F05 | Anomaly Highlights | new (optional) |
+| [M17-F01](./F01-audit-event-schema-and-emission-contract.md) | Audit Event Schema & Emission Contract | new (cross-cutting) |
+| [M17-F02](./F02-append-only-sink-and-retention.md) | Append-Only Sink & Retention | from M01-F08 in MODULES.md |
+| [M17-F03](./F03-audit-viewer-ui.md) | Audit Viewer UI (Owner-only) | from M01-F08-R06 |
+| [M17-F04](./F04-export.md) | Export (CSV / JSON) | new |
+| [M17-F05](./F05-anomaly-highlights.md) | Anomaly Highlights | new (optional) |

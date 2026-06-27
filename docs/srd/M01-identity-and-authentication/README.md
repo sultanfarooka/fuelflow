@@ -54,23 +54,23 @@ Apply to every M01 feature unless overridden in §4 of the feature file.
 Ordered by **user lifecycle**: identity creation → daily auth → alternative auth →
 session control → credential modification → security hardening → compliance.
 
-| ID | Feature | Lifecycle | Design | File |
-|---|---|---|---|---|
-| M01-F01 | Self-Service Registration | `drafting` | [↗](../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx) | [F01](./F01-registration.md) |
-| M01-F02 | Phone OTP Verification | `drafting` | — | [F02](./F02-phone-otp-verification.md) |
-| M01-F03 | Email Verification | `drafting` | — | [F03](./F03-email-verification.md) |
-| M01-F04 | Login | `drafting` | — | [F04](./F04-login.md) |
-| M01-F05 | Logout & Session Revocation | `drafting` | — | [F05](./F05-logout-and-session-revocation.md) |
-| M01-F06 | Password Recovery | `drafting` | — | [F06](./F06-password-recovery.md) |
-| M01-F07 | PIN Quick Login | `drafting` | — | [F07](./F07-pin-quick-login.md) |
-| M01-F08 | Device & Session Management | `drafting` | — | [F08](./F08-device-and-session-management.md) |
-| M01-F09 | Phone Number Change | `drafting` | — | [F09](./F09-phone-number-change.md) |
-| M01-F10 | Email Add / Change / Remove | `drafting` | — | [F10](./F10-email-add-change-remove.md) |
-| M01-F11 | Password Change (authenticated) | `drafting` | — | [F11](./F11-password-change.md) |
-| M01-F12 | Two-Factor Authentication (TOTP) | `drafting` | — | [F12](./F12-two-factor-authentication.md) |
-| M01-F13 | Account Lockout & Unlock | `drafting` | — | [F13](./F13-account-lockout-and-unlock.md) |
-| M01-F14 | Password Policy | `drafting` | — | [F14](./F14-password-policy.md) |
-| M01-F15 | Suspicious-Activity Alerts | `drafting` | — | [F15](./F15-suspicious-activity-alerts.md) |
-| M01-F16 | Terms & Privacy Acceptance | `drafting` | — | [F16](./F16-terms-and-privacy-acceptance.md) |
+| ID | Feature | Lifecycle | Design |
+|---|---|---|---|
+| [M01-F01](./F01-registration.md) | Self-Service Registration | `drafting` | [↗](../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx) |
+| [M01-F02](./F02-phone-otp-verification.md) | Phone OTP Verification | `drafting` | — |
+| [M01-F03](./F03-email-verification.md) | Email Verification | `drafting` | — |
+| [M01-F04](./F04-login.md) | Login | `drafting` | — |
+| [M01-F05](./F05-logout-and-session-revocation.md) | Logout & Session Revocation | `drafting` | — |
+| [M01-F06](./F06-password-recovery.md) | Password Recovery | `drafting` | — |
+| [M01-F07](./F07-pin-quick-login.md) | PIN Quick Login | `drafting` | — |
+| [M01-F08](./F08-device-and-session-management.md) | Device & Session Management | `drafting` | — |
+| [M01-F09](./F09-phone-number-change.md) | Phone Number Change | `drafting` | — |
+| [M01-F10](./F10-email-add-change-remove.md) | Email Add / Change / Remove | `drafting` | — |
+| [M01-F11](./F11-password-change.md) | Password Change (authenticated) | `drafting` | — |
+| [M01-F12](./F12-two-factor-authentication.md) | Two-Factor Authentication (TOTP) | `drafting` | — |
+| [M01-F13](./F13-account-lockout-and-unlock.md) | Account Lockout & Unlock | `drafting` | — |
+| [M01-F14](./F14-password-policy.md) | Password Policy | `drafting` | — |
+| [M01-F15](./F15-suspicious-activity-alerts.md) | Suspicious-Activity Alerts | `drafting` | — |
+| [M01-F16](./F16-terms-and-privacy-acceptance.md) | Terms & Privacy Acceptance | `drafting` | — |
 
 > `Lifecycle` is denormalised from each feature's frontmatter — keep in sync when you flip.
