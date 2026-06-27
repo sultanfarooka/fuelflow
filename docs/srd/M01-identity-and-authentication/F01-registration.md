@@ -87,9 +87,9 @@ Design: [`F01-registration.tsx`](../../../fuel-flow-web/src/design/screens/M01/F
 
 | Event | Fields | Sink |
 |---|---|---|
-| `auth.registration.attempted` | `phoneHash, emailHash?, ip, ua, outcome` | [M17](../../SRD.md#m17--audit--compliance-stub) |
-| `auth.registration.succeeded` | `userId, phoneHash, emailHash?, tcVersion, ip` | [M17](../../SRD.md#m17--audit--compliance-stub) |
-| `auth.otp.issued` *(emitted by F02; listed for traceability)* | `userId, purpose=registration, phoneHash, ip` | [M17](../../SRD.md#m17--audit--compliance-stub) |
+| `auth.registration.attempted` | `phoneHash, emailHash?, ip, ua, outcome` | [M17](../M17-audit-and-compliance/README.md) |
+| `auth.registration.succeeded` | `userId, phoneHash, emailHash?, tcVersion, ip` | [M17](../M17-audit-and-compliance/README.md) |
+| `auth.otp.issued` *(emitted by F02; listed for traceability)* | `userId, purpose=registration, phoneHash, ip` | [M17](../M17-audit-and-compliance/README.md) |
 
 `outcome` ∈ `{success, duplicate_phone, duplicate_email, validation_failed, rate_limited}`.
 
