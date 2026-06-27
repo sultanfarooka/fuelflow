@@ -2,7 +2,7 @@
 id: M01
 title: Identity & Authentication
 lifecycle: drafting
-last-updated: 2026-06-27
+last-updated: 2026-06-28
 ---
 
 # M01 — Identity & Authentication
