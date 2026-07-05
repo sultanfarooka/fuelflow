@@ -73,3 +73,8 @@ coverage/
 graphify-out/
 # Playwright MCP artifacts (snapshots, console logs, screenshots from E2E walks)
 .playwright-mcp/
+# Stray screenshots dropped at repo root (Playwright MCP `browser_take_screenshot`
+# uses cwd when given a bare filename — guard against accidental check-in)
+/*.png
+/*.jpg
+/*.jpeg
