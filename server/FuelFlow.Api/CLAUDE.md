@@ -123,7 +123,7 @@ For business-rule failures returned via the `Result<T>` pattern, the shape is `{
 
 A few representative shapes. Swagger (`/swagger`) is the authoritative catalogue — when these samples drift from current DTOs, **trust Swagger and the DTOs in `FuelFlow.Application/DTOs/`**.
 
-### Owner Registration — [M01-F01](../../docs/MODULES.md#m01-f01--self-service-registration)
+### Owner Registration — [M01-F01](../../docs/srd/M01-identity-and-authentication/F01-registration.md)
 
 ```http
 POST /api/v1/auth/register
@@ -145,7 +145,8 @@ Content-Type: application/json
 }
 ```
 
-### Login — [M01-F03](../../docs/MODULES.md#m01-f03--login--session)
+### Login — [M01-F04](../../docs/srd/M01-identity-and-authentication/F04-login.md)
+<!-- (was MODULES.md M01-F03 "Login & Session"; renumbered to M01-F04 in SRD) -->
 
 ```http
 POST /api/v1/auth/login
@@ -173,7 +174,7 @@ Content-Type: application/json
 
 Tokens are placed in HTTP-only cookies (`access_token`, `refresh_token`). They are NOT in the JSON body.
 
-### Refresh Token — [M01-F03](../../docs/MODULES.md#m01-f03--login--session)
+### Refresh Token — [M01-F04](../../docs/srd/M01-identity-and-authentication/F04-login.md)
 
 ```http
 POST /api/v1/auth/refreshToken

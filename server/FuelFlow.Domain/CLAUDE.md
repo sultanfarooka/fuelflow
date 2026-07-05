@@ -49,7 +49,7 @@ The columns shown are the meaningful business fields — every entity also has `
 | `User` (`AspNetUsers`) | CP | email, fullName, phone, role, organizationId | Identity extension; `phone` validated `+92XXXXXXXXXX`. `organizationId` is a plain Guid (cross-context to `Organization`). |
 | `RefreshToken` | CP | userId, tokenHash, expiresAt, revokedAt, ip, userAgent, deviceId | Hashed only — plain token sent at creation. Rotation on refresh; reuse ⇒ revoke chain. |
 | `PhoneVerification` | CP | userId, code, expiresAt, attempts | OTP records; targets pre-org-creation flows so it must live in control plane. |
-| `UserStation` (many-to-many) | PT | userId, stationId | Manager → station assignments ([M01-F07](../../docs/MODULES.md#m01-f07--multi-station-access)). `userId` is a plain Guid (no FK to control-plane AppUser). |
+| `UserStation` (many-to-many) | PT | userId, stationId | Manager → station assignments ([M16-F04](../../docs/srd/M16-team-and-access/F04-multi-station-access-assignment.md); legacy `M01-F07` in [`MODULES.md`](../../docs/MODULES.md)). `userId` is a plain Guid (no FK to control-plane AppUser). |
 | `FuelTank` | PT | stationId, fuelTypeId, capacityLiters, name | Tank name unique per station. `fuelTypeId` is an F01-shim cross-context nav (F01 shim — kept for backwards compat; use IFuelTypeRepository for new lookups). |
 | `FuelType` | CP | name, unit, isCustom, stationId? | Platform reference data (PMG, HSD, HOBC). `stationId` is a Guid? (no nav after M14-F01 — was cross-context). |
 | `FuelNozzle` | PT | stationId, tankId, nozzleNumber, isActive | Unique per station; nozzle linked to one tank. |
@@ -82,7 +82,7 @@ These are registered in `AppDbContext.OnModelCreating` with `ToTable(t => t.Excl
 - `BankAccount` (root `Entities/`): `OrganizationId`, `BankName`, `AccountNumber`, `AccountTitle`, `IsPrimary`. FK to `Organization`; global query filter by `OrganizationId`.
 - `Station` entity gains `IsSetupComplete: bool` (default `false`) and `AcceptedPaymentMethods: List<string>` (JSONB, default `["Cash"]`).
 
-Entities still to be added per the roadmap: `Customer`, `CreditTransaction`, `Supplier`, `SupplierPayment`, `Expense`, `ExpenseCategory`, `Product` (lubricants), `Notification`, `AuditLog`, `SubscriptionPayment`. See [M05](../../docs/MODULES.md#m05--finance--accounts), [M09](../../docs/MODULES.md#m09--lubricants--oil-shop), [M10](../../docs/MODULES.md#m10--sms--notifications), [M11-F03](../../docs/MODULES.md#m11-f03--payment--verification), [M01-F08](../../docs/MODULES.md#m01-f08--audit-trail).
+Entities still to be added per the roadmap: `Customer`, `CreditTransaction`, `Supplier`, `SupplierPayment`, `Expense`, `ExpenseCategory`, `Product` (lubricants), `Notification`, `AuditLog`, `SubscriptionPayment`. Audit tracking is now [M17](../../docs/srd/M17-audit-and-compliance/README.md) in the SRD. For modules still in the deprecated [`docs/MODULES.md`](../../docs/MODULES.md): [M05](../../docs/MODULES.md#m05--finance--accounts), [M09](../../docs/MODULES.md#m09--lubricants--oil-shop), [M10](../../docs/MODULES.md#m10--sms--notifications), [M11-F03](../../docs/MODULES.md#m11-f03--payment--verification).
 
 ## Directory Structure
 

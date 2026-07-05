@@ -4,16 +4,16 @@ Routes are auto-discovered from the file system by the TanStack Router Vite plug
 
 ## Page Structure (Route → Access)
 
-Authoritative mapping of routes to the role(s) allowed to see them. Reference [`docs/MODULES.md`](../../../docs/MODULES.md) for the underlying feature IDs.
+Authoritative mapping of routes to the role(s) allowed to see them. Feature IDs link to [`docs/SRD.md`](../../../docs/SRD.md) for migrated modules (M01, M16, M17) and to the deprecated [`docs/MODULES.md`](../../../docs/MODULES.md) for the rest.
 
 | Page | Route | Access | Module |
 |---|---|---|---|
 | Landing | `/` | Public | — |
 | Pricing / Plan Comparison | `/pricing` | Public | [M11-F08](../../../docs/MODULES.md#m11-f08--plan-comparison--pricing-page) |
-| Registration | `/auth/register` | Public | [M01-F01](../../../docs/MODULES.md#m01-f01--self-service-registration) |
-| Login | `/auth/login` | Public | [M01-F03](../../../docs/MODULES.md#m01-f03--login--session) |
-| Email verification | `/auth/verify-email`, `/auth/check-email-register` | Public | [M01-F02](../../../docs/MODULES.md#m01-f02--email-verification) |
-| Password reset | `/auth/forgot-password`, `/auth/reset-password`, `/auth/check-email-reset` | Public | [M01-F04](../../../docs/MODULES.md#m01-f04--password-recovery) |
+| Registration | `/auth/register` | Public | [M01-F01](../../../docs/srd/M01-identity-and-authentication/F01-registration.md) |
+| Login | `/auth/login` | Public | [M01-F04](../../../docs/srd/M01-identity-and-authentication/F04-login.md) |
+| Email verification | `/auth/verify-email`, `/auth/check-email-register` | Public | [M01-F03](../../../docs/srd/M01-identity-and-authentication/F03-email-verification.md) |
+| Password reset | `/auth/forgot-password`, `/auth/reset-password`, `/auth/check-email-reset` | Public | [M01-F06](../../../docs/srd/M01-identity-and-authentication/F06-password-recovery.md) |
 | Onboarding (org + first station) | `/onboarding` | Authenticated, no org | [M08-F01](../../../docs/MODULES.md#m08-f01--station-profile) |
 | Org Dashboard | `/dashboard` | All authenticated | [M07-F06](../../../docs/MODULES.md#m07-f06--consolidated-all-stations-view) |
 | Station detail | `/dashboard/station/:stationId` | Owner, Manager | — |
@@ -27,12 +27,12 @@ Authoritative mapping of routes to the role(s) allowed to see them. Reference [`
 | Credit Customers | `/dashboard/station/:stationId/credit` (stub) | Owner, Manager, Custom | [M15](../../../docs/MODULES.md#m15--credit-customers) |
 | Finance & Accounts | `/dashboard/station/:stationId/finance` (stub) | Owner, Manager, Accountant, Custom | [M05](../../../docs/MODULES.md#m05--finance--accounts) |
 | Reports | `/dashboard/station/:stationId/reports` (stub) | Owner, Manager, Accountant, Custom | [M07-F01..F06](../../../docs/MODULES.md#m07--reporting-analytics--platform-ui) |
-| Users & Access | `/dashboard/station/:stationId/admin/users` (stub) | Owner | [M01-F05..F07](../../../docs/MODULES.md#m01-f05--user-management) |
+| Users & Access | `/dashboard/station/:stationId/admin/users` (stub) | Owner | [M16 — Team & Access](../../../docs/srd/M16-team-and-access/README.md) (legacy `M01-F05..F07` in `MODULES.md`) |
 | Staff & Payroll | `/dashboard/station/:stationId/admin/staff` (stub, Pro+) | Owner | [M13](../../../docs/MODULES.md#m13--staff--payroll) |
 | Lubricants / Oil Shop | `/dashboard/station/:stationId/admin/lubricants` (stub, Pro+) | Owner | [M09](../../../docs/MODULES.md#m09--lubricants--oil-shop) |
 | Settings | `/settings` (stub) | Owner, Manager | [M08](../../../docs/MODULES.md#m08--settings--configuration) |
 | Subscription | `/settings/subscription` (planned) | Owner | [M11-F01..F07](../../../docs/MODULES.md#m11--subscription--billing) |
-| Audit log viewer | `/settings/audit` (planned) | Owner | [M01-F08-R06](../../../docs/MODULES.md#m01-f08--audit-trail) |
+| Audit log viewer | `/settings/audit` (planned) | Owner | [M17-F03 — Audit Viewer UI](../../../docs/srd/M17-audit-and-compliance/F03-audit-viewer-ui.md) (legacy `M01-F08-R06` in `MODULES.md`) |
 | Admin: Payment verification | `/admin/payments` (planned) | SuperAdmin | [M11-F03](../../../docs/MODULES.md#m11-f03--payment--verification) |
 
 **Role enforcement** is two-layered:
@@ -42,7 +42,7 @@ Authoritative mapping of routes to the role(s) allowed to see them. Reference [`
 
 ## Registration Flow
 
-Multi-step form spread across three routes (see [M01-F01](../../../docs/MODULES.md#m01-f01--self-service-registration)):
+Multi-step form spread across three routes (see [M01-F01](../../../docs/srd/M01-identity-and-authentication/F01-registration.md)):
 
 | Step | Route | Content |
 |---|---|---|

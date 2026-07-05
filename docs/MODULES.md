@@ -1,9 +1,23 @@
 # Fuel Flow — Modules, Features & Requirements
 
-> Single source of truth for all modules, features, and requirements.
+> ## ⚠️ DEPRECATED
+>
+> **The single source of truth is now [`SRD.md`](SRD.md)** (per-feature specs under `srd/MXX-*/FXX-*.md`).
+>
+> This file is kept only for the modules not yet migrated to the SRD — **M02–M15 (except M16)**. Migrated modules: **M01**, **M16**, **M17** — see those in [`SRD.md`](SRD.md).
+>
+> - **Do not add new rows here.** New features go to SRD only.
+> - **Do not update statuses here** when SRD already owns the module.
+> - When you next touch an unmigrated module substantively, migrate it to SRD first and replace its section here with `→ moved to <SRD path>`.
+> - Once every row is migrated, this file becomes an archive and root [`CLAUDE.md`](../CLAUDE.md) Rule 1 flips its pointer entirely to SRD.
+>
+> See [`CLAUDE.md`](CLAUDE.md) → "SRD vs MODULES.md — transition state" for the full transition rules.
+
+> Legacy SoT registry for modules, features, and requirements.
 > Every item has a stable hierarchical ID that can be referenced anywhere — code, commits, PR titles, GitHub Issues, tests, conversations.
 
 **Last Updated:** 2026-06-26 (M08-F03 — Nozzle Configuration, Done)
+**Deprecated since:** 2026-06-28 (SRD takes over as SoT; this file persists only for unmigrated modules)
 **Single SoT since:** 2026-05-16 (consolidates the former `PRD.md` §5+§7 and `IMPLEMENTATION_STATUS.md` priority queue; tech-stack / architecture / API / schema / UI reference content moved to scoped `CLAUDE.md` files — see root [`CLAUDE.md`](../CLAUDE.md) Rule 9)
 
 ---

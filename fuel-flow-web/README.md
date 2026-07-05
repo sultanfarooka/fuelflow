@@ -187,11 +187,12 @@ formatDate(new Date()) // "08/02/2026"
 
 ## 🚀 Next Steps
 
-See **[`docs/MODULES.md`](../docs/MODULES.md)** — "Current Priorities" section lists the next 3 tasks with `MXX-FXX-RXX` IDs.
+See **[`docs/SRD.md`](../docs/SRD.md)** — module index with per-feature specs under `docs/srd/MXX-*/FXX-*.md`. Modules not yet migrated to SRD (M02–M15 except M16) still live in the deprecated [`docs/MODULES.md`](../docs/MODULES.md).
 
 ## 📖 Documentation
 
-- **Modules / features / requirements (SoT)**: [`docs/MODULES.md`](../docs/MODULES.md)
+- **Modules / features / requirements (SoT)**: [`docs/SRD.md`](../docs/SRD.md) — per-feature specs under [`docs/srd/`](../docs/srd/)
+- **Legacy registry** (unmigrated modules only): [`docs/MODULES.md`](../docs/MODULES.md) — deprecated
 - **Frontend conventions**: [`fuel-flow-web/CLAUDE.md`](./CLAUDE.md) + scoped `src/*/CLAUDE.md`
 - **Backend conventions**: [`server/CLAUDE.md`](../server/CLAUDE.md) + scoped `server/FuelFlow.*/CLAUDE.md`
 - **Project Overview**: [`docs/ProjectOverView.md`](../docs/ProjectOverView.md) — business requirements
@@ -202,6 +203,6 @@ See **[`docs/MODULES.md`](../docs/MODULES.md)** — "Current Priorities" section
 Follow root [`CLAUDE.md`](../CLAUDE.md) and the scoped [`CLAUDE.md`](./CLAUDE.md) files for:
 - Code conventions
 - Architecture patterns
-- Business rules (with `MXX-FXX-RXX` IDs in [`docs/MODULES.md`](../docs/MODULES.md))
+- Business rules (with `MXX-FXX[-RXX]` IDs — see [`docs/SRD.md`](../docs/SRD.md), or [`docs/MODULES.md`](../docs/MODULES.md) for unmigrated modules)
 - Multi-tenancy patterns
 - Testing approach

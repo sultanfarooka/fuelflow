@@ -192,4 +192,4 @@ Paid **monthly on milestone sign-off** (not lump-sum). First payment: `[TBD: on 
 
 **Udhaar** — credit sale (customer owes station). **Dip reading** — fuel level via dip stick (mm → liters). **OGRA** — sets official fuel prices. **PMG/HSD/HOBC** — petrol / diesel / hi-octane. **Shift** — sales period opened & closed with meter readings. **Shortage** — gap between expected and collected cash, often on nozzleman's ledger.
 
-*Engineering detail: `docs/MODULES.md`.*
+*Engineering detail: `docs/SRD.md`.*

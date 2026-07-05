@@ -1,759 +1,209 @@
 ---
 name: feature-discovery
-description: Intake step for a new module / feature / requirement before /feature-planning, plus a rediscovery mode that re-critiques an already-discovered feature for flow gaps, AC holes, missing tags, and ripple coverage. Loads docs/MODULES.md and docs/ProjectOverView.md, then either (a) takes a one-paragraph idea card and collaboratively refines it (who asked, measurable outcome, motivation link, subscription tier, domain tags) or (b) re-opens a recently discovered feature, walks a lifecycle/AC/tag/dependency critique matrix, and proposes additions. Decides whether to skip the registry (existing item, cross-cutting tooling) or write changes. Picks granularity (R / F / M), detects ripple effects, gauges and assigns the priority tier (P0–P3), implementation order, and dependencies — writing the Appendix C Priority Matrix row and updating the module ranking / Current Priorities when warranted — confirms with the user, then edits docs/MODULES.md and — when warranted — docs/ProjectOverView.md. Invoke with /feature-discovery (new) or /feature-discovery rediscover [id]. Hands back the new or modified ID(s) for /feature-planning.
-disable-model-invocation: true
+description: Classify a new feature/requirement ask against the Fuel Flow SRD. Determines whether the ask is a duplicate, a new R-row under an existing feature, a change to an existing R-row, a new feature in an existing module, a new module, or a conflict with existing requirements. ALSO detects cascading impacts — other features whose §7 Dependencies, §1 cross-references, §8 Audit emissions, or §9 API surface need updates because of this ask — and bundles all proposed edits into a single approval gate. After approval, applies every edit and updates the feature lifecycle in BOTH the feature file frontmatter AND the docs/SRD.md index row, for every affected feature. Use when the user describes a feature/requirement and asks where it fits, whether it already exists, conflicts with something, or what else needs to change because of it.
 ---
 
-# Feature Discovery — Fuel Flow
+# /discover-feature — SRD discovery & classification
 
-The intake skill that runs **before** `/feature-planning`. Two modes:
+Locate where a new ask belongs in the SRD before any code is written (CLAUDE.md Rule 1). Verdict-first, **never writes before user approval**. After classifying the primary ask, the skill also identifies **cascading impacts** — other features whose dependencies, cross-references, audit emissions, or API surface need updates — and bundles every proposed edit into a single approval block. When a requirement is added or changed, the feature lifecycle is reassessed and updated in **two places** (feature file frontmatter AND `docs/SRD.md` index column) for **every** affected feature. The module-level lifecycle in `SRD.md` is reassessed too.
 
-1. **New-idea mode** (default) — use when the user has an idea that
-   is not yet in `docs/MODULES.md`.
-2. **Rediscovery mode** — use when a feature was already added (often
-   recently via this same skill) and the user wants to re-critique
-   it: complete-flow gaps, AC holes, missing tags, unstated
-   dependencies, ripple effects on `Done` items.
+## When to invoke
 
-Manually invoked. Output is one (or two) edits to the working tree —
-never code, never a commit, never a PR.
+- User types `/discover-feature` (or `/discover`).
+- User describes a feature/requirement and asks "where does this belong in SRD?", "does this already exist?", "is this a duplicate?", "does this conflict with anything?".
+- You are about to start work on something not yet referenced in `docs/SRD.md` and need to decide whether to add an R-row, modify an R-row, add an F-file, or add a new module.
 
-This skill is a **refinement partner**, not a gate. The user shares a
-rough idea (or an existing ID); Claude helps shape or sharpen it by
-surfacing the signals a strong spec needs and proposing answers when
-the user is unsure. Claude does not block weak ideas — it improves
-them.
+## Reference docs
 
-Conventions are referenced from root [`CLAUDE.md`](../../../CLAUDE.md)
-Rules 1, 2, 6, 9 and [`docs/MODULES.md`](../../../docs/MODULES.md)
-Maintenance Conventions. They are never restated.
+- `docs/SRD.md` — module + feature index, **lifecycle column** (one of the two places lifecycle is recorded).
+- `docs/srd/README.md` — feature-file template (§§1–11), ID rules, lifecycle table, R-row statuses, "Changing or replacing a feature".
+- `docs/MODULES.md` — **read-only** legacy registry for unmigrated modules (M02–M15 except M16). Never add rows here.
+- `docs/CLAUDE.md` — transition rules for SRD vs MODULES.md.
+- Root `CLAUDE.md` — workflow Rule 1 (locate in SRD before any work).
 
-## What this skill is, and isn't
+## Phase 1 — Elicit
 
-- **Is:** intake and re-intake. Loads context, takes an idea card
-  *or* a target ID, refines/critiques it, classifies it, places or
-  amends it in `MODULES.md` (and, when warranted,
-  `ProjectOverView.md`).
-- **Isn't:** `feature-planning`. Stops at the registry. User runs
-  `/feature-planning <id>` next.
-- **Isn't:** a PR step. No commits, branches, or `gh`. Per root
-  Rules 1 + 2 the registry edits ship in the **same PR** as the
-  implementation — so the working-tree edit is the right hand-off.
-- **Isn't:** a lifecycle-flip step. Rediscovery never downgrades a
-  `Done` item to `Planned` because a gap was found — gaps become
-  new `RXX` rows or refinements, not status reversals.
+If the user's opening description is detailed enough to classify (mentions role + trigger + outcome), skip to Phase 2. Otherwise probe for whichever of these is missing:
 
-## Mode selection
+- **User role(s)** — Owner, Manager, Cashier, Customer, Platform.
+- **Trigger** — what action / screen / event starts the flow.
+- **Expected outcome** — what state changes, what the user sees.
+- **Data / external systems** — DB entities, SMS, email, OGRA, third-party.
+- **New ask vs. change to existing requirement** — the user's belief here drives Phase 4 routing.
 
-After Step 0 loads context, decide the mode:
+Use `AskUserQuestion` only if a clarification truly blocks classification.
 
-- **Explicit invocation** — if the user invoked
-  `/feature-discovery rediscover [id]` (or said
-  "rediscover M01-F09", "let's re-examine X", "audit the
-  flow of …"), go to **Procedure — rediscovery**.
-- **Default** — go to **Procedure — new idea**.
-- **Ambiguous** — ask one `AskUserQuestion` with two options:
-  "Start a new idea" vs "Rediscover an existing feature".
+## Phase 2 — Index scan (read-only)
 
-## Procedure — new idea
+Read `docs/SRD.md` and `docs/MODULES.md`. Pick **2–4 candidate modules** by keyword + semantic fit. State each candidate with a one-line "why" before scanning deeper.
 
-The skill walks 10 steps. Each step has a clear stop condition. Use
-`AskUserQuestion` for any question where the answer is finite
-(role / tier / scope / yes-no); use a numbered free-form prompt for
-narrative (title, business rule, AC text).
+## Phase 3 — Deep scan (parallel Explore subagents)
 
-### Step 0 — Load domain context
+Spawn one `Explore` subagent per shortlisted module **in parallel** (single message, multiple Agent tool calls).
 
-At the start of every run, read in full:
+For **migrated** modules (M01, M16, M17 today), brief each subagent to:
 
-- `docs/MODULES.md` — the registry. Every existing `MXX-FXX-RXX`,
-  every status, every Maintenance Convention. **Including the ranking
-  layer**, which this skill must keep current when it writes:
-  - the **"Priority & order"** reading guide (tier P0–P3 criteria +
-    the least-dependency ranking rule),
-  - the **Module Index** `Order` / `Priority` columns,
-  - the **`Priority & Implementation Order`** section (module ranking +
-    `Depends on`),
-  - **`Appendix C — Priority Matrix`** (every feature's `Order`, tier,
-    status, `Depends on`, ★ next-to-pick-up marker),
-  - **`Current Priorities`** (the Top-5 modules + ★ next item that
-    `/feature-planning` consumes).
-- `docs/ProjectOverView.md` — narrative source of truth for module
-  descriptions, user stories, business model, subscription tiers,
-  Pakistan-market context.
+1. Read the module `README.md` and every `FXX-*.md` in `docs/srd/<module-dir>/`.
+2. For each existing feature, report:
+   - **Overlap** — §1 Purpose / §3 Functional Requirement / §5 AC that already covers the ask. Cite `MXX-FXX[-RXX]` + the exact line.
+   - **Conflict** — any AC or R-row whose behavior contradicts the ask. Cite `MXX-FXX-RXX` + line.
+   - **Close fit** — feature this ask would most naturally extend.
+3. Report the feature's **current lifecycle** (frontmatter `Lifecycle:` value) and, if the ask modifies an existing R-row, the **current R-row status**.
+4. Best-fit placement: R-row under existing FXX (add or modify), new FXX, or no fit.
 
-These are reread on every invocation so the skill is always aware of
-the current state of the registry, the ranking, and the product story.
+For **unmigrated** candidate modules (in `MODULES.md` only), the subagent reads only the module's section in `MODULES.md` and returns the same shape — overlap, conflict, close fit — no per-feature lifecycle exists yet.
 
-### Step 1 — Idea card
+Breadth: **medium**. Pass the user's full ask verbatim.
 
-Ask the user to paste a one-paragraph idea card. Template (give them
-this exact prompt):
+## Phase 3.5 — Cascade scan (impact analysis)
 
-> Paste a short paragraph covering:
-> 1. **Problem** — what's broken or missing today?
-> 2. **Who is affected** — Owner / Manager / Nozzleman / Credit
->    customer / Platform admin / other?
-> 3. **Expected outcome** — what should be different after this ships?
-> 4. **Why now** — what triggered the idea (customer request, sales
->    deal, bug pattern, regulation, your own observation)?
+Once the primary target feature is known from Phase 3, run a **second pass** to find every other feature whose spec needs updating because of this ask. Spawn a parallel `Explore` subagent (or one per module if cascade scope is wide) briefed to find:
+
+| Impact category | What to look for | Example edit needed |
+|---|---|---|
+| **§7 Dependencies — inbound** | Features that list the primary target in their §7 Dependencies table with relation `depends on` / `extends` / `triggers`. | If primary's behavior changes, their dependency rationale may need updating; their lifecycle may revert (see Phase 6.5). |
+| **§7 Dependencies — outbound** | Features the primary target depends on. Does the new R-row introduce a new dependency? | Add a row to primary's §7. Add a reciprocal mention to the depended-on feature's §10 Open questions if it owes new behavior. |
+| **§1 / §6 cross-references** | Markdown links like `[MXX-FXX]` in §1 Purpose, §6 Design flow, or inline anywhere. | If primary's name or scope changes, referencing features need link/wording updates. |
+| **§8 Audit emissions** | New event types added → M17 (Audit & Compliance) catalogues them. | Add an entry under M17-F01 Audit Event Schema, or update M17's emission contract. |
+| **§9 API surface** | Endpoint paths that overlap or share contract with other features. | Update API description in primary; warn user if a non-primary feature references the same endpoint. |
+| **Module-wide NFRs** | If §4 of primary diverges from the module README's NFRs (rate limits, i18n, perf budgets). | Either bring primary in line or update the module README NFR section. |
+
+Each subagent returns a list of `(target feature, impact category, proposed edit, current lifecycle)` tuples. **No file writes.**
+
+If no cascades exist, state that explicitly in the verdict block ("No cascading impacts detected").
+
+## Phase 4 — Verdict
+
+Synthesize subagent reports into **one** of these verdicts with citations.
+
+| Verdict | Meaning | Scaffold action (Phase 6) |
+|---|---|---|
+| **Duplicate of `MXX-FXX[-RXX]`** | Existing line already covers the ask. | No file changes. Print decision recap. |
+| **Modify existing requirement `MXX-FXX-RXX`** | Ask **changes** an existing R-row's wording / behavior. | Edit R-row in place + §11 entry + **lifecycle/status flip (Phase 6.5)** + `Last updated` + **SRD.md index lifecycle column update**. |
+| **New requirement under `MXX-FXX`** | Adds an `R<next>` to an existing feature. | Append R-row to §3 + §11 entry + **lifecycle/status flip (Phase 6.5)** + `Last updated` + **SRD.md index lifecycle column update**. |
+| **New feature in `MXX`** (migrated module) | Warrants its own `FXX-<kebab>.md`. | Create new file from template + add row to `SRD.md` module table + add to module `README.md` feature index + reassess module-level lifecycle in `SRD.md`. |
+| **New feature in `MXX`** (unmigrated module) | Module needs SRD migration first per `docs/CLAUDE.md`. | Do **not** scaffold. Tell user to migrate `MXX` to SRD first, then re-run. |
+| **New module needed** | Rare. Doesn't fit any existing module. | Do **not** scaffold. Recommend the user confirm M-level addition per root `CLAUDE.md` Rule 1. |
+| **Conflicts with `MXX-FXX-RXX`** | Behaves contrary to existing locked AC. | Do **not** scaffold. Ask user how to resolve: supersede / re-scope / drop. |
+
+The verdict block **must include the proposed lifecycle/status flip** (computed via Phase 6.5 rules) AND **the full cascade impact list** (from Phase 3.5) so the user sees every change before approving. Example:
+
+> **Verdict: Modify existing requirement M01-F04-R03** — current R03 says "...". New ask requires "...".
+> **Current state:** feature lifecycle `design-approved`, R03 status `Planned`.
+> **Proposed primary edit:** rewrite R03 in `F04-login.md` §3; add §11 entry; bump `Last updated`.
+> **Proposed lifecycle flip:** `F04-login.md` frontmatter `design-approved` → `drafting`; `SRD.md` M01 table row `design-approved` → `drafting`. Design playground may need re-approval — warning.
 >
-> If you can only answer 1 or 2 of these, paste what you have — we'll
-> figure out the rest together.
+> **Cascading impacts (3):**
+> 1. **M01-F07 PIN Quick Login** — §7 Dependencies lists F04 as `depends on`. Wording update needed: "...new behavior...". Lifecycle currently `spec-locked` → revert to `drafting`. Update in `F07-pin-quick-login.md` + `SRD.md` index.
+> 2. **M01-F08 Device & Session Management** — §1 cross-references F04 ("after successful login via [F04]..."). Link still valid; text wording may need a tweak. Lifecycle unaffected (already `drafting`).
+> 3. **M17-F01 Audit Event Schema** — new audit event `login.<new-mode>` introduced. Add row to M17-F01 §3. M17-F01 currently `_not drafted_` — flip to `drafting`.
 
-Capture the paragraph verbatim. Do not paraphrase. Then parse it into
-structured fields (problem, affected role, outcome, trigger). Note
-which fields the paragraph already covered and which are blank.
+## Phase 5 — Approval gate (mandatory)
 
-### Step 2 — Overlap detection
+Approval is **one decision over the entire bundle** — primary edit + every cascade item + every lifecycle flip listed in the verdict block. Use `AskUserQuestion`:
 
-Match the candidate against:
+- **Approve full bundle and scaffold** — apply primary edit + all cascade edits + all lifecycle flips in one pass.
+- **Approve verdict only (no file changes)** — print the recap, stop.
+- **Approve partial bundle** — user names which cascade items to skip; the rest proceed. Use a follow-up `AskUserQuestion` (multi-select) listing each cascade item.
+- **Revise verdict — feedback follows** — return to Phase 4 after user input.
 
-- `docs/MODULES.md` rows — title and requirement text.
-- `docs/ProjectOverView.md` passages — narrative descriptions that may
-  not yet be in the registry.
-- `Out of Scope` items — explicitly rejected earlier work.
+**No file writes until an "Approve … and scaffold" option is chosen.**
 
-Sort the results:
+If the bundle includes a terminal lifecycle flip (`shipped` / `superseded` / `removed` on any affected feature), surface that as a separate confirmation **inside the same approval block** — never auto-flip terminals.
 
-- **Exact match** in `MODULES.md` → return the existing ID and stop
-  at step 3 (a).
-- **Out of Scope match** → call this out loudly: "this was explicitly
-  rejected as `<id>`; do you want to revive it?" If yes, treat as new
-  work, but require the user to state what has changed since rejection
-  (this becomes part of the Discovery note in step 8).
-- **Near match** — similar item. Ask: "is this the same as
-  `<existing-id>` or genuinely different?"
-- **`ProjectOverView`-only mention** — described in narrative but
-  never promoted to `MODULES.md`. Flag it explicitly: "this is in
-  `ProjectOverView.md` §X but has no `MXX-FXX-RXX`. Promoting now."
+## Phase 6 — Scaffold (only after approval)
 
-### Step 3 — Classify
+### Case A — Modify existing requirement `MXX-FXX-RXX`
 
-Pick one path:
+1. Edit the R-row text in §3 of the feature file. **Never renumber. Never reuse a deleted ID.**
+2. Append a §11 Change history entry: `- **<today YYYY-MM-DD>** — <one-line why>.`
+3. Bump `Last updated` in the frontmatter to today.
+4. **Apply Phase 6.5 lifecycle/status flip rules.** This updates the feature file frontmatter `Lifecycle:` AND the lifecycle column in `docs/SRD.md` AND, if necessary, the module-level lifecycle in `SRD.md`.
 
-(a) **Already exists** — stop. Tell the user the existing ID, its
-status, and to run `/feature-planning <existing-id>`. No edits.
+### Case B — New requirement under `MXX-FXX`
 
-(b) **Cross-cutting tooling / infra / repo-wide config** (per root
-Rule 1) — stop. Skip the registry. Tell the user:
+1. Append `R<next>` to §3 (next free slot — append-only). Status `Drafting` by default; Phase 6.5 may override.
+2. Append §11 entry with today's date and why.
+3. Bump `Last updated`.
+4. **Apply Phase 6.5 lifecycle/status flip rules** — same dual update (feature file + `SRD.md` index).
 
-> Tooling, not product surface. Branch as
-> `feat-tooling-<short-name>` and ship as `feat(tooling): …` (same
-> shape as `feat(tooling): graphify` and PR #3). No `MODULES.md`
-> edit.
+### Case C — New feature in migrated module `MXX`
 
-No edits.
+1. Create `docs/srd/<module-dir>/F<next>-<kebab>.md` using the template at `docs/srd/README.md` §"Feature file template" — all 11 sections in order, empty ones get `_None._`. Frontmatter: `Lifecycle: drafting`, `Last updated: <today>`, `Design: _Design pending — see §10._`.
+2. Edit `docs/SRD.md`: add the new feature row to the module's table with `Lifecycle: drafting`.
+3. Edit `docs/srd/<module-dir>/README.md`: add the feature to the module's feature index.
+4. **Reassess module-level lifecycle.** Per `docs/srd/README.md`: "At the module level the same vocabulary summarises every feature inside — `drafting` if ≥ 1 feature is still drafting, `shipped` when all are." Adding a `drafting` feature means a `shipped` module reverts to `drafting` in `SRD.md`. Update if needed.
 
-(c) **Product surface** — continue to step 4.
+### Case D — Duplicate / Conflict / Unmigrated-module / New-module
 
-### Step 4 — Refine and spec
+No file writes on the primary. Cascade items (if any) are still considered — for example, a "Duplicate" verdict might still surface that an existing cross-reference is stale. Apply approved cascade edits only; print a 3–5 line recap for the primary.
 
-This is where Claude earns its keep. The goal is a full spec with no
-blanks, built collaboratively with the user.
+### Case E — Cascade edits (applies after Cases A/B/C, in the same pass)
 
-**4a. Refinement probe — fill the value signals.** For each signal
-the idea card left blank or vague, ask one focused question. Where
-the user is unsure, Claude proposes the most plausible answer based
-on the loaded `ProjectOverView.md` motivations and existing
-`MODULES.md` patterns, and the user accepts or corrects:
+For every cascade item in the approved bundle, apply the proposed edit. Common shapes:
 
-- **Who specifically asked for this?** real customer / sales / support
-  ticket pattern / regulatory / "I imagined it from a problem I saw".
-- **Measurable outcome.** Minutes saved per shift, mistakes avoided,
-  rupees of fraud prevented, churn reduction, % of users affected.
-  Numbers are nice; concrete observable changes are required.
-- **Maps to which `ProjectOverView.md` motivation?** Multi-station
-  management / inventory / udhaar (credit customers) / shift ops /
-  reporting / subscription & billing / Pakistan-market context (PKR,
-  Urdu, +92 phone, JazzCash/Easypaisa) / platform/devops. If it maps
-  to none, say so explicitly — that is information, not a blocker.
-- **Cost of not building it.** Station can't operate / data lost /
-  billing fails (must build) → nice-to-have (defer-eligible).
-- **Could an existing item absorb this?** Second-look at near-matches
-  from step 2 before committing to a new row.
+- **§7 Dependencies edit** — `Edit` the dependent feature's §7 table row (or add a new one). Append §11 entry. Bump `Last updated`. Apply Phase 6.5 lifecycle rules if the change is substantive.
+- **§1 / §6 cross-reference text** — `Edit` the wording / link in place. §11 entry only if the change alters intent; pure link rename is a trivial edit (no §11 per `docs/srd/README.md` "Changing or replacing a feature" rules).
+- **§8 Audit emissions** — add a row to the target feature's §8 table. If a new event type is introduced, also `Edit` `docs/srd/M17-audit-and-compliance/F01-audit-event-schema-and-emission-contract.md` to register it. Each touched feature gets a §11 entry + `Last updated` bump.
+- **§9 API surface** — add/edit the row in the §9 table of the owning feature. §11 entry. Bump `Last updated`.
+- **Module-wide NFR change** — `Edit` the module's `README.md` NFR section. Bump module-level `Last updated`. Reassess module lifecycle in `SRD.md`.
 
-Capture answers verbatim. They become the **Discovery note** written
-in step 8.
+For **every cascade-affected feature**, after editing, reapply Phase 6.5: update `Lifecycle:` in both the feature file frontmatter AND its row in `docs/SRD.md`. Reassess module-level lifecycle in `SRD.md` if any feature's lifecycle reverted.
 
-**4b. Choose granularity (R / F / M).** Append-only — never reuse a
-retired number, never renumber existing IDs (Maintenance Convention
-#6). Read the registry to compute "next free":
+Cascade lifecycle reversion follows the same severity rules as the primary — wording-only edits to a cross-reference don't revert lifecycle; substantive §7/§8/§9 changes do.
 
-- **R (requirement)** — fits inside an existing `MXX-FXX`. Next free
-  `RXX` in that feature's requirements table. Intake: rule text,
-  one or more `- **ACx** Given… When… Then…` lines.
-- **F (feature)** — new feature inside an existing `MXX`. Next free
-  `FXX`. Intake: title, 1–2 line description, requirements table
-  (≥ 1 `RXX`), acceptance criteria, domain tags (step 4c).
-- **M (module)** — brand new module. **Rare** — flag and ask the
-  user to confirm. Next free `MXX` (≥ M12 today). Intake: title,
-  `**Purpose:**` line, Module Index row, ≥ 1 feature underneath
-  with ≥ 1 requirement, domain tags.
+## Phase 6.5 — Lifecycle / Status flip rules (Cases A & B only)
 
-**4c. Required domain tags.** Use `AskUserQuestion` with structured
-options for each tag. Required for new **F** and **M**; new **R**
-inherits its parent feature's tags unless the user overrides:
+A requirement change or addition reopens the spec to some degree. Apply these rules, **and always update lifecycle in two places** — the feature file frontmatter AND the lifecycle column for that feature's row in `docs/SRD.md`. If the module-level lifecycle in `SRD.md` is also affected (e.g. module was `shipped`, now has a `drafting` feature again), update that too.
 
-| Tag | Options | Why it matters |
-|---|---|---|
-| `tenant-scope` | per-station / per-organization / platform-global | EF global query filter, Owner-bypass behavior |
-| `tier` | Starter / Professional / Enterprise / All | M11-F06 gating (`SUB-010`), JSONB feature flags (M11-F01-R04) |
-| `capacity-impact` | max_stations / max_users / none | Triggers M11-F06-R02 / R03 review |
-| `locale` | PKR-only / Urdu-needed / locale-agnostic | M08-F05 i18n, Pakistan number format (Rs. 1,25,000), `+92` phone, JazzCash/Easypaisa |
-| `sensitive-action` | yes / no | If yes, auto-link to M01-F08 audit trail (`AUD-*`) |
-| `notification-trigger` | yes / no | If yes, link to M10-F01 event catalog |
-| `money-touch` | prices / credit / billing / margins / none | Auto-link to M05 / M06 / M11; multi-tenancy guard; audit |
-| `shift-lifecycle-touch` | open / close / mid-shift / none | M04-F03..F05 invariants (one open shift per station, opening meter ≥ last closing, variance threshold) |
+### Feature lifecycle reversion
 
-Render these as a one-line `**Tags:**` field in the new entry (step
-7 shows the exact layout). They are a contract with downstream
-skills (`feature-planning`, `feature-implementation`) — the planner
-knows what files to scaffold from the tag set alone.
-
-**4d. Domain-routed probe.** Based on the answers in 4c, ask one
-domain-specific follow-up:
-
-- `money-touch != none` → "PKR only? Audit-required? Affects credit
-  limits or `customer special rates` (M06-F05)?"
-- `shift-lifecycle-touch != none` → "Runs during an open shift or
-  between shifts? Affects variance calculation (M02-F05-R03)?"
-- `sensitive-action = yes` → "Confirm: this needs an `AUD-*` audit
-  log entry per M01-F08."
-- `notification-trigger = yes` → "Which `M10-F01` event ID, or new
-  event?"
-- `tier != All` → "Does this need a JSONB feature flag (M11-F01-R04)
-  for the gating check?"
-- `locale = Urdu-needed` → "Which i18n keys? Confirm M08-F05-R02
-  applies."
-
-### Step 5 — Side-effects check
-
-Two passes:
-
-**5a. Anti-pattern detection.** Block or flag:
-
-- Item is currently `Out of Scope` → confirm with user before
-  re-adding (already partially covered in step 2 if matched there).
-- Violates a stated invariant — e.g. "allow multiple open shifts per
-  station" contradicts `M04-F03-R01`. **Block.** Cite the rule, ask
-  the user to either reframe or explicitly retire the invariant
-  (which is a separate discovery).
-- Idea card paragraph is still purely "it would be nice if…" with
-  no `who asked` and no `measurable outcome` after step 4a — flag
-  this in the Discovery note (do not block; let the user proceed
-  with the gap recorded).
-
-**5b. Ripple effects on existing items.** For every `MXX-FXX-RXX`
-that may be affected, ask the user — do not auto-decide:
-
-- Does this new item *modify* an existing rule (tighten / supersede)?
-- Does it *depend on* an existing item being changed (new field on
-  an entity already `Done`)?
-- Does it *change a `Done` item's observable behavior*? → regression
-  risk; **flag loudly**.
-- Should `Current Priorities` change? If yes, propose a slot
-  (above/below specific existing priorities) and a one-line reason.
-  User accepts or moves it.
-
-List each affected ID with a one-line `<id>: <what changes>` note.
-Empty list is fine.
-
-**5c. Gauge priority, order & dependencies.** Every new entry must land
-in the ranking layer, not just the registry. Tier and order are a
-**re-rankable ordinal layered on top of the stable IDs** — they never
-renumber an `MXX/FXX/RXX` (Maintenance Convention #6). Reuse what you
-already collected (step 4a cost-of-not-building, step 4c tags, step 5b
-precursors) — do not re-interview.
-
-**Dependencies (`Depends on`).** From the step 5b precursor list, keep
-the prerequisites that are **not yet `Done`**. If all prerequisites are
-`Done` (or there are none), the item is **independent** → `—`.
-
-**Tier (P0–P3, P0 = highest).** Propose from the signals below, then
-confirm with one `AskUserQuestion` (4 options = P0/P1/P2/P3, each
-labelled with its `MODULES.md` criterion). Derivation:
-
-- **P0 Critical** — independent **and** in an access / billing /
-  platform-foundation domain that blocks revenue or other modules.
-- **P1 High** — core operational loop: `shift-lifecycle-touch ≠ none`,
-  or `money-touch ∈ {prices, credit, margins}`, or inventory / nozzle /
-  pricing / finance surface.
-- **P2 Medium** — needs operational data to already exist:
-  reporting / analytics, or `notification-trigger = yes`.
-- **P3 Low** — gated / optional add-on: `tier ∈ {Professional,
-  Enterprise}`, or a staff / lubricants-style standalone module.
-
-Most discoveries are P1–P3; reserve P0 for independent
-foundation/revenue/access work.
-
-**Order, by granularity:**
-
-- **R (requirement)** — no new order (Appendix C is per-feature).
-  Re-evaluate the **parent feature's** Appendix C row: a new `Planned`
-  R rolls the feature header up (so its Appendix C `Status` may move
-  `Done`→`In Progress`), and may change its `Depends on` and its ★.
-- **F (feature)** — new Appendix C row in the parent module's block.
-  `Order = <moduleOrder>.<n>`, inserted by dependency (independent →
-  earlier in the block; blocked → later) and **renumber only that
-  module's `.n` suffixes**. Module-level `Order`/`Priority` are
-  unchanged unless the user says the new feature changes the module's
-  standing.
-- **M (module)** — gauge the module `Order` by tier + least-dependency
-  rule (independent leads its tier; the most-blocked sinks), then
-  **re-rank**: insert at that slot and shift every later module's
-  `Order` +1 in the **Module Index** and the **`Priority &
-  Implementation Order`** table, add a new **Appendix C** block, and
-  re-prefix the `Order N.n` of every shifted block. Rare — already
-  gated by step 4b's M-level confirm. Stable `MXX` IDs never change.
-
-**★ next-to-pick-up & `Current Priorities`.** Decide whether the new
-item becomes its module's ★ (continue-if-`In Progress`, else the
-module's highest-priority independent `Planned` item). If the item's
-module is in the Top-5 by `Order` and the item becomes that module's ★,
-propose the matching `Current Priorities` edit and confirm with the
-user — never auto-move (same rule as step 5b).
-
-### Step 6 — Decide on `ProjectOverView.md`
-
-Apply this default; let the user override:
-
-- **New module (M-level)** → `ProjectOverView.md` **always** gets a
-  matching module section (purpose, primary user roles, user
-  stories, feature list).
-- **New feature (F-level)** → `ProjectOverView.md` **usually** gets
-  a feature paragraph or bullet under the parent module. Skip only
-  if the user confirms the feature is purely internal-mechanism.
-- **New requirement (R-level)** → `ProjectOverView.md` **rarely**
-  changes. Update only if user-visible behavior is introduced or a
-  documented business rule changes.
-- **Modifications to existing items** (from step 5b) that change
-  user-visible behavior → propose the matching
-  `ProjectOverView.md` edit alongside the `MODULES.md` change.
-
-If `ProjectOverView.md` has no existing section to host the new
-item, place the new section in the order the file already uses
-(domain grouping — read the file before placing). Do not guess.
-
-### Step 7 — Present proposed edits
-
-Show, diff-style, every line that will change, grouped by file.
-
-**For `docs/MODULES.md`,** new entries use this exact shape:
-
-```
-### MXX-FXX — <title>   [Status: Planned]
-
-> _Discovery (YYYY-MM-DD): <who asked> · <measurable outcome> ·
-> maps to ProjectOverView "<motivation>" · cost-of-not-building:
-> <one phrase>_
-
-**Tags:** tenant-scope=<…>; tier=<…>; capacity-impact=<…>;
-locale=<…>; sensitive-action=<…>; notification-trigger=<…>;
-money-touch=<…>; shift-lifecycle-touch=<…>
-
-<1–2 line description>
-
-**Requirements:**
-
-| ID | Requirement | Legacy | Status |
+| Current `Lifecycle:` | On **R-row added** | On **R-row changed** | Side effect to flag |
 |---|---|---|---|
-| MXX-FXX-R01 | … | — | Planned |
+| `drafting` | stay `drafting` | stay `drafting` | none |
+| `spec-locked` | → `drafting` (spec no longer frozen) | → `drafting` | none |
+| `design-approved` | → `drafting` | → `drafting` | Design playground file (`Design:` link in frontmatter) may need re-approval — warn user. |
+| `in-implementation` | stay `in-implementation` | stay `in-implementation` (impl continues; flip the R-row status — see below) | If the change invalidates merged code, recommend a follow-up PR. |
+| `shipped` | **Confirm with user.** Default: open a new feature (Case C) instead — `shipped` is terminal. Alternative: revert to `in-implementation` if user explicitly wants scope creep. | **Confirm with user.** Default recommendation: new feature with `supersedes:` linkage to this one, per `docs/srd/README.md` "Changing or replacing a feature" → "Wholesale replace". | Same. |
+| `superseded` / `removed` | **Do not edit.** Recommend a new feature in the same module. | Same. | Same. |
 
-**Acceptance Criteria:**
-- **AC1** Given … When … Then …
-```
+### R-row status flip
 
-A new **F** also gets its **Appendix C** row in the parent module's
-block (tier + order from step 5c):
-
-```
-| <moduleOrder>.<n> | MXX-FXX | <title> | <Pn> | Planned | <deps or —> | <★ if module's next> |
-```
-
-New requirement-only entries get the row + any new AC bullets, plus the
-parent feature's Appendix C row delta (step 5c). The `Discovery` and
-`Tags` lines are written **only on the parent feature/module**, not on
-individual `RXX` rows (R-level inherits tags — and its parent feature's
-tier — by convention).
-
-**Ranking-layer edits (from step 5c)** — always part of the diff:
-
-- **Appendix C — Priority Matrix** row(s):
-  - **F** → the new row in the parent module's block:
-    `| <moduleOrder>.<n> | MXX-FXX | <title> | <Pn> | Planned | <deps or —> | <★ or blank> |`,
-    plus the renumbered `.n` of any rows pushed down in that block.
-  - **R** → the parent feature's row delta (`Status` roll-up, `Depends
-    on`, ★) — no new row.
-  - **M** → the new Appendix C block (header `### Order N — MXX … · Pn`
-    + its feature rows) and the re-prefixed `Order N.n` of every shifted
-    block.
-- **Module Index** `Order` + `Priority` row (new **M** only) and the
-  `+1` re-rank of every shifted module row.
-- **`Priority & Implementation Order`** row (new **M** only) + the same
-  re-rank deltas, with the `Depends on (unmet)` value.
-- `**Last Updated:** YYYY-MM-DD` bump at the top of `MODULES.md`.
-- **`Current Priorities`** changes if step 5c said the item becomes a
-  Top-5 module's ★.
-
-Also include in the diff:
-
-- Row(s) being modified elsewhere (step 5b ripple effects), with
-  old → new values.
-
-**For `docs/ProjectOverView.md`** (only when step 6 said yes): the
-new section / paragraph / bullet, placed at the right location,
-plus any wording changes from step 5b's ripple analysis.
-
-Defaults for new rows:
-
-- Status → `Planned`.
-- Legacy → `—` unless the user explicitly maps to a legacy ID.
-- Acceptance criteria shape → `- **AC1** Given… When… Then…`.
-
-### Step 8 — Confirm
-
-Get explicit yes/no from the user on the whole proposed diff (both
-files, if `ProjectOverView.md` is part of it). If they want changes,
-loop back to step 4 / 5 / 6 / 7 as appropriate. **Do not write
-until confirmed.**
-
-### Step 9 — Apply and hand back
-
-Edit `docs/MODULES.md`, and `docs/ProjectOverView.md` if step 6 said
-yes. No commits, branches, or PRs.
-
-Tell the user:
-
-- The new ID(s).
-- What was modified elsewhere (both files, if applicable).
-- Next step: `/feature-planning <new-id>` — it cuts the
-  `feat-<new-id>-<short>` branch off `main` (carrying these
-  working-tree edits along) and writes
-  `docs/implementation/<new-id>.md` onto it.
-- Per root Rules 1 + 2: these doc edits ship in the **same PR** as
-  the implementation, not a follow-up.
-
-## Procedure — rediscovery
-
-Use when the user wants to re-critique an existing feature (often
-recently discovered via this same skill). The shape mirrors the
-new-idea procedure — Step 0 is shared, then it pivots from *intake*
-to *critique*, and rejoins the shared confirm/apply path.
-
-### R-Step 0 — Load domain context
-
-Same as new-idea Step 0. Read `docs/MODULES.md` and
-`docs/ProjectOverView.md` in full on every invocation.
-
-### R-Step 1 — Pick the target
-
-Grep `MODULES.md` for the Discovery blockquote pattern
-(`> _Discovery (`). List the matches as `MXX-FXX — <title>
-(YYYY-MM-DD)` most-recent-first. Present with `AskUserQuestion`
-when the count fits (≤ 4); otherwise show the list and ask the
-user to name an ID.
-
-If the user supplies an ID that has no Discovery note, accept it
-anyway — older items can still be critiqued. If `MODULES.md` has
-no Discovery blockquotes yet, prompt directly for an ID.
-
-### R-Step 2 — Reload the target in full
-
-Capture, in working memory:
-
-- The full feature section: description, requirements table, ACs,
-  `**Tags:**` line, Discovery blockquote.
-- Parent module's `**Purpose:**` line.
-- Every other `MXX-FXX-RXX` referenced from the feature (linked
-  precursors, refinements, ripple targets).
-- Matching `ProjectOverView.md` passages (search by title and key
-  terms from the description).
-
-State back to the user: "Rediscovering `<id> — <title>` discovered
-`<date>`. Tags: `<tags>`. `<n>` requirements, `<m>` ACs. Linked
-to: `<list of linked IDs>`. Ready to walk the critique matrix."
-
-### R-Step 3 — Run the critique matrix (5 dimensions)
-
-For each dimension, list **specific** observed gaps as one-line
-candidate findings. Do not propose fixes yet — separation of
-diagnosis from prescription keeps the user in control.
-
-**3a. Lifecycle / flow completeness.** Walk the feature's lifecycle
-and ask, for each stage, "is there an AC or a requirement?":
-
-- Initiation — who can perform it? (role check explicit?)
-- Trigger — time-based / user-action / system-event?
-- Input — format / range / uniqueness validation?
-- Persistence — atomic / multi-step? rollback path?
-- Idempotency — replay-safe? duplicate-submit protection?
-- Failure paths — invalid input / permission denied / quota
-  exceeded / external dependency down (e.g. SMS provider) /
-  partial success?
-- Compensating actions — rollback / retry / notify on failure?
-- Side effects — audit (M01-F08), notifications (M10-F01),
-  billing (M11), shift state (M04), variance (M02-F05)?
-- Exit / cleanup — what cancels the flow? what's the timeout?
-
-**3b. AC coverage matrix.** For each requirement row, check whether
-ACs cover: happy path / each input-validation failure / permission-
-denied per non-authorized role / multi-tenant boundary (Station A
-vs B; Owner vs scoped) / race conditions / trial & plan-limit
-edges / mobile-PWA / i18n (English + Urdu) and PKR formatting.
-
-**3c. Tag completeness.** Inspect the 8 tags
-(`tenant-scope`, `tier`, `capacity-impact`, `locale`,
-`sensitive-action`, `notification-trigger`, `money-touch`,
-`shift-lifecycle-touch`). Flag missing values; flag values that
-look wrong given the feature's behavior (e.g. `sensitive-action=no`
-on a feature that obviously touches auth or money).
-
-**3d. Dependencies & ripples.** Identify:
-
-- Precursor IDs the feature depends on but doesn't reference
-  (e.g. `M01-F09` depends on `M10-F03`).
-- `Done` items the feature modifies — refinement, extension, or
-  supersession (see R-Step 6 below for status-suffix classification).
-- Downstream features this enables that should now link back.
-- **Ranking drift** — does the feature's **Appendix C** row still hold
-  after these findings? Check the tier (still matches its P0–P3
-  criterion?), the `Depends on` value (a newly-found precursor may make
-  a once-independent item blocked, or a now-`Done` precursor may free
-  it), the ★ marker, and whether `Current Priorities` should move. Flag
-  each as a finding; the fix lands in R-Step 5.
-
-**3e. `ProjectOverView.md` alignment.** Does the narrative still
-match the registry after this feature? Are there passages that
-describe pre-feature behavior in present tense?
-
-### R-Step 4 — Findings table
-
-Render the gaps as a single table. Empty dimensions are fine.
-
-| # | Dimension | Issue (observed gap) | Proposed action |
-|---|---|---|---|
-| 1 | Lifecycle | OTP provider outage path unspecified | New R: fallback to email when verified, else max-3 retry with backoff |
-| 2 | AC coverage | No AC for max-attempts lockout (R04) | Add AC9: "Given OTP attempts > 3, When user retries, Then 15-min lockout returned" |
-| 3 | Dependency | M01-F08 audit not explicitly linked | Add inline `(see M01-F08)` to R09 description |
-| 4 | Tags | `notification-trigger=yes` but no `M10-F01` event ID | Add new `M10-F01-RXX` event for "phone-changed" + cross-link |
-
-For each row ask the user one of three answers:
-
-- **Accept** — incorporate into the proposed edit (next step).
-- **Defer** — record as a known gap in the Discovery blockquote
-  but don't change anything else now.
-- **Reject** — won't-fix; do not record.
-
-Use a numbered free-form prompt: "For each row reply with
-`<#> accept|defer|reject [optional note]`. Multiple lines OK."
-
-### R-Step 5 — Refine accepted findings
-
-Group accepted findings by the edit they imply:
-
-- **New `RXX` row(s)** — same shape and rules as new-idea
-  Step 7. Append-only numbering; pick next free `RXX` in the
-  feature's table.
-- **New `ACx` bullet(s)** on an existing requirement — append-only;
-  next free `ACx` after the last existing one.
-- **Inline cross-reference edits** on existing rows — narrowly
-  scoped wording add, no behavior change.
-- **Tag edits** on the `**Tags:**` line — add missing tags or
-  correct a clearly wrong value.
-- **Ranking-layer edits** (step 5c logic) — update the feature's
-  **Appendix C** row when a finding changes its tier, `Depends on`, or
-  ★; a new `Planned` `RXX` rolls the feature header up so its Appendix C
-  `Status` may move `Done`→`In Progress`. A new `FXX` from rediscovery
-  gets a full new Appendix C row (tier + `<moduleOrder>.<n>` order).
-  Propose any `Current Priorities` shift and confirm — never auto-move.
-
-If an accepted finding involves a `Done` item, apply the **Status
-rule for Done items** (next section). If it would affect
-`ProjectOverView.md`, draft that edit too (new-idea Step 6 logic
-applies).
-
-If `Current Priorities` should change (e.g. accepted findings
-escalate the work), propose a slot and ask the user to confirm —
-do not auto-move.
-
-### R-Step 6 — Status rule for Done items
-
-> **Done means shipped — forever. Suffix it `· refined by [ID]` / `· extended by [ID]` when the new row adds, `· superseded by [ID]` when the new row replaces. `· superseded` rolls up; the rest stay Done.**
-
-When an accepted finding touches a `Done` row, **write the
-cross-reference into the Status column as a suffix** — not into the
-requirement text. The same schema is canonicalised in
-[`docs/MODULES.md`](../../../docs/MODULES.md) Status Legend.
-
-| Case | Status value to write | Header roll-up effect |
+| Feature lifecycle (current) | New R-row status | Changed R-row status flip |
 |---|---|---|
-| Feature header (e.g. `M01-F01`) | — | Rolls up from its row statuses; never edit the header directly. |
-| Existing `Done` row that is *refined* (narrowed / clarified by `[RYY]`; original rule still holds) | `Done · refined by [MXX-FXX-RYY](#…)` | Counts as **Done**. Header stays Done. |
-| Existing `Done` row that is *extended* (new branches / options added by `[RYY]`; original rule still holds) | `Done · extended by [MXX-FXX-RYY](#…)` | Counts as **Done**. Header stays Done. |
-| Existing `Done` row that is *superseded* (original behavior replaced; row is reference-only) | `Done · superseded by [MXX-FXX-RYY](#…)` | Counts as **In Progress**. Header rolls up. |
-| New `RYY` row added through rediscovery | Status `Planned` (full new row) | Counts as **Planned**. Header rolls up. |
+| `drafting` (or just reverted to it) | `Drafting` | `Drafting` |
+| `in-implementation` | `Planned` | Was `Done` → flip to `Planned` (impl invalidated). Was `In Progress` → stay `In Progress` + warn user impl needs review. Was `Planned` → stay `Planned`. Was `Removed` → don't touch removed rows. |
+| `shipped` | per user confirmation in lifecycle table above | per user confirmation |
 
-Whenever a header rolls up (a new `Planned` row under a `Done` feature),
-**sync the feature's Appendix C `Status`** to the rolled-up value
-(`Done`→`In Progress`) and re-check its ★ — the matrix must agree with
-the header.
+### Two-place lifecycle update (ALWAYS do both)
 
-**The decision test — refine/extended vs superseded.** Ask, for the
-finding at hand:
+When the feature lifecycle changes:
 
-> *Could this missing piece have been written when the original
-> feature shipped, with the knowledge available at that time?*
+1. **Feature file** — edit the `Lifecycle:` row in the frontmatter table at the top of `docs/srd/<module-dir>/FXX-*.md`.
+2. **SRD index** — edit the lifecycle column in the feature's row in `docs/SRD.md` under the module's table.
 
-- **No** → genuinely new context introduced by a later feature (a
-  new failure mode, a new dependency, a new locale). The original
-  was complete-for-its-time. Use **`· refined by`** (narrows /
-  clarifies) or **`· extended by`** (adds branches).
-- **Yes** → the original was wrong or incomplete by its own
-  standards. Use **`· superseded by`** — the row is no longer
-  authoritative, and the feature header rolls up.
+If the module-level lifecycle in `SRD.md` is now stale (e.g. all features were `shipped` but one just reverted to `drafting`), update the **`Lifecycle:`** value on the module's heading line in `SRD.md` too. Apply the same rule symbolically: module lifecycle = the "earliest" lifecycle present across its features (`drafting` < `spec-locked` < `design-approved` < `in-implementation` < `shipped`).
 
-If unclear, ask the user: "After this new row ships, does the old
-rule still hold as written, or is it gone?"
+**Terminal flips (`shipped` → anything, `superseded` / `removed` → anything) ALWAYS require explicit user confirmation via `AskUserQuestion`** — never auto-flip.
 
-**Worked example.** During M01-F09 rediscovery, finding #17 adds
-"platform absorbs signup SMS cost" as a new R-row on M11-F02
-(Trial Period, currently `Done`). Apply the test: could M11-F02
-have written this when it shipped? No — signup SMS didn't exist
-until M01-F09 introduced it. So the new R is `Planned`, the
-existing M11-F02 R-rows stay plain `Done`, and the M11-F02 header
-rolls up to `In Progress` automatically (because of the new
-`Planned` child). No suffix needed on the existing rows.
+## Phase 7 — Handoff
 
-**Anti-example.** A finding that says "M01-F01 AC1 should return
-202 instead of 409 to avoid enumeration" *would* be a supersession
-of M01-F01-R01: anti-enumeration was achievable when the feature
-shipped (well-known web pattern). Status would become
-`Done · superseded by [the new R-row]`, and M01-F01's header rolls
-up.
+After writing, print:
 
-Confirm the classification with the user for every Done-touching
-finding before drafting the edit.
+1. **Files-changed table** — every file touched (primary + cascade), with a one-line summary per file (what changed, lifecycle before → after).
+2. **Suggested branch name** per root `CLAUDE.md` Rule 4: `feat-<id-lowercase-kebab>-<short-name>` (e.g. `feat-m01-f04-r12-rate-limit-per-ip`).
+3. **Reminder:** flip lifecycle to `in-implementation` in the PR that starts the implementation (same PR — never a follow-up). The cascaded features ride along in the same PR — never split them off.
 
-### R-Step 7 — Rediscovery log line
+Stop. The skill does not create branches, run `git`, or open PRs.
 
-Append a one-line rediscovery entry to the feature's Discovery
-blockquote so the in-file audit trail survives:
+## Guard-rails (non-negotiable)
 
-```
-> _Discovery (2026-05-19): … original note …_
-> _Rediscovered 2026-05-23: added R11–R13 (provider outage,
-> SIM-swap audit, recovery channel exhaust); refined R03 with
-> AC9; deferred 1 finding (quiet-hours OTP suppression)._
-```
-
-One line per rediscovery pass. Today's date from system context.
-
-### R-Step 8 — Present, confirm, apply
-
-Reuse new-idea Steps 7 → 8 → 9 verbatim: render the full diff
-(both files when applicable), get explicit yes/no, write the
-edits. Hand back the new/modified IDs and remind the user that
-these working-tree edits ship in the same PR as the
-implementation (root Rules 1 + 2).
-
-If the user runs rediscovery and accepts zero findings, the
-correct outcome is **no edits** — tell them the feature looks
-sound and exit cleanly.
-
-## Boundaries
-
-- Never opens a PR, never commits, never creates a branch. Edits sit
-  in the working tree for the implementation PR to pick up.
-- Never adds a row for cross-cutting tooling — ships as
-  `feat-tooling-<name>` with no registry edit.
-- Never reuses or renumbers a retired ID (Maintenance Convention #6).
-  Tier and `Order` are a separate **re-rankable** ordinal layered on
-  top of the IDs — re-ranking the `Order` sequence (e.g. when inserting
-  a new module) is allowed and expected; renaming an `MXX/FXX/RXX` is
-  not.
-- Never edits a feature `###` heading. Priority/tier/order live in the
-  **Module Index**, the **`Priority & Implementation Order`** section,
-  and **`Appendix C`** — never appended to a heading (that would break
-  the cross-reference anchors). The skill must keep these ranking tables
-  in sync with every row it adds.
-- Never flips status of existing items as a side effect of new-idea
-  intake — discovery is intake, not lifecycle. The status changes
-  this skill is allowed to write are (a) appending a `· refined by`
-  / `· extended by` / `· superseded by` suffix on an existing `Done`
-  row per rediscovery R-Step 6 and (b) initial `Planned` for brand-
-  new rows. All other status flips happen in `feature-implementation`
-  and the shipping PR (root Rule 2).
-- Never downgrades a `Done` row to plain `In Progress` or `Planned`.
-  When a `Done` row needs to surface follow-up work, suffix it
-  (`Done · refined/extended/superseded by [ID]`) — never strip the
-  `Done`. What shipped, shipped.
-- Never edits a feature header's status directly. Headers roll up
-  from row statuses per the rule in
-  [`docs/MODULES.md`](../../../docs/MODULES.md) Status Legend.
-- Never deletes a row. `Out of Scope` is how items are retired.
-- Never edits scoped `CLAUDE.md` files. `ProjectOverView.md` is the
-  only other file this skill may edit, and only when step 6 (new
-  idea) or R-Step 5 (rediscovery) warrants it.
-- Never edits `docs/implementation/<id>.md`. That belongs to
-  `feature-planning`.
-- Never edits `docs/CHANGELOG.md`. CHANGELOG entries are added in
-  the shipping PR per `docs/CLAUDE.md`, not at discovery.
-- Never refuses an idea (or a rediscovery finding) on the user's
-  behalf. If a value signal is missing, the skill helps the user
-  articulate it; if it remains missing, the gap is **recorded**
-  (in the Discovery note for new ideas; as a `Defer` row in the
-  Findings table for rediscovery) and the user proceeds.
-
-## Conventions referenced (not redefined)
-
-- ID format: `MXX-FXX-RXX`, three-tier hierarchical, append-only.
-- Status legend: `Planned` / `In Progress` / `Done` / `Done · refined by [ID]` / `Done · extended by [ID]` / `Done · superseded by [ID]` / `Out of Scope` — full schema and roll-up rule in [`docs/MODULES.md`](../../../docs/MODULES.md) Status Legend.
-- Priority/order ranking: tiers `P0 Critical` / `P1 High` / `P2 Medium` / `P3 Low` (P0 = highest), the module `Order`, the `<moduleOrder>.<n>` feature order, the `Depends on` independence rule, and the ★ next-to-pick-up marker — all defined in [`docs/MODULES.md`](../../../docs/MODULES.md) "Priority & order" guide, `Priority & Implementation Order`, and `Appendix C — Priority Matrix`. This skill assigns them; it never redefines them here.
-- Acceptance criteria are the test plan (Maintenance Convention #5),
-  shape: `- **AC1** Given… When… Then…`.
-- Status flip ships in the same PR as the code (root Rule 2).
-- `MODULES.md` edits and the implementation ship in one PR (root
-  Rule 1).
-- Cross-cutting tooling skips the ID (root Rule 1, second paragraph).
-- `ProjectOverView.md` is the source of truth for module
-  descriptions, user stories, and feature specs
-  (`docs/CLAUDE.md` "What Goes Where").
-- Pakistan-market defaults — currency PKR, language English + Urdu,
-  phone `+92XXXXXXXXXX`, payment methods include JazzCash and
-  Easypaisa — live in M08-F05 and M11-F03 respectively.
-
-## How this slots into the existing pipeline
-
-```
-User has a new idea (paragraph)       User wants to re-critique an existing feature
-       │                                          │
-       ▼                                          ▼
-/feature-discovery                       /feature-discovery rediscover [id]
-       │ (loads MODULES.md +                      │ (loads MODULES.md +
-       │  ProjectOverView.md,                     │  ProjectOverView.md,
-       │  refines with user)                      │  walks 5-dimension critique)
-       │                                          │
-       ├─ already exists? → stop, return ID       ├─ zero findings? → stop, no edits
-       ├─ cross-cutting?  → stop, "feat-tooling-…"├─ findings accepted → edits MODULES.md
-       └─ new R / F / M  → edits MODULES.md       │   (+ ProjectOverView.md when warranted)
-                          (+ ProjectOverView.md   │   appends Rediscovered log line
-                          when warranted),        │   applies Done-row status rule
-                          returns new ID          │   returns new/modified IDs
-                                    │             │
-                                    └─────┬───────┘
-                                          ▼
-                                  /feature-planning <id>
-                                          │
-                                          ▼
-                                  /feature-implementation
-                                          │
-                                          ▼
-                                  /pr-workflow
-                                          │
-                                          ▼
-                                  One PR, all doc edits + impl in same diff
-```
-
-Each step has its own user-confirmation gate; nothing chains
-automatically.
+- **Read-only until approval.** No Edit / Write before Phase 5 returns "Approve and scaffold".
+- **Never modify `MODULES.md`.** It's frozen — migrate the module to SRD first per `docs/CLAUDE.md`.
+- **Never reuse a deleted `RXX` or `FXX` slot.** Removed rows keep their slot forever with status `Removed`.
+- **Cross-feature references use full relative paths**, e.g. `[M01-F04](../M01-identity-and-authentication/F04-login.md)`.
+- **Lifecycle updates always happen in two places** — feature file frontmatter AND `SRD.md` index. Plus the module-level lifecycle in `SRD.md` when needed. **Apply to every cascade-affected feature**, not just the primary.
+- **Cascade analysis is mandatory** — never skip Phase 3.5. If no cascades exist, say so explicitly in the verdict.
+- **All cascade edits land in the same PR** as the primary edit — never as follow-ups.
+- **Terminal lifecycle flips (`shipped` / `superseded` / `removed`) require explicit user confirmation** — for primary AND cascade items.
+- **No `git` operations.**
