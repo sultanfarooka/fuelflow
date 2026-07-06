@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Lifecycle** | `drafting` |
+| **Lifecycle** | `spec-locked` |
 | **Design** | [`F02-phone-otp-verification.tsx`](../../../fuel-flow-web/src/design/screens/M01/F02-phone-otp-verification.tsx) |
 | **Last updated** | 2026-07-01 |
 
