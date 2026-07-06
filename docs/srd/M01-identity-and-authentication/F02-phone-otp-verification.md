@@ -4,7 +4,7 @@
 |---|---|
 | **Lifecycle** | `drafting` |
 | **Design** | [`F02-phone-otp-verification.tsx`](../../../fuel-flow-web/src/design/screens/M01/F02-phone-otp-verification.tsx) |
-| **Last updated** | 2026-06-27 |
+| **Last updated** | 2026-07-01 |
 
 ## 1. Purpose
 
@@ -110,6 +110,7 @@ _None._ All initial open questions resolved 2026-06-27 — see section 11.
 
 ## 11. Change history
 
+- **2026-07-01** — Daily-cap window boundary clarified during F02 planning. Codified as a module-wide NFR in [M01 README](./README.md) (not an F02-specific R-row) — the daily cap is a calendar day aligned to Asia/Karachi, resetting at 00:00 PKT. Inherited by every M01 feature that references a daily cap (F01, F02, F03, F06, F09). See `docs/implementation/M01-F02/plan.md` OQ-6 for the discovery context.
 - **2026-06-27** — Initial draft. Carries forward M01-F09-R03 (SMS OTP, blocking login until verified), R04 (6 digits, 5-min TTL, 3 attempts, 60 s resend), R10 (platform SMS sender pre-onboarding), R12 (rate limits) from MODULES.md. Splits from F01 to make OTP entry a first-class feature with its own audit emissions and design surface.
 - **2026-06-27** — **OQ1 resolved →** idempotent 200 with `alreadyVerified=true` flag. AC8 rewritten; server short-circuits before OTP validation when user is already verified; new `auth.otp.already_verified` audit event added in §8.
 - **2026-06-27** — **OQ2 resolved →** SMS body = plaintext code only, no deep link. Added R11.

@@ -2,7 +2,7 @@
 id: M01
 title: Identity & Authentication
 lifecycle: drafting
-last-updated: 2026-06-28
+last-updated: 2026-07-01
 ---
 
 # M01 — Identity & Authentication
@@ -33,7 +33,7 @@ Apply to every M01 feature unless overridden in §4 of the feature file.
 | Credentials at rest | Passwords bcrypt cost ≥ 12. OTPs SHA-256 + pepper. Refresh tokens hashed. |
 | Transport | HTTPS only. Cookies `HttpOnly`, `Secure`, `SameSite=Lax`. |
 | Performance | p95 < 300 ms excluding outbound SMS / email dispatch. |
-| Rate limiting | Per-IP sliding window + per-phone daily cap on every auth endpoint. Default: 10 OTP/phone/day, 1 resend / 60 s. |
+| Rate limiting | Per-IP sliding window + per-phone daily cap on every auth endpoint. Default: 10 OTP/phone/day, 1 resend / 60 s. **Daily-cap window is a calendar day aligned to Asia/Karachi (PKT, UTC+5); resets at 00:00 PKT.** |
 | Accessibility | WCAG 2.1 AA. Focus management on multi-step flows. OTP boxes one accessible group. |
 | i18n | All strings `en` + `ur`. RTL when `<html dir="rtl">`. |
 | Error messages | No internal leaks. Same shape for "bad credentials" regardless of user existence. |
