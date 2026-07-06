@@ -48,6 +48,83 @@ Cross-cutting infra work (validators, hooks, background jobs, migrations, audit 
 
 ## Phase A — Main thread
 
+### Step 0 — Load the plan (if it exists)
+
+Before spawning the design agent, check for the planning artefact at
+`docs/implementation/<MXX-FXX>/plan.md` (produced by the `/plan-feature` skill).
+
+**If plan.md EXISTS** — first perform a **staleness check**:
+
+- Read `plan_last_updated:` from plan.md's YAML frontmatter.
+- Read `**Last updated**` from the SRD spec's header table (or `Last Updated` from
+  `docs/MODULES.md` for unmigrated modules).
+- If SRD spec date > plan date, the plan is potentially stale. Ask the user via
+  `AskUserQuestion`:
+    - **Refresh the plan** (Recommended) — invokes `/plan-feature MXX-FXX --refresh`,
+      which reads the updated SRD and updates plan.md before proceeding
+    - **Continue anyway** — plan is fine as-is; SRD change was cosmetic
+    - **Cancel**
+
+If the plan is current OR the user opted "continue anyway", proceed with extraction:
+
+- **Screens table** — pass to the design agent as the authoritative screen list. The agent
+  MUST generate exactly these screens; not fewer, not more. Deviations from the plan
+  require the user to first re-run `/plan-feature` to update it.
+- **AC → surface mapping** — the agent uses this to know which ACs must be visible
+  somewhere in the design. Backend-only ACs (marked with the flag) are automatically
+  moved to the "Not designable" list without asking.
+- **Open questions** — if the plan lists unresolved `OQ-N:` items with no answer, surface
+  them to the user via `AskUserQuestion` BEFORE spawning the agent. This is the same
+  role as the agent's CLARIFY block, but resolved upfront and once — the agent doesn't
+  re-ask what the plan already asked.
+- **User journey** — pass to the agent as context so the copy on the CTA can name the
+  next step correctly (e.g. "Continue to phone verification" points to the M01-F02
+  screen because the journey names it).
+- **Cross-feature dependencies** — surface to the user if any dependency is `drafting`
+  or missing; ask whether to proceed (design may need to change once the dependency is
+  spec'd).
+
+Include the plan.md path in the agent prompt as `{PLAN_PATH}` and instruct the agent to
+read it as part of its context batch.
+
+**If plan.md is MISSING** — warn the user via `AskUserQuestion`:
+
+- **Recommended: run `/plan-feature` first, then re-run this command.** This surfaces
+  scope and open questions before burning tokens on generation.
+- **Continue anyway** — the agent will infer screens from the SRD spec. Works, but the
+  agent may generate a screen the user didn't want, or miss one. More iteration cycles.
+- **Cancel.**
+
+If user picks "continue anyway", proceed without a plan. Note the absence in the final
+summary so it's visible in review.
+
+### Backpressure — escalation to SRD from the design agent
+
+The design agent may discover during context-reading that the plan or SRD is inconsistent
+(e.g. spec references an audit event that doesn't exist in M17, or requires a screen for an
+AC that has no visible surface possible). Instead of hallucinating, the agent MUST emit an
+`ESCALATE_TO_SRD:` block:
+
+```
+ESCALATE_TO_SRD:
+Feature: MXX-FXX
+Reason: <what's inconsistent — plan vs SRD, SRD vs another feature, missing detail>
+Suggested action: <re-run /plan-feature, invoke /feature-discovery, edit spec directly>
+State: <what phase you were in — desktop / tablet / mobile — so we can resume>
+```
+
+Main thread handles this exactly like `/plan-feature`'s escalation:
+
+1. Saves phase progress to `docs/implementation/<MXX-FXX>/.design-in-progress.md`.
+2. Surfaces the escalation to the user.
+3. On approval, either invokes `/plan-feature MXX-FXX --refresh` or `/feature-discovery`
+   with the reason.
+4. After SRD (and possibly plan) is updated, offers to resume the current phase or restart
+   from Phase 0.
+
+Do NOT let the design agent invent facts to work around a spec bug. Escalation is cheaper
+than shipping a wrong design.
+
 ### Step 1 — Resolve the feature ID
 
 The user invoked `/design-feature $ARGUMENTS`.
@@ -118,6 +195,16 @@ CONTEXT TO READ (parallel batch)
    `M{XX}-F{XX}` if the SRD file doesn't exist AND the module is listed under "Unmigrated" in
    `docs/SRD.md`. If neither exists, return: `BLOCKED: feature {id} has no SRD or MODULES.md entry`.
 2. Module README at `docs/srd/M{XX}-*/README.md` if it exists.
+2a. **Plan file** at `{PLAN_PATH}` if it exists (main thread will substitute the path or
+   "none"). When a plan exists, it is the AUTHORITATIVE scope:
+     - Generate exactly the screens listed in the plan's Screens table — no additions,
+       no omissions.
+     - Use the AC → surface mapping to know what must be visible. Backend-only ACs are
+       already flagged; list them in "Not designable" without further analysis.
+     - Any open questions in the plan have already been resolved by the main thread
+       before spawning you — treat them as answered.
+     - The user journey in the plan tells you how the CTA should name the next step.
+   If the plan is "none", fall back to inferring screens from the spec (relaxed mode).
 3. `fuel-flow-web/CLAUDE.md` — stack, breakpoints, theme tokens, RTL rules.
 4. `fuel-flow-web/src/routes/CLAUDE.md` — role/route conventions for this feature.
 5. `fuel-flow-web/src/components/CLAUDE.md` — Field system, Dialog/Sonner patterns.
