@@ -113,9 +113,10 @@ export const Stepper = ({
                 : isDone
                   ? "var(--foreground)"
                   : "var(--muted)",
-              color:
-                isActive || isDone
-                  ? "var(--primary-foreground)"
+              color: isActive
+                ? "var(--primary-foreground)"
+                : isDone
+                  ? "var(--background)"
                   : "var(--muted-foreground)",
             }}
             transition={{ duration: 0.25, ease: EASE_OUT_QUART }}
