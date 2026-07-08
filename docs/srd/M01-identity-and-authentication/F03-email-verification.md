@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Lifecycle** | `drafting` |
-| **Design** | [`F03-email-verification.tsx`](../../../fuel-flow-web/src/design/screens/M01/F03-email-verification.tsx) |
-| **Last updated** | 2026-06-27 |
+| **Lifecycle** | `design-approved` |
+| **Design** | [`M01-F03/`](../../../fuel-flow-web/src/designs/M01-F03/) — [`check-inbox.tsx`](../../../fuel-flow-web/src/designs/M01-F03/check-inbox.tsx), [`verify-result.tsx`](../../../fuel-flow-web/src/designs/M01-F03/verify-result.tsx) |
+| **Last updated** | 2026-07-08 |
 
 ## 1. Purpose
 
@@ -110,3 +110,4 @@ _None._ All initial open questions resolved 2026-06-27 — see section 11.
 - **2026-06-27** — **OQ1 resolved →** always show "verified — sign in" screen; no auto-sign-in. Keeps server logic stateless (no session detection); matches the cross-device case naturally. AC1 updated.
 - **2026-06-27** — **OQ2 resolved →** same as OQ1 decision — verify succeeds, SPA shows success + login CTA regardless of device. No separate handling needed.
 - **2026-06-27** — **OQ3 resolved →** no security-notification email. User just clicked the link themselves; a second email is noise with no meaningful security gain.
+- **2026-07-08** — Designs shipped (`drafting` → `design-approved`). Two screens — `check-inbox.tsx` (3 states) + `verify-result.tsx` (4 states) — across desktop, tablet, mobile viewports. Routed here directly from module plan §8 (no feature plan needed; mirrors F02 pattern with email channel). During desktop review the email address was un-masked so the user sees the full recipient in the "we've sent a link to X" copy.
