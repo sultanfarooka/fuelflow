@@ -83,10 +83,10 @@ last_updated: YYYY-MM-DD
 ## Features spanned
 | Order | Feature | Plan |
 |---|---|---|
-| 1 | M01-F01 Registration | [plan](../implementation/M01-F01/plan.md) |
-| 2 | M01-F02 Phone OTP | [plan](../implementation/M01-F02/plan.md) |
-| 3 | M01-F03 Email verify | [plan](../implementation/M01-F03/plan.md) |
-| 4 | M12-F01 Onboarding | [plan](../implementation/M12-F01/plan.md) |
+| 1 | M01-F01 Registration | [plan](../plans/M01/M01-F01.md) |
+| 2 | M01-F02 Phone OTP | [plan](../plans/M01/M01-F02.md) |
+| 3 | M01-F03 Email verify | [plan](../plans/M01/M01-F03.md) |
+| 4 | M12-F01 Onboarding | [plan](../plans/M12/M12-F01.md) |
 
 ## Steps
 | # | Step | Feature | Assertion |

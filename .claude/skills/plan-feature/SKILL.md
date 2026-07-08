@@ -1,11 +1,11 @@
 ---
 name: plan-feature
-description: Draft the implementation plan for one SRD feature (MXX-FXX[-RXX]) before design or code. Produces `docs/implementation/<MXX-FXX>/plan.md` with the screen inventory, user journeys, backend flow, AC → surface mapping, open questions, test strategy, analytics events, and cross-feature dependencies. Invokes `/feature-discovery` on the fly when the planning discussion surfaces a new requirement that needs to be classified against the SRD. Its output is the canonical input for `/design-feature` (which reads plan.md to scope screen generation) and for `/feature-implementation`. Use whenever the user picks up a feature, before spawning designs or writing code.
+description: Draft the implementation plan for one SRD feature (MXX-FXX[-RXX]) before design or code. Produces `docs/plans/<MXX>/<MXX-FXX>.md` with the screen inventory, user journeys, backend flow, AC → surface mapping, open questions, test strategy, analytics events, and cross-feature dependencies. Invokes `/feature-discovery` on the fly when the planning discussion surfaces a new requirement that needs to be classified against the SRD. Its output is the canonical input for `/design-feature` (which reads plan.md to scope screen generation) and for `/feature-implementation`. Use whenever the user picks up a feature, before spawning designs or writing code.
 ---
 
 # /plan-feature — feature implementation plan
 
-Produces a durable planning artefact at `docs/implementation/<MXX-FXX>/plan.md` that answers:
+Produces a durable planning artefact at `docs/plans/<MXX>/<MXX-FXX>.md` that answers:
 
 - **Which screens** does this feature own?
 - **How does the user move through them?** (state machine / journey)
@@ -44,16 +44,27 @@ The skill runs in **four phases**, gated by the user at each hand-off.
    - **Preferred:** glob `docs/srd/M{XX}-*/F{XX}-*.md`.
    - **Fallback:** `docs/MODULES.md` section `M{XX}-F{XX}` if the SRD file doesn't exist AND the module is listed under "Unmigrated" in `docs/SRD.md`.
    - Neither → return `BLOCKED: feature MXX-FXX has no SRD or MODULES.md entry — run /feature-discovery first`.
-3. Read in parallel:
+3. **Check for module plan** — read `docs/plans/<MXX>/module-plan.md` if it exists. This is the AI Workflow synthesis artefact (see [`docs/AI-WORKFLOW.md`](../../../docs/AI-WORKFLOW.md)).
+   - **If module-plan.md exists:**
+     - Check §8 "Per-feature planning necessity" table for this feature's row.
+     - **If §8 says "No" for this feature** → return `SKIP: covered by module plan §8 — proceed directly to /design-feature MXX-FXX`. Print a one-line reason from the §8 "Why" column so the user understands the routing decision. Do NOT write a plan file.
+     - **If §8 says "Yes"** → continue, and treat module-plan as authoritative for shared model (§2), shared shells (§3), events (§4), auth (§5), and cross-feature deps (§1). The feature plan inherits these and does NOT re-declare them.
+     - **If §8 is silent** on this feature (module plan predates the feature) → warn the user via `AskUserQuestion`: "Module plan doesn't route this feature. Options: (a) Continue with full feature plan, (b) Update module plan §8 first via `/plan-module MXX --refresh`, (c) Cancel."
+     - **Staleness check** — compare `plan_last_updated:` in module-plan frontmatter against the SRD spec's `Last updated`. If SRD is newer, warn: "Module plan may be stale — consider `/plan-module MXX --refresh` before continuing."
+   - **If module-plan.md is missing:** proceed in relaxed mode (per-feature planning without module synthesis). If the module has ≥3 features that share entities or events, note in the final summary that `/plan-module MXX` would prevent drift.
+4. Read in parallel:
    - Spec file (mandatory)
    - `docs/srd/M{XX}-*/README.md` module context (if it exists)
+   - `docs/plans/<MXX>/module-plan.md` (already located in step 3, if present)
    - Any linked features cited in the spec's §7 Dependencies / §1 cross-references
-   - Existing `docs/implementation/<MXX-FXX>/` folder — if `plan.md` already exists, ask before overwriting (offer: refresh, iterate, cancel)
-4. State the resolved ID + the SRD path used in one sentence.
+   - Existing `docs/plans/<MXX>/<MXX-FXX>.md` — if it already exists, ask before overwriting (offer: refresh, iterate, cancel)
+5. State the resolved ID + the SRD path used + module-plan status (used / absent / stale) in one sentence.
 
 ### Phase B — Draft the plan structure
 
-Extract the following from the spec — none require the user yet:
+Extract the following from the spec — none require the user yet.
+
+**When `module-plan.md` exists**, the plan is thinner: **Data model impact** and **Cross-feature dependencies** are one-liners that reference the module plan rather than re-declaring the shared shape. Any deviation from the module plan (a feature-specific field, a new dep not in the module DAG) escalates via `ESCALATE_TO_SRD:` — the module plan is authoritative and must be updated first via `/plan-module MXX --refresh` or `/feature-discovery`.
 
 - **Screens inventory** — enumerate from §6 Flows / §5 Acceptance Criteria. Row per screen: name, purpose, primary states (default / loading / error / empty / api-4xx variants).
 - **User journey** — sketch a state diagram from the flows (`stateDiagram-v2` Mermaid). Include entry points (which feature / route lands here), success outcome (which feature / route to next), and failure outcomes (recovery paths).
@@ -62,8 +73,11 @@ Extract the following from the spec — none require the user yet:
 - **Open questions** — read the spec critically. What does it not answer? Common gaps: microcopy tone, error message wording, race conditions, boundary values (min/max/off-by-one), retry semantics, race-condition winner, offline behaviour, RTL edge cases. Prefix each with `OQ-N:` for tracking.
 - **Test strategy** — split into E2E (Playwright, mandatory happy path + at least one failure), unit (validators, hooks), and "not designable" (backend-only ACs that ship without visual coverage).
 - **Analytics events** — what to instrument. Format: `<domain>.<action>` (e.g. `otp.sent`, `otp.verified`, `otp.expired`, `otp.rate_limited`). Include event properties.
-- **Data model impact** — new tables, columns, migrations, indexes, constraints. Check `server/FuelFlow.Infrastructure/Migrations/` for existing schema. Nothing new = state "No schema changes."
+- **Data model impact** — new tables, columns, migrations, indexes, constraints. Check `server/FuelFlow.Infrastructure/Migrations/` for existing schema.
+  - **If module-plan.md exists:** write `"Inherits from module-plan §2 shared model. Delta: <none | specific fields this feature adds that aren't yet in §2>"`. Any material delta means the module plan needs updating first — escalate rather than adding to the feature plan.
+  - **If module-plan.md is absent:** enumerate here as before. Nothing new = state "No schema changes."
 - **Cross-feature dependencies** — read §7 Dependencies. List both `depends on ...` and `is depended on by ...`. If a dependency is `drafting` or missing, flag it.
+  - **If module-plan.md exists:** write `"See module-plan §1 interaction diagram. Delta: <none | new dep this feature introduces>"`. New deps that aren't in the module plan escalate.
 
 Write to memory (don't file-write yet). This is the draft the user reviews.
 
@@ -106,7 +120,7 @@ Do NOT let unvalidated requirements slip into the plan. The plan is a contract �
    - **Iterate on a specific section** (specify which)
    - **Cancel**
 3. On approve:
-   - Write `docs/implementation/<MXX-FXX>/plan.md`
+   - Write `docs/plans/<MXX>/<MXX-FXX>.md`
    - If the feature was `drafting` in the SRD frontmatter AND every AC now has a resolved surface + resolved open questions, offer to bump the SRD lifecycle to `spec-locked` (the state where "we know what to build; now we design").
 4. Print the hand-off summary — one line each:
    - Plan file written
@@ -193,7 +207,7 @@ as CLARIFY prompts to the user.)
 
 ## Contract with `/design-feature`
 
-- `/design-feature` reads `docs/implementation/<MXX-FXX>/plan.md` at Phase A.
+- `/design-feature` reads `docs/plans/<MXX>/<MXX-FXX>.md` at Phase A.
 - It uses the **Screens** table to enumerate what TSX to generate — no more, no less.
 - It uses the **AC → surface mapping** to know which ACs must be visible somewhere.
 - It uses **Open questions** — if any remain unresolved in the plan, `/design-feature` surfaces them as CLARIFY prompts before generating.
@@ -225,7 +239,7 @@ State: <what you were doing when you hit this — so we can resume>
 ```
 
 Main thread:
-1. Saves the current planning state to `docs/implementation/<MXX-FXX>/.plan-in-progress.md`
+1. Saves the current planning state to `docs/plans/<MXX>/.<MXX-FXX>-in-progress.md`
 2. Presents the escalation to the user
 3. On user approval, invokes `/feature-discovery` with the reason
 4. After SRD is updated, offers to resume planning (`/plan-feature MXX-FXX --resume`) or restart
@@ -235,11 +249,13 @@ final plan.md.
 
 ## Rules
 
-- **One feature per invocation.** For a whole module, run per feature or use `/module-planning` (if that skill exists).
+- **One feature per invocation.** For a whole module, run `/plan-module MXX` first — it produces the cross-feature synthesis and its §8 table decides which features still need their own `/plan-feature`.
+- **Module plan is authoritative when present.** Feature plan inherits §2 shared model, §3 shared shells, §4 events, §5 auth, and §1 cross-feature deps from module-plan. Deviations escalate — never silently expand.
+- **`SKIP: covered by module plan §8` is a valid return.** When the module plan routes this feature to design directly, `/plan-feature` returns SKIP without writing a plan.md. The main thread then proceeds to `/design-feature MXX-FXX`.
 - **SRD is the source of truth.** The plan is downstream — it never contradicts SRD, only expands it. If planning reveals a contradiction, use `/feature-discovery` to reconcile.
 - **New requirements MUST go through `/feature-discovery`** — no plan-local AC rows that aren't traced back to SRD.
 - **Plan file is markdown, git-native.** No hosted app, no MDX, no vendor. Renders fully in GitHub, IDE, and CLI.
-- **Plan is disposable after ship.** Per `docs/CLAUDE.md`, `docs/implementation/` artefacts are archived after the PR ships — they document the journey, not the final state.
+- **Plan is disposable after ship.** Per `docs/CLAUDE.md`, `docs/plans/` per-feature artefacts are archived after the PR ships — they document the journey, not the final state. `module-plan.md` and `module-recap.md` stay.
 - **The plan is not the design.** The design is the running TSX. The plan is the prose that scopes the design.
 
 ## Cost note

@@ -28,6 +28,36 @@ Layer-specific rules (validation, DTOs, station filtering, error responses, audi
 | [`docs/ProjectOverView.md`](docs/ProjectOverView.md) | Business requirements, user stories |
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Version history, architectural decisions |
 
+## Getting started with a new feature — AI Workflow
+
+Every feature moves through the **AI Workflow** pipeline: one slash-command per stage, each stage reads the previous stage's artefact as its scope contract and flips the SRD `lifecycle:` field. The full protocol (stage-by-stage, module-level synthesis, design-only PR path, propagation rules) lives in **[`docs/AI-WORKFLOW.md`](docs/AI-WORKFLOW.md)** — read it once, then use the summary below.
+
+| # | Stage | Command | Artefact | `lifecycle:` after |
+|---|---|---|---|---|
+| 0 | SRD spec | `/feature-discovery` | `docs/srd/MXX-*/FXX-*.md` | `drafting` (feature) |
+| 1 | Module plan ★ | `/plan-module MXX` | `docs/plans/<MXX>/module-plan.md` | `planned` (module) |
+| 2 | Feature plan (conditional) | `/plan-feature MXX-FXX` | `docs/plans/<MXX>/<MXX-FXX>.md` | `spec-locked` |
+| 3 | Design | `/design-feature MXX-FXX` | `fuel-flow-web/src/designs/<MXX-FXX>/*.tsx` | `design-approved` |
+| 3.5 | Design-only PR (optional) | `mcp__github__create_pull_request` | merged design PR | (unchanged; design lives on main) |
+| 4 | Implementation | `/feature-implementation MXX-FXX` | `server/**` + `fuel-flow-web/src/**` | `in-implementation` |
+| 5 | E2E | `/feature-e2e-testing MXX-FXX` | `fuel-flow-web/e2e-tests/<MXX-FXX>.spec.ts` | (stays) |
+| 6 | Ship | `mcp__github__create_pull_request` | merged feature PR | `shipped` (feature) |
+| 7 | Feature recap | `/recap-feature MXX-FXX` | `docs/plans/<MXX>/<MXX-FXX>-recap.md` | (terminal) |
+| 8 | Module recap ★ | `/recap-module MXX` | `docs/plans/<MXX>/module-recap.md` | `shipped` (module) |
+
+**Start with `/plan-module MXX`** for modules with ≥3 interacting features (M01, M03, M06, M08). It synthesises the shared data model, shared UI shells, event flow, auth matrix, shipping DAG, and — crucially — its §8 table decides which features still need `/plan-feature` and which can go straight to `/design-feature`. This cuts per-feature planning cost and prevents cross-feature drift (shared model reshaped in one plan, different in another). Skip module plan for modules with ≤2 features or non-interacting features.
+
+**Stop after any stage — the pipeline is designed for it.** The `lifecycle:` field is the persistence mechanism: `design-approved` literally means "designed, not yet implemented." Come back weeks later and `/feature-implementation MXX-FXX` reads `plan.md` + `designs/*.tsx` from disk and continues from there.
+
+**Two ways to run "design every feature first, then implement each":**
+
+1. **Local branches** — one `feat-<id>-<name>` branch per feature, plan + design committed and pushed, no PR opened. Come back per feature for impl + E2E + PR. Simplest.
+2. **Design PRs to main (stage [3.5])** — use branch pair `design-<id>-<name>` (design PR merged to main; safe because designs are dev-only) then `feat-<id>-<name>` off freshly-merged main for the implementation PR. Shared shells stabilise on main incrementally; each design is reviewable in the real repo. Two PRs per feature instead of one.
+
+**Skip stages for trivial features** per each skill's "when to skip" heuristic — a copy tweak or single-file fix goes straight to the feature PR at [6]. **Every stage supports backpressure**: if a later stage finds a spec bug, it emits `ESCALATE_TO_SRD:` and the main thread routes back to `/feature-discovery` (or `/plan-module --refresh`) before the offending stage resumes — no silent scope expansion.
+
+The workflow rules below (branching, commit scopes, PR conventions, lifecycle flips) formalise what each stage does at the git level.
+
 ## Development Workflow (MANDATORY)
 
 Non-negotiable for every piece of work.
@@ -56,7 +86,9 @@ git checkout -b feat-<feature-id>-<short-name>
 
 `feat-<id>-<adequate-name>` — id lowercase-hyphenated (`m04-f03-r01`), name 3–6 kebab words. `fix-`/`docs-` for fixes/docs. Example: `feat-m04-f03-r01-one-open-shift-per-station`.
 
-**Module-scoped exception:** `/module-planning` + `/module-implementation` build a whole `MXX` on a single integration branch `module/<MXX>` (e.g. `module/M08`), shipped as one PR. Constituent features don't get their own `feat-` branches.
+**Design-only PR variant** (AI Workflow stage [3.5]): if you want to ship plan + design to main before implementation, use `design-<id>-<adequate-name>` for the design PR, then cut `feat-<id>-<adequate-name>` off freshly-merged main for the implementation PR. Full protocol: [`docs/AI-WORKFLOW.md`](docs/AI-WORKFLOW.md#design-only-pr-path).
+
+**Module plan PR** (AI Workflow stage [1]): docs-only branch `feat-<mxx>-module-plan` off main, ships as a small docs PR.
 
 ### 5. PR-per-feature into `main`
 

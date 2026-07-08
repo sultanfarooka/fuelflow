@@ -67,6 +67,7 @@ Once the primary target feature is known from Phase 3, run a **second pass** to 
 | **§8 Audit emissions** | New event types added → M17 (Audit & Compliance) catalogues them. | Add an entry under M17-F01 Audit Event Schema, or update M17's emission contract. |
 | **§9 API surface** | Endpoint paths that overlap or share contract with other features. | Update API description in primary; warn user if a non-primary feature references the same endpoint. |
 | **Module-wide NFRs** | If §4 of primary diverges from the module README's NFRs (rate limits, i18n, perf budgets). | Either bring primary in line or update the module README NFR section. |
+| **Module plan** ★ | If `docs/plans/<MXX>/module-plan.md` exists, does the new ask touch §2 (shared data model), §3 (shared UI shells), §4 (event/audit flow), §5 (auth matrix), §6 (shipping sequence), or §8 (per-feature planning necessity)? | Bundle module-plan.md edits into the approval gate. Substantive changes to §2/§4 trigger module-plan lifecycle reversion (`planned` → `drafting`) and revert affected `design-approved` features to `drafting`/`spec-locked` per Phase 6.5 module-plan rules below. |
 
 Each subagent returns a list of `(target feature, impact category, proposed edit, current lifecycle)` tuples. **No file writes.**
 
@@ -152,6 +153,20 @@ For **every cascade-affected feature**, after editing, reapply Phase 6.5: update
 
 Cascade lifecycle reversion follows the same severity rules as the primary — wording-only edits to a cross-reference don't revert lifecycle; substantive §7/§8/§9 changes do.
 
+### Case F — Module plan edits (applies when cascade Phase 3.5 flagged Module plan)
+
+If `docs/plans/<MXX>/module-plan.md` exists and the new ask touches it:
+
+- **§2 Shared data model** — Edit the entity row (add/change field, ownership, or mutator). Bump `plan_last_updated` in module-plan frontmatter. If the change is substantive (new entity, changed ownership, changed field shape that other features consume), apply Phase 6.5 **module-plan lifecycle rules** — module reverts `planned` → `drafting`; any `design-approved` or `in-implementation` feature that reads/writes the entity reverts per severity rules.
+- **§3 Shared UI shells** — Edit the shell row (add new shell, add a feature to the "Rendered by" list). If a new shell name is introduced, note the path where it should live (`fuel-flow-web/src/designs/_shared/<kebab>.tsx`). No lifecycle revert unless an existing shell's contract materially changes.
+- **§4 Event / audit flow** — Add/edit the emitter → event → consumer row. Bundle with the §8 Audit emissions cascade edit for the primary feature. If an event schema changes (fields renamed/dropped), consuming features revert `design-approved` → `spec-locked`.
+- **§5 Auth matrix** — Edit the row for the affected feature(s). No lifecycle revert unless the change breaks a shipped feature's behavior.
+- **§6 Shipping sequence** — Update the DAG. No lifecycle revert. Warn user if a `design-approved` feature is now blocked by an unimplemented dependency.
+- **§7 Open questions** — Append `MOQ-N` if new; strike-through + note resolution if answered.
+- **§8 Per-feature planning necessity** — If flipping a feature from "No" to "Yes" that has already reached `design-approved`, warn the user that a plan might now be overdue (usually just skip — retroactive plans aren't required for shipped work).
+
+Every module-plan edit gets a change-history bullet at the bottom of module-plan.md and a `plan_last_updated` bump. Terminal module-lifecycle flips (`shipped` → anything) always require explicit user confirmation.
+
 ## Phase 6.5 — Lifecycle / Status flip rules (Cases A & B only)
 
 A requirement change or addition reopens the spec to some degree. Apply these rules, **and always update lifecycle in two places** — the feature file frontmatter AND the lifecycle column for that feature's row in `docs/SRD.md`. If the module-level lifecycle in `SRD.md` is also affected (e.g. module was `shipped`, now has a `drafting` feature again), update that too.
@@ -204,6 +219,7 @@ Stop. The skill does not create branches, run `git`, or open PRs.
 - **Cross-feature references use full relative paths**, e.g. `[M01-F04](../M01-identity-and-authentication/F04-login.md)`.
 - **Lifecycle updates always happen in two places** — feature file frontmatter AND `SRD.md` index. Plus the module-level lifecycle in `SRD.md` when needed. **Apply to every cascade-affected feature**, not just the primary.
 - **Cascade analysis is mandatory** — never skip Phase 3.5. If no cascades exist, say so explicitly in the verdict.
+- **Module plan cascade** — if `docs/plans/<MXX>/module-plan.md` exists for the primary's module, Phase 3.5 MUST check it against §2 / §3 / §4 / §5 / §6 / §8 per the Module plan row of the impact table. Bundle any module-plan edits into the primary approval gate (Case F).
 - **All cascade edits land in the same PR** as the primary edit — never as follow-ups.
 - **Terminal lifecycle flips (`shipped` / `superseded` / `removed`) require explicit user confirmation** — for primary AND cascade items.
 - **No `git` operations.**

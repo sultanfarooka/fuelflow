@@ -13,7 +13,7 @@ This file is for someone working **inside `docs/`**. Repository-wide workflow ru
 | `MODULES.md` | **DEPRECATED** legacy registry | Specs for M02–M15 (except M16) until each is migrated. **Do not add new rows.** |
 | `ProjectOverView.md` | Business overview | Module descriptions, user stories, subscription tiers |
 | `CHANGELOG.md` | Version history | Architectural decisions, tech changes, feature additions |
-| `implementation/<MXX>/<feature>.md` | Per-feature/module **implementation plans** | Disposable; archived after the PR ships |
+| `plans/<MXX>/module-plan.md` + `plans/<MXX>/<MXX-FXX>.md` | Module + per-feature **plans** produced by AI Workflow | Feature plans disposable after PR ships; module plan + module recap durable |
 
 Tech-stack / architecture / API / schema / UI reference content does **not** live here — it lives in scoped `CLAUDE.md` files next to the code. See root [`CLAUDE.md`](../CLAUDE.md) Rule 9 for the index.
 

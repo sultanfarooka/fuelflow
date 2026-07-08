@@ -1,19 +1,19 @@
 ---
 name: recap-feature
-description: Post-ship recap for one SRD feature (MXX-FXX). Diffs the shipped code and tests against the pre-ship plan.md; captures deviations, follow-up items, tech debt introduced, analytics coverage, and learnings that should feed the next feature. Produces `docs/implementation/<MXX-FXX>/recap.md`. Runs after the feature's PR is merged (or standalone anytime after ship to backfill). Closes the plan → design → implement → ship loop that would otherwise leave archaeology unanswered six months later.
+description: Post-ship recap for one SRD feature (MXX-FXX). Diffs the shipped code and tests against the pre-ship plan.md; captures deviations, follow-up items, tech debt introduced, analytics coverage, and learnings that should feed the next feature. Produces `docs/plans/<MXX>/<MXX-FXX>-recap.md`. Runs after the feature's PR is merged (or standalone anytime after ship to backfill). Closes the plan → design → implement → ship loop that would otherwise leave archaeology unanswered six months later.
 ---
 
 # /recap-feature — post-ship feature recap
 
 The last stop in the feature lifecycle (see `docs/srd/README.md` for the full pipeline). After the PR ships, this skill:
 
-- Reads `docs/implementation/<MXX-FXX>/plan.md` (the pre-ship contract)
+- Reads `docs/plans/<MXX>/<MXX-FXX>.md` (the pre-ship contract)
 - Reads the shipped code, tests, migrations, and design files
 - Detects deviations (what changed vs. what was planned)
 - Records follow-ups, tech debt, learnings
-- Writes `docs/implementation/<MXX-FXX>/recap.md`
+- Writes `docs/plans/<MXX>/<MXX-FXX>-recap.md`
 
-The recap is the artefact anyone opening `docs/implementation/M01-F01/` six months from now reads to understand **what shipped and why it differed from the plan**. `git log` shows the how; recap.md shows the intent.
+The recap is the artefact anyone opening `docs/plans/M01/` six months from now reads to understand **what shipped and why it differed from the plan**. `git log` shows the how; recap.md shows the intent.
 
 ## When to use
 
@@ -31,7 +31,7 @@ Skip only when:
 
 1. Parse the feature ID from `$ARGUMENTS`. Accept `MXX-FXX` (with optional `-RXX` — that's routed to feature-level).
 2. Locate artefacts:
-   - Plan: `docs/implementation/<MXX-FXX>/plan.md` (mandatory — if missing, return `BLOCKED: no plan.md — nothing to diff against`)
+   - Plan: `docs/plans/<MXX>/<MXX-FXX>.md` (mandatory — if missing, return `BLOCKED: no plan.md — nothing to diff against`)
    - SRD spec: `docs/srd/M{XX}-*/F{XX}-*.md` or `docs/MODULES.md` section
    - Design: `fuel-flow-web/src/designs/<MXX-FXX>/*.tsx` (may be gone — designs are marked disposable)
    - Shipped code: use grep for the feature ID across `server/**`, `fuel-flow-web/src/**`
@@ -71,7 +71,7 @@ Ask the user (via `AskUserQuestion`, optional — user can skip any):
 
 Assemble the recap and present for approval before writing. On approval:
 
-- Write `docs/implementation/<MXX-FXX>/recap.md`
+- Write `docs/plans/<MXX>/<MXX-FXX>-recap.md`
 - Ensure SRD lifecycle is `shipped` (bump if still `in-implementation`) with today's date
 - Bump `docs/SRD.md` index row if the lifecycle changed
 - Print a summary with paths and next-feature guidance (e.g. "M01-F02's plan should reference this recap's learning about SMS mocking")

@@ -48,55 +48,60 @@ Cross-cutting infra work (validators, hooks, background jobs, migrations, audit 
 
 ## Phase A — Main thread
 
-### Step 0 — Load the plan (if it exists)
+### Step 0 — Load the plans (module + feature)
 
-Before spawning the design agent, check for the planning artefact at
-`docs/implementation/<MXX-FXX>/plan.md` (produced by the `/plan-feature` skill).
+Before spawning the design agent, load BOTH planning artefacts in this order:
 
-**If plan.md EXISTS** — first perform a **staleness check**:
+- **Module plan** at `docs/plans/<MXX>/module-plan.md` (produced by `/plan-module`) — authoritative for shared model (§2), shared UI shells (§3), event flow (§4), auth (§5), and cross-feature interactions (§1).
+- **Feature plan** at `docs/plans/<MXX>/<MXX-FXX>.md` (produced by `/plan-feature`) — feature-specific screens, journey, backend flow, ACs, open questions.
 
-- Read `plan_last_updated:` from plan.md's YAML frontmatter.
-- Read `**Last updated**` from the SRD spec's header table (or `Last Updated` from
-  `docs/MODULES.md` for unmigrated modules).
-- If SRD spec date > plan date, the plan is potentially stale. Ask the user via
-  `AskUserQuestion`:
-    - **Refresh the plan** (Recommended) — invokes `/plan-feature MXX-FXX --refresh`,
-      which reads the updated SRD and updates plan.md before proceeding
+#### 0a — Module plan (authoritative for shared decisions)
+
+**If `module-plan.md` EXISTS** — always the primary reference:
+
+- Extract §3 shared shells table — pass to the agent as `{MODULE_SHELLS}`. The agent MUST import these from `fuel-flow-web/src/designs/_shared/` rather than re-implementing.
+- Extract §2 shared data model — pass as `{MODULE_MODEL}`. The design cannot invent new entity fields; mock data must use the shapes locked here.
+- Extract §4 event flow row for this feature — pass as `{MODULE_EVENTS}`. Analytics/audit-adjacent copy must reference these event names.
+- Extract §5 auth row for this feature — pass as `{MODULE_AUTH}`. Determines whether the design shows anonymous / authenticated / fresh-auth-gate chrome.
+- Extract §8 planning-necessity routing decision for this feature — determines whether a feature `plan.md` is expected (Yes) or intentionally absent (No, module plan covers it).
+- **Staleness check** — compare `plan_last_updated:` in module-plan frontmatter against the SRD spec's `Last updated`. If SRD is newer, warn: "Module plan may be stale — consider `/plan-module MXX --refresh` before continuing."
+
+**If `module-plan.md` is MISSING** — proceed in relaxed mode:
+
+- No shared-shell enforcement; the agent may need to define new patterns.
+- Warn in the final summary: "No module plan — designs may drift from siblings. Run `/plan-module MXX` to lock shared decisions."
+- For modules with ≥3 features in `docs/SRD.md` sharing entities/events/shells, offer to run `/plan-module MXX` first via `AskUserQuestion`.
+
+#### 0b — Feature plan (screens + journey + open questions)
+
+**If module-plan §8 said "No" for this feature** — feature plan is expected to be absent. Proceed with the module plan as sole reference. Do NOT warn about the missing feature plan.
+
+**If module-plan §8 said "Yes" (or module plan missing) — check for feature `plan.md`:**
+
+**If feature plan EXISTS** — perform a **staleness check**:
+
+- Read `plan_last_updated:` from feature plan's YAML frontmatter.
+- Read `**Last updated**` from the SRD spec's header table (or `Last Updated` from `docs/MODULES.md` for unmigrated modules).
+- If SRD spec date > feature plan date, the plan is potentially stale. Ask the user via `AskUserQuestion`:
+    - **Refresh the plan** (Recommended) — invokes `/plan-feature MXX-FXX --refresh`, which reads the updated SRD and updates the feature plan before proceeding
     - **Continue anyway** — plan is fine as-is; SRD change was cosmetic
     - **Cancel**
 
-If the plan is current OR the user opted "continue anyway", proceed with extraction:
+If current OR "continue anyway", proceed with extraction from the feature plan:
 
-- **Screens table** — pass to the design agent as the authoritative screen list. The agent
-  MUST generate exactly these screens; not fewer, not more. Deviations from the plan
-  require the user to first re-run `/plan-feature` to update it.
-- **AC → surface mapping** — the agent uses this to know which ACs must be visible
-  somewhere in the design. Backend-only ACs (marked with the flag) are automatically
-  moved to the "Not designable" list without asking.
-- **Open questions** — if the plan lists unresolved `OQ-N:` items with no answer, surface
-  them to the user via `AskUserQuestion` BEFORE spawning the agent. This is the same
-  role as the agent's CLARIFY block, but resolved upfront and once — the agent doesn't
-  re-ask what the plan already asked.
-- **User journey** — pass to the agent as context so the copy on the CTA can name the
-  next step correctly (e.g. "Continue to phone verification" points to the M01-F02
-  screen because the journey names it).
-- **Cross-feature dependencies** — surface to the user if any dependency is `drafting`
-  or missing; ask whether to proceed (design may need to change once the dependency is
-  spec'd).
+- **Screens table** — pass to the design agent as the authoritative screen list. The agent MUST generate exactly these screens; not fewer, not more. Deviations require re-running `/plan-feature` to update the plan first.
+- **AC → surface mapping** — the agent uses this to know which ACs must be visible somewhere in the design. Backend-only ACs are moved to "Not designable" without asking.
+- **Open questions** — if the plan lists unresolved `OQ-N:` items with no answer, surface them to the user via `AskUserQuestion` BEFORE spawning the agent.
+- **User journey** — pass to the agent so CTA copy can name the next step correctly (e.g. "Continue to phone verification" points to M01-F02 because the journey names it).
+- **Cross-feature dependencies** — surface to the user if any dependency is `drafting` or missing; ask whether to proceed.
 
-Include the plan.md path in the agent prompt as `{PLAN_PATH}` and instruct the agent to
-read it as part of its context batch.
+**If feature plan is MISSING** but §8 said "Yes" (or module plan absent) — warn via `AskUserQuestion`:
 
-**If plan.md is MISSING** — warn the user via `AskUserQuestion`:
-
-- **Recommended: run `/plan-feature` first, then re-run this command.** This surfaces
-  scope and open questions before burning tokens on generation.
-- **Continue anyway** — the agent will infer screens from the SRD spec. Works, but the
-  agent may generate a screen the user didn't want, or miss one. More iteration cycles.
+- **Recommended: run `/plan-feature MXX-FXX` first, then re-run this command.**
+- **Continue anyway** — the agent will infer screens from module plan + SRD spec. Works, but more iteration cycles.
 - **Cancel.**
 
-If user picks "continue anyway", proceed without a plan. Note the absence in the final
-summary so it's visible in review.
+Include both paths in the agent prompt as `{MODULE_PLAN_PATH}` and `{PLAN_PATH}` (either may be "none"). Instruct the agent to read them in its context batch.
 
 ### Backpressure — escalation to SRD from the design agent
 
@@ -115,7 +120,7 @@ State: <what phase you were in — desktop / tablet / mobile — so we can resum
 
 Main thread handles this exactly like `/plan-feature`'s escalation:
 
-1. Saves phase progress to `docs/implementation/<MXX-FXX>/.design-in-progress.md`.
+1. Saves phase progress to `docs/plans/<MXX>/.<MXX-FXX>-design-in-progress.md`.
 2. Surfaces the escalation to the user.
 3. On approval, either invokes `/plan-feature MXX-FXX --refresh` or `/feature-discovery`
    with the reason.
@@ -195,8 +200,25 @@ CONTEXT TO READ (parallel batch)
    `M{XX}-F{XX}` if the SRD file doesn't exist AND the module is listed under "Unmigrated" in
    `docs/SRD.md`. If neither exists, return: `BLOCKED: feature {id} has no SRD or MODULES.md entry`.
 2. Module README at `docs/srd/M{XX}-*/README.md` if it exists.
-2a. **Plan file** at `{PLAN_PATH}` if it exists (main thread will substitute the path or
-   "none"). When a plan exists, it is the AUTHORITATIVE scope:
+2a. **Module plan** at `{MODULE_PLAN_PATH}` if it exists (main thread substitutes the
+    path or "none"). When present, it is AUTHORITATIVE for cross-feature decisions and
+    OVERRIDES anything you might infer from the spec alone:
+     - §2 Shared data model — mock data in your TSX MUST use the field shapes locked
+       here. Do NOT invent new entity fields; if the spec seems to imply one that
+       isn't in §2, escalate via `ESCALATE_TO_SRD:`.
+     - §3 Shared UI shells — the shells listed here already exist under
+       `fuel-flow-web/src/designs/_shared/`. Import them; do NOT re-implement any shell
+       whose name appears in the table.
+     - §4 Event flow — analytics/audit-adjacent copy references these event names.
+     - §5 Auth matrix — determines whether the design renders anonymous, authenticated,
+       or fresh-auth-gate chrome. Fresh-auth gate features render the
+       `PasswordReAuthPrompt` shell.
+     - §8 Planning necessity — tells you whether a feature plan.md is expected. If §8
+       says "No" for this feature, `{PLAN_PATH}` will be "none" by design; use the
+       module plan + SRD spec as your scope contract.
+   If the module plan is "none", fall back to relaxed mode (spec + feature plan only).
+2b. **Feature plan** at `{PLAN_PATH}` if it exists (main thread substitutes the path or
+   "none"). When a feature plan exists, it is the AUTHORITATIVE per-feature scope:
      - Generate exactly the screens listed in the plan's Screens table — no additions,
        no omissions.
      - Use the AC → surface mapping to know what must be visible. Backend-only ACs are
@@ -204,7 +226,11 @@ CONTEXT TO READ (parallel batch)
      - Any open questions in the plan have already been resolved by the main thread
        before spawning you — treat them as answered.
      - The user journey in the plan tells you how the CTA should name the next step.
-   If the plan is "none", fall back to inferring screens from the spec (relaxed mode).
+     - Where the feature plan says "inherits from module-plan §2" or "see module-plan
+       §1", refer back to `{MODULE_PLAN_PATH}` for the authoritative shape.
+   If the feature plan is "none" AND module-plan §8 said "No" for this feature, use
+   the module plan + SRD spec directly (this is the intended flow — not a fallback).
+   If both are "none", fall back to inferring screens from the spec (fully relaxed).
 3. `fuel-flow-web/CLAUDE.md` — stack, breakpoints, theme tokens, RTL rules.
 4. `fuel-flow-web/src/routes/CLAUDE.md` — role/route conventions for this feature.
 5. `fuel-flow-web/src/components/CLAUDE.md` — Field system, Dialog/Sonner patterns.
