@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Lifecycle** | `spec-locked` |
-| **Design** | _pending — plan approved, TSX designs next via `/design-feature M01-F04`._ Plan: [`M01-F04.md`](../../plans/M01/M01-F04.md) |
+| **Lifecycle** | `design-approved` |
+| **Design** | [`M01-F04/`](../../../fuel-flow-web/src/designs/M01-F04/) — [`login-form.tsx`](../../../fuel-flow-web/src/designs/M01-F04/login-form.tsx), [`two-factor-step.tsx`](../../../fuel-flow-web/src/designs/M01-F04/two-factor-step.tsx). Plan: [`M01-F04.md`](../../plans/M01/M01-F04.md) |
 | **Last updated** | 2026-07-08 |
 
 ## 1. Purpose
@@ -120,3 +120,4 @@ Full schemas in Swagger.
 
 - **2026-06-27** — Initial draft.
 - **2026-07-08** — R02 rewritten to remove the info-leak. Previously R02 said "otherwise route to F02 resume" which implied the login endpoint returned a distinct response for unverified-phone (contradicting AC3's identical-body-for-4-failure-cases rule). Now R02 explicitly defers to AC3's `invalid_credentials`; the F02-resume UX is scoped to the SPA-side pending-verification session cookie flow, not the login endpoint. Discovered during F04 `/plan-feature` on 2026-07-08 (OQ3). No cascade edits required — §7 deps, §8 audits, §9 API, and module-plan sections unchanged.
+- **2026-07-08** — Designs shipped (`spec-locked` → `design-approved`). Two screens — `login-form.tsx` (7 states) + `two-factor-step.tsx` (6 states) — across desktop, tablet, mobile viewports. 26 variants total. T&C-required state renders a mocked F16-styled `BlockingLegalModal` inline (to be replaced by the real component when F16 is designed). Recovery-code path shows as a state on the 2FA step (input swaps from 6-cell OTP to single monospace text field), not a separate screen. Mobile: brand panel hidden; "Forgot password?" and "Remember device" split onto separate 44px rows; 6-cell OTP shrinks to `h-11 gap-1.5` to fit 375px viewport.
