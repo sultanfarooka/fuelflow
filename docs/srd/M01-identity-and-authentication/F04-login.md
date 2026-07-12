@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Lifecycle** | `drafting` |
-| **Design** | _pending_ |
-| **Last updated** | 2026-06-27 |
+| **Lifecycle** | `design-approved` |
+| **Design** | [`M01-F04/`](../../../fuel-flow-web/src/designs/M01-F04/) — [`login-form.tsx`](../../../fuel-flow-web/src/designs/M01-F04/login-form.tsx), [`two-factor-step.tsx`](../../../fuel-flow-web/src/designs/M01-F04/two-factor-step.tsx). Plan: [`M01-F04.md`](../../plans/M01/M01-F04.md) |
+| **Last updated** | 2026-07-08 |
 
 ## 1. Purpose
 
@@ -30,7 +30,7 @@ indistinguishable from "user does not exist" to prevent enumeration.
 | ID | Requirement | Status |
 |---|---|---|
 | R01 | Identifier is either E.164 phone or email; one input field auto-detects | Drafting |
-| R02 | Phone login allowed only if `PhoneNumberConfirmed=true`; otherwise route to [F02](./F02-phone-otp-verification.md) resume | Drafting |
+| R02 | Phone login allowed only if `PhoneNumberConfirmed=true`; unverified phone returns `invalid_credentials` per AC3 (no info leak). SPA-side UX may route the just-registered user back to [F02](./F02-phone-otp-verification.md) via the pending-verification session cookie — that path does not depend on the login endpoint's response | Drafting |
 | R03 | Email login allowed only if `EmailConfirmed=true`; unverified email → generic `invalid_credentials` (no leak) | Drafting |
 | R04 | Password verified with bcrypt; constant-time compare | Drafting |
 | R05 | Bad credentials → 401 `invalid_credentials` (single error code regardless of which field was wrong, or whether user exists) | Drafting |
@@ -119,3 +119,5 @@ Full schemas in Swagger.
 ## 11. Change history
 
 - **2026-06-27** — Initial draft.
+- **2026-07-08** — R02 rewritten to remove the info-leak. Previously R02 said "otherwise route to F02 resume" which implied the login endpoint returned a distinct response for unverified-phone (contradicting AC3's identical-body-for-4-failure-cases rule). Now R02 explicitly defers to AC3's `invalid_credentials`; the F02-resume UX is scoped to the SPA-side pending-verification session cookie flow, not the login endpoint. Discovered during F04 `/plan-feature` on 2026-07-08 (OQ3). No cascade edits required — §7 deps, §8 audits, §9 API, and module-plan sections unchanged.
+- **2026-07-08** — Designs shipped (`spec-locked` → `design-approved`). Two screens — `login-form.tsx` (7 states) + `two-factor-step.tsx` (6 states) — across desktop, tablet, mobile viewports. 26 variants total. T&C-required state renders a mocked F16-styled `BlockingLegalModal` inline (to be replaced by the real component when F16 is designed). Recovery-code path shows as a state on the 2FA step (input swaps from 6-cell OTP to single monospace text field), not a separate screen. Mobile: brand panel hidden; "Forgot password?" and "Remember device" split onto separate 44px rows; 6-cell OTP shrinks to `h-11 gap-1.5` to fit 375px viewport.
