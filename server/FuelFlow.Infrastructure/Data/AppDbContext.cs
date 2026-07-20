@@ -51,6 +51,7 @@ public class AppDbContext : DbContext
     public DbSet<StationShiftConfig> StationShiftConfigs => Set<StationShiftConfig>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<AccountHead> AccountHeads => Set<AccountHead>();
+    public DbSet<FinancialEntry> FinancialEntries => Set<FinancialEntry>();
     // Removed in M14-F01 (moved to ControlPlaneDbContext): RefreshTokens,
     // PhoneVerifications, Subscriptions, SubscriptionPlans, OMCs, OMCFuelTypes,
     // FuelTypes. Identity tables (AspNetUsers etc.) likewise no longer live in
