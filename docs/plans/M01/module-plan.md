@@ -3,7 +3,7 @@ module: M01
 title: Identity & Authentication
 lifecycle_at_plan: drafting
 features_in_scope: [F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16]
-plan_last_updated: 2026-07-08
+plan_last_updated: 2026-07-27
 ---
 
 # M01 — Identity & Authentication · Module Plan
@@ -41,7 +41,8 @@ graph LR
   F14 -->|validates pwd| F06[F06 Recovery]
   F14 -->|validates pwd| F11[F11 Pwd Change]
   F01 -->|creates User + queues OTP| F02[F02 Phone OTP]
-  F01 -->|queues email verify| F03[F03 Email Verify]
+  F01 -.records email address only.-> F03[F03 Email Verify]
+  M12[M12 Onboarding] -->|triggers first verify email| F03
   F02 -->|PhoneNumberConfirmed| F04[F04 Login]
   F03 -->|EmailConfirmed| F04
   F16 -->|current version + tcAcceptanceRequired| F04
@@ -85,7 +86,7 @@ graph LR
 
 | Entity | Owner (creates) | Read by | Mutated by | Fields (union) |
 |---|---|---|---|---|
-| **User** | F01 | F04, F06, F07, F09, F10, F11, F12, F13, F15 | F02 (`PhoneNumberConfirmed`), F03 (`EmailConfirmed`), F06 (`PasswordHash`), F09 (`PhoneNumber`+`PhoneNumberConfirmed`), F10 (`Email`+`EmailConfirmed`+`PendingEmailChange`), F11 (`PasswordHash`), F12 (`TwoFactorSecret`, `TwoFactorEnabled`, `RecoveryCodesHashes`), F13 (`AccessFailedCount`, `LockedUntil`, `EscalationCount`), F16 (`AcceptedTcVersion`) | `Id`, `PhoneNumber`, `PhoneNumberConfirmed`, `Email?`, `EmailConfirmed`, `PendingEmailChange?`, `PasswordHash`, `TwoFactorSecret?`, `TwoFactorEnabled`, `RecoveryCodesHashes?`, `AccessFailedCount`, `LockedUntil?`, `EscalationCount`, `AcceptedTcVersion`, `CreatedAt` |
+| **User** | F01 | F04, F06, F07, F09, F10, F11, F12, F13, F15 | F01 (`AcceptedTcVersion` — set at creation), F02 (`PhoneNumberConfirmed`), F03 (`EmailConfirmed`), F06 (`PasswordHash`), F09 (`PhoneNumber`+`PhoneNumberConfirmed`), F10 (`Email`+`EmailConfirmed`+`PendingEmailChange`), F11 (`PasswordHash`), F12 (`TwoFactorSecret`, `TwoFactorEnabled`, `RecoveryCodesHashes`), F13 (`AccessFailedCount`, `LockedUntil`, `EscalationCount`), F16 (`AcceptedTcVersion` — on re-acceptance) | `Id`, `PhoneNumber`, `PhoneNumberConfirmed`, `Email?`, `EmailConfirmed`, `PendingEmailChange?`, `PasswordHash`, `TwoFactorSecret?`, `TwoFactorEnabled`, `RecoveryCodesHashes?`, `AccessFailedCount`, `LockedUntil?`, `EscalationCount`, `AcceptedTcVersion`, `CreatedAt` |
 | **OtpChallenge** | F02 | F02, F09 | F02 (`Status: active→used/locked/expired`, `Attempts++`) | `Id`, `UserId`, `PhoneHash`, `CodeHash`, `Purpose` (`registration`/`login`/`phone-change`/`password-recovery`), `IssuedAt`, `ExpiresAt`, `Attempts`, `Status`, `LastAttemptAt?` |
 | **EmailVerificationToken** | F03 | F03, F06, F10 | F03 (`Status: active→used/expired`) | `Id`, `UserId`, `EmailHash`, `TokenHash`, `Purpose` (`registration`/`email-add`/`email-change`/`password-recovery`), `IssuedAt`, `ExpiresAt`, `Status` |
 | **PasswordResetToken** | F06 | F06 | F06 (`Status: active→used/expired`) | `Id`, `UserId`, `Channel` (`phone`/`email`), `TokenHash`, `IssuedAt`, `ExpiresAt`, `Status` |
@@ -108,8 +109,8 @@ graph LR
 
 | Shell | Path | Rendered by | Notes |
 |---|---|---|---|
-| **AuthBrandPanel** (rotating scenes + gradient cross-fade) | `fuel-flow-web/src/designs/_shared/brand-panel.tsx` | F01, F02, F03, F04, F06 | Already exists (established in M01-F01 canonical design) |
-| **AuthFormColumn** (stepper + paired fields + CTA wipe) | `fuel-flow-web/src/designs/_shared/` | F01, F02, F04, F06 | Established in M01-F01 |
+| **AuthBrandPanel** (rotating scenes + gradient cross-fade) | `fuel-flow-web/src/designs/_shared/brand-surfaces.tsx` (+ `brand-scenes.ts`) | F01, F02, F03, F04, F06 | Already exists (established in M01-F01 canonical design) |
+| **AuthFormColumn** (stepper + paired fields + CTA wipe) | `fuel-flow-web/src/designs/_shared/auth-shell.tsx` (+ `form-bits.tsx`, `form-states.ts`, `inline-alert.tsx`) | F01, F02, F04, F06 | Established in M01-F01 |
 | **PasswordField** (F14 component — live strength meter + rule checklist + eye toggle) | `fuel-flow-web/src/components/forms/password-field.tsx` | F01, F06, F11 | Owned by F14; used by three surfaces |
 | **OtpEntry** (6-cell input, auto-submit, countdown, resend) | `fuel-flow-web/src/components/auth/otp-entry.tsx` | F02, F06 (phone-recovery), F09 (phone-change) | Owned by F02 |
 | **PasswordReAuthPrompt** (fresh-auth ≤5 min gate) | `fuel-flow-web/src/components/auth/password-reauth.tsx` | F07 (PIN setup), F09, F10, F11 (implicit), F12 (setup/disable/regenerate) | New shared component |
@@ -196,7 +197,7 @@ graph TD
 | Group | Features | Notes |
 |---|---|---|
 | **1. Foundation** | F14, F16 | No cross-feature deps. Ship first — everything downstream needs them |
-| **2. Onboarding channels** | F01 → then F02, F03 in parallel | F01 blocks F02/F03; F02/F03 have no interdep |
+| **2. Onboarding channels** | F01 → then F02, F03 in parallel | F01 blocks F02/F03; F02/F03 have no interdep. **F03 is only partly shippable inside M01** — F01 records the address but M12 Onboarding triggers the first verification email, so F03's end-to-end path also depends on M12. F03 R10's standing "Verify your email" prompt is the M01-only surface that does not need M12 |
 | **3. Auth core** | **F04 + F13 co-ship** | F04 needs F13's 423 lock behaviour; F13 needs F04's fail events to count. Ship as one PR. |
 | **4. Session infra** | **F05 + F08 co-ship** | F08 owns list + `SessionRow`; F05 owns revoke actions on that list. Ship as one PR. |
 | **5. PIN** | F07 | Needs F04 + F08 (Session row owns PinHash) |
@@ -254,3 +255,9 @@ Token estimate savings vs planning every feature: ~5 × 12k = **~60k tokens** fo
 ## 10. Change history
 
 - **2026-07-08** — Initial module plan. §8 planning-necessity routing set (11 Yes, 5 No). All 8 MOQs resolved during plan session. MOQ-1 locked as `OtpChallenge`; no F02 SRD rename required (the SRD refers to "OTP row" abstractly). Existing M01-F02 plan.md already conforms.
+- **2026-07-27** — Corrections surfaced during `/plan-feature M01-F01`:
+  - **§1** — the `F01 -->|queues email verify| F03` edge was wrong. F01's SRD never claimed to send the first verification email (R07/AC1 cover SMS only); F03's spec claimed it did, in two places. Resolved in F01's favour: F01 records the address, **M12 Onboarding triggers the first email**. Edge downgraded to "records email address only" and an M12 trigger node added. F03 §1/§7 updated to match, and F03 gained R10 (standing "Verify your email" prompt) to close the abandoned-onboarding gap this opens.
+  - **§2** — `User.AcceptedTcVersion` credited F16 as sole mutator; F01 also sets it at creation (F01 R09, reworded the same day). Ownership clarification only — the field's shape is unchanged, so `design-approved` F04, which reads it for the `tcAcceptanceRequired` gate, does **not** revert.
+  - **§3** — shared-shell paths pointed at `_shared/brand-panel.tsx`, which does not exist. Corrected to the shipped `brand-surfaces.tsx` / `auth-shell.tsx` (plus the sibling modules each actually pulls in).
+  - **§6** — ship group 2 now records that F03 is only partly shippable inside M01, since its end-to-end path depends on M12 (unmigrated).
+  - No lifecycle flips: every affected feature (F01, F03) was already `drafting`, and the module remains `drafting`.

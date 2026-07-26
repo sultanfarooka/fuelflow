@@ -2,18 +2,23 @@
 
 | | |
 |---|---|
-| **Lifecycle** | `design-approved` |
+| **Lifecycle** | `design-approved` · ⚠️ R10 has no design surface — see §10 OQ1 |
 | **Design** | [`M01-F03/`](../../../fuel-flow-web/src/designs/M01-F03/) — [`check-inbox.tsx`](../../../fuel-flow-web/src/designs/M01-F03/check-inbox.tsx), [`verify-result.tsx`](../../../fuel-flow-web/src/designs/M01-F03/verify-result.tsx) |
-| **Last updated** | 2026-07-08 |
+| **Last updated** | 2026-07-27 |
 
 ## 1. Purpose
 
 A user proves ownership of the optional email they supplied during
-[F01 Registration](./F01-registration.md) (or later via
-[F10 Email Change](./F10-email-change.md)) by clicking a time-limited link
+[F01 Registration](./F01-registration.md) by clicking a time-limited link
 sent to that address. Success flips `EmailConfirmed` to true and unlocks
 email as an alternative login channel ([F04 Login](./F04-login.md)).
 Phone-only accounts are unaffected — email verification is never blocking.
+
+**F01 does not send this email.** Registration only records the address;
+the first verification email is triggered by
+[M12 Onboarding](../../MODULES.md#m12-f01--onboarding-wizard), or on demand
+via the resend endpoint / the standing prompt in R10. Later address changes
+re-run this flow via [F10 Email Add / Change / Remove](./F10-email-add-change-remove.md).
 
 ## 2. User stories
 
@@ -37,6 +42,7 @@ Phone-only accounts are unaffected — email verification is never blocking.
 | R07 | Resend rate-limited: 60-second cooldown per email address; daily cap (default 10, configurable) | Drafting |
 | R08 | Per-IP rate limit on both verify and resend endpoints (sliding window) | Drafting |
 | R09 | Email verification never blocks account access — phone-verified accounts operate fully without it | Drafting |
+| R10 | A user holding an unverified email sees a **standing, non-blocking "Verify your email" prompt** in profile/settings with a resend action, shown independently of any trigger. This is the recovery path for an address recorded at [F01](./F01-registration.md) whose owner abandoned [M12](../../MODULES.md#m12-f01--onboarding-wizard) onboarding before the first verification email was ever sent — without it, such an address is unverifiable through any surface | Drafting |
 
 ## 4. Non-functional requirements
 
@@ -73,10 +79,11 @@ Design: [`F03-email-verification.tsx`](../../../fuel-flow-web/src/design/screens
 
 | Relation | Target | Why |
 |---|---|---|
-| Depends on | [F01 Registration](./F01-registration.md) | Queues the first verification email when an email is supplied |
+| Depends on | [F01 Registration](./F01-registration.md) | Records the optional address at signup — but does **not** send the first verification email (see §1) |
+| Depends on | [M12-F01 Onboarding Wizard](../../MODULES.md#m12-f01--onboarding-wizard) | Triggers the first verification email for an address recorded at registration. ⚠️ Unmigrated module — spec lives in the deprecated `MODULES.md` |
 | Depends on | [M10-F03 Notification Channels](../../MODULES.md#m10-f03--notification-channels) | SMTP sender for verification emails |
 | Used by | [F04 Login](./F04-login.md) | Email login channel requires `EmailConfirmed=true` |
-| Used by | [F10 Email Change](./F10-email-change.md) | Re-runs this flow for the new address before swapping |
+| Used by | [F10 Email Add / Change / Remove](./F10-email-add-change-remove.md) | Re-runs this flow for the new address before swapping |
 | Out of scope | Phone OTP verification (→ [F02](./F02-phone-otp-verification.md)) · magic-link login (not planned) | Owned by their respective features |
 
 ## 8. Audit emissions
@@ -102,7 +109,9 @@ Full schemas in Swagger. Side effect on resend: enqueues email via M10-F03.
 
 ## 10. Open questions
 
-_None._ All initial open questions resolved 2026-06-27 — see section 11.
+- **OQ1 — R10 has no design surface.** The shipped designs ([`check-inbox.tsx`](../../../fuel-flow-web/src/designs/M01-F03/check-inbox.tsx), [`verify-result.tsx`](../../../fuel-flow-web/src/designs/M01-F03/verify-result.tsx)) were approved on 2026-07-08 against a spec that did not yet contain R10; both cover the link-click flow only. R10's standing, trigger-independent "Verify your email" prompt in profile/settings is a **third screen that does not exist**. The lifecycle is held at `design-approved` by explicit decision rather than reverted, so this OQ is the only record of the gap — `/design-feature M01-F03` must add that screen before F03 goes to implementation.
+
+All initial open questions resolved 2026-06-27 — see section 11.
 
 ## 11. Change history
 
@@ -111,3 +120,7 @@ _None._ All initial open questions resolved 2026-06-27 — see section 11.
 - **2026-06-27** — **OQ2 resolved →** same as OQ1 decision — verify succeeds, SPA shows success + login CTA regardless of device. No separate handling needed.
 - **2026-06-27** — **OQ3 resolved →** no security-notification email. User just clicked the link themselves; a second email is noise with no meaningful security gain.
 - **2026-07-08** — Designs shipped (`drafting` → `design-approved`). Two screens — `check-inbox.tsx` (3 states) + `verify-result.tsx` (4 states) — across desktop, tablet, mobile viewports. Routed here directly from module plan §8 (no feature plan needed; mirrors F02 pattern with email channel). During desktop review the email address was un-masked so the user sees the full recipient in the "we've sent a link to X" copy.
+- **2026-07-27** — **First-email trigger moved from F01 to M12.** §1 and §7 both asserted that F01 queues the first verification email; F01's own R07/AC1 never did, so the two specs disagreed. Resolved in F01's favour: registration records the address only, M12 onboarding sends the first email. Surfaced during `/plan-feature M01-F01`. Note the new §7 dependency on M12 — an unmigrated module still specced in the deprecated `MODULES.md`.
+- **2026-07-27** — **R10 added (new).** Moving the trigger to M12 opened a gap symmetrical to [F01 R11](./F01-registration.md): an address recorded at signup by a user who then abandons onboarding would never be sent a verification email, and nothing routed them to the resend endpoint. R10 makes the "Verify your email" prompt standing and trigger-independent, so the address is always recoverable.
+- **2026-07-27** — **Broken links fixed** — `./F10-email-change.md` (×2, §1 and §7) → `./F10-email-add-change-remove.md`.
+- **2026-07-27** — **Merge note.** R10 was added on the M01-F01 branch while the designs were being approved in parallel on `m01-main`, so the shipped designs pre-date it and do not cover it. Lifecycle deliberately held at `design-approved` rather than reverting to `drafting` per the usual Phase 6.5 rule; the uncovered surface is tracked as §10 OQ1 instead.
