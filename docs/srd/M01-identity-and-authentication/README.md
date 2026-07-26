@@ -56,10 +56,10 @@ session control → credential modification → security hardening → complianc
 
 | ID | Feature | Lifecycle | Design |
 |---|---|---|---|
-| [M01-F01](./F01-registration.md) | Self-Service Registration | `drafting` | [↗](../../../fuel-flow-web/src/design/screens/M01/F01-registration.tsx) |
-| [M01-F02](./F02-phone-otp-verification.md) | Phone OTP Verification | `drafting` | — |
+| [M01-F01](./F01-registration.md) | Self-Service Registration | `design-approved` | [↗](../../../fuel-flow-web/src/designs/M01-F01/) |
+| [M01-F02](./F02-phone-otp-verification.md) | Phone OTP Verification | `spec-locked` | [↗](../../../fuel-flow-web/src/designs/M01-F02/) |
 | [M01-F03](./F03-email-verification.md) | Email Verification | `drafting` | — |
-| [M01-F04](./F04-login.md) | Login | `drafting` | — |
+| [M01-F04](./F04-login.md) | Login | `design-approved` | [↗](../../../fuel-flow-web/src/designs/M01-F04/) |
 | [M01-F05](./F05-logout-and-session-revocation.md) | Logout & Session Revocation | `drafting` | — |
 | [M01-F06](./F06-password-recovery.md) | Password Recovery | `drafting` | — |
 | [M01-F07](./F07-pin-quick-login.md) | PIN Quick Login | `drafting` | — |

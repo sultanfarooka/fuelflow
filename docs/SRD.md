@@ -15,7 +15,7 @@ High-level index. For detail:
 
 | ID | Feature | Lifecycle |
 |---|---|---|
-| [M01-F01](srd/M01-identity-and-authentication/F01-registration.md) | Self-Service Registration | `drafting` |
+| [M01-F01](srd/M01-identity-and-authentication/F01-registration.md) | Self-Service Registration | `design-approved` |
 | [M01-F02](srd/M01-identity-and-authentication/F02-phone-otp-verification.md) | Phone OTP Verification | `spec-locked` |
 | [M01-F03](srd/M01-identity-and-authentication/F03-email-verification.md) | Email Verification | `drafting` |
 | [M01-F04](srd/M01-identity-and-authentication/F04-login.md) | Login | `design-approved` |
