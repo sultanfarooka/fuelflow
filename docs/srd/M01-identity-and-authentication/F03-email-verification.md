@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Lifecycle** | `drafting` |
-| **Design** | _pending_ |
+| **Lifecycle** | `design-approved` · ⚠️ R10 has no design surface — see §10 OQ1 |
+| **Design** | [`M01-F03/`](../../../fuel-flow-web/src/designs/M01-F03/) — [`check-inbox.tsx`](../../../fuel-flow-web/src/designs/M01-F03/check-inbox.tsx), [`verify-result.tsx`](../../../fuel-flow-web/src/designs/M01-F03/verify-result.tsx) |
 | **Last updated** | 2026-07-27 |
 
 ## 1. Purpose
@@ -109,7 +109,9 @@ Full schemas in Swagger. Side effect on resend: enqueues email via M10-F03.
 
 ## 10. Open questions
 
-_None._ All initial open questions resolved 2026-06-27 — see section 11.
+- **OQ1 — R10 has no design surface.** The shipped designs ([`check-inbox.tsx`](../../../fuel-flow-web/src/designs/M01-F03/check-inbox.tsx), [`verify-result.tsx`](../../../fuel-flow-web/src/designs/M01-F03/verify-result.tsx)) were approved on 2026-07-08 against a spec that did not yet contain R10; both cover the link-click flow only. R10's standing, trigger-independent "Verify your email" prompt in profile/settings is a **third screen that does not exist**. The lifecycle is held at `design-approved` by explicit decision rather than reverted, so this OQ is the only record of the gap — `/design-feature M01-F03` must add that screen before F03 goes to implementation.
+
+All initial open questions resolved 2026-06-27 — see section 11.
 
 ## 11. Change history
 
@@ -117,6 +119,8 @@ _None._ All initial open questions resolved 2026-06-27 — see section 11.
 - **2026-06-27** — **OQ1 resolved →** always show "verified — sign in" screen; no auto-sign-in. Keeps server logic stateless (no session detection); matches the cross-device case naturally. AC1 updated.
 - **2026-06-27** — **OQ2 resolved →** same as OQ1 decision — verify succeeds, SPA shows success + login CTA regardless of device. No separate handling needed.
 - **2026-06-27** — **OQ3 resolved →** no security-notification email. User just clicked the link themselves; a second email is noise with no meaningful security gain.
+- **2026-07-08** — Designs shipped (`drafting` → `design-approved`). Two screens — `check-inbox.tsx` (3 states) + `verify-result.tsx` (4 states) — across desktop, tablet, mobile viewports. Routed here directly from module plan §8 (no feature plan needed; mirrors F02 pattern with email channel). During desktop review the email address was un-masked so the user sees the full recipient in the "we've sent a link to X" copy.
 - **2026-07-27** — **First-email trigger moved from F01 to M12.** §1 and §7 both asserted that F01 queues the first verification email; F01's own R07/AC1 never did, so the two specs disagreed. Resolved in F01's favour: registration records the address only, M12 onboarding sends the first email. Surfaced during `/plan-feature M01-F01`. Note the new §7 dependency on M12 — an unmigrated module still specced in the deprecated `MODULES.md`.
 - **2026-07-27** — **R10 added (new).** Moving the trigger to M12 opened a gap symmetrical to [F01 R11](./F01-registration.md): an address recorded at signup by a user who then abandons onboarding would never be sent a verification email, and nothing routed them to the resend endpoint. R10 makes the "Verify your email" prompt standing and trigger-independent, so the address is always recoverable.
-- **2026-07-27** — **Broken links fixed** — `./F10-email-change.md` (×2, §1 and §7) → `./F10-email-add-change-remove.md`. **Design link corrected** from a `src/design/screens/M01/` path that never existed on disk to `_pending_`.
+- **2026-07-27** — **Broken links fixed** — `./F10-email-change.md` (×2, §1 and §7) → `./F10-email-add-change-remove.md`.
+- **2026-07-27** — **Merge note.** R10 was added on the M01-F01 branch while the designs were being approved in parallel on `m01-main`, so the shipped designs pre-date it and do not cover it. Lifecycle deliberately held at `design-approved` rather than reverting to `drafting` per the usual Phase 6.5 rule; the uncovered surface is tracked as §10 OQ1 instead.
