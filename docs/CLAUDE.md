@@ -1,105 +1,53 @@
 # docs — Documentation System
 
+This file is for someone working **inside `docs/`**. Repository-wide workflow rules live in the root [`CLAUDE.md`](../CLAUDE.md) (don't duplicate them here).
+
 ## Document Map
 
 | File | Purpose | Source of Truth For |
-|------|---------|---------------------|
-| `MODULES.md` | Module / feature / requirement registry + current priorities | Hierarchical IDs (`MXX-FXX-RXX`), per-requirement status, legacy ID mapping, "Where to Continue" |
-| `ProjectOverView.md` | Business requirements | Module descriptions, user stories, feature specs, subscription tiers |
+|---|---|---|
+| `SRD.md` | SRD index | Modules, lifecycle, links to per-feature specs |
+| `srd/README.md` | SRD conventions | Template, ID rules, lifecycle states, change mechanisms |
+| `srd/MXX-*/README.md` | Module spec | Scope, NFRs, dependencies, feature index |
+| `srd/MXX-*/FXX-*.md` | Feature spec | Acceptance criteria, flows, NFRs, edge cases |
+| `MODULES.md` | **DEPRECATED** legacy registry | Specs for M02–M15 (except M16) until each is migrated. **Do not add new rows.** |
+| `ProjectOverView.md` | Business overview | Module descriptions, user stories, subscription tiers |
 | `CHANGELOG.md` | Version history | Architectural decisions, tech changes, feature additions |
-| `EF_CONFIGURATION_CONVENTIONS.md` | EF Core mapping standards | Fluent API section ordering, relationship comments (also in `server/FuelFlow.Infrastructure/CLAUDE.md`) |
-| `ACTIVE-TASK.md` | Per-session handoff scratchpad | Last action, next action, files touched, decisions made this session, blockers (1-2 lines per field) |
-| `SCOPE-FENCE.md` | Current sprint scope + frozen paths + deferred ideas | In-scope items mirroring `MODULES.md` "Current Priorities", paths temporarily off-limits, ideas captured but not yet planned |
-| `KNOWN-ISSUES.md` | Workarounds and intentional technical debt catalogue | `KI-XX` rows: known bugs not yet fixed, shipped workarounds, performance/accuracy compromises |
-| `ENV-MAP.md` | Environment variable / user-secret map (no values) | Every `Configuration["…"]` + `import.meta.env.VITE_*` key, where it's read, whether required, server-only vs public |
-| `DECISIONS.md` | Index of non-trivial technical decisions | `D-XX` rows: one-line decision + link to scoped `CLAUDE.md` / CHANGELOG / `docs/adr/` for the full reasoning |
-| `ADR-template.md` | Scaffold for new Architecture Decision Records | Copy → `docs/adr/ADR-NNN-…md` when a decision warrants more than a one-line `DECISIONS.md` row |
+| `plans/<MXX>/module-plan.md` + `plans/<MXX>/<MXX-FXX>.md` | Module + per-feature **plans** produced by AI Workflow | Feature plans disposable after PR ships; module plan + module recap durable |
 
-Reference content (tech stack, architecture, API conventions, DB schema, UI specs) lives in the **scoped `CLAUDE.md`** files next to the code — see the "What Goes Where" table below and the root [`CLAUDE.md`](../CLAUDE.md) Rule 9.
+Tech-stack / architecture / API / schema / UI reference content does **not** live here — it lives in scoped `CLAUDE.md` files next to the code. See root [`CLAUDE.md`](../CLAUDE.md) Rule 9 for the index.
 
-## What Goes Where
+## SRD vs MODULES.md — transition state
 
-| Content Type | Document |
-|-------------|----------|
-| **Module / feature / requirement IDs (`MXX-FXX-RXX`)** | `MODULES.md` |
-| **Per-requirement status (Planned / In Progress / Done)** | `MODULES.md` |
-| **Legacy → new ID mapping (SH-001 → M04-F03-R01, etc.)** | `MODULES.md` Appendix A |
-| **Acceptance criteria per feature** | `MODULES.md` |
-| **Current priorities (next 3 tasks)** | `MODULES.md` "Current Priorities" section |
-| API conventions, sample request/response | `server/FuelFlow.Api/CLAUDE.md` |
-| **Endpoint catalogue (authoritative)** | **Swagger** at `/swagger` — auto-generated |
-| Backend tech stack, Clean Architecture, CQRS+MediatR | `server/CLAUDE.md` |
-| Commands / Queries / DTO patterns, validators, multi-tenancy guards, Mapperly | `server/FuelFlow.Application/CLAUDE.md` |
-| ER diagram, key entities | `server/FuelFlow.Domain/CLAUDE.md` |
-| **DB schema (authoritative)** | **EF Core migrations** |
-| EF Core configurations, important DB rules, global query filters | `server/FuelFlow.Infrastructure/CLAUDE.md` |
-| Frontend tech stack, state, forms, routing, i18n, PWA | `fuel-flow-web/CLAUDE.md` |
-| Route → role mapping, registration / onboarding flows | `fuel-flow-web/src/routes/CLAUDE.md` |
-| Component patterns (shadcn, Field system, Dialog/Sonner/Recharts, subscription UI) | `fuel-flow-web/src/components/CLAUDE.md` |
-| API client, Zod validators, utilities | `fuel-flow-web/src/lib/CLAUDE.md` |
-| Module descriptions (what it does, user stories) | `ProjectOverView.md` |
-| Architecture decisions and rationale (full narrative) | `CHANGELOG.md` |
-| Per-session handoff (last action, next action, files touched) | `ACTIVE-TASK.md` |
-| Current sprint scope, frozen paths, deferred ideas | `SCOPE-FENCE.md` |
-| Known bugs, workarounds, intentional tech debt | `KNOWN-ISSUES.md` |
-| Env var / user-secret / `VITE_*` map (keys only, no values) | `ENV-MAP.md` |
-| Index of non-trivial technical decisions | `DECISIONS.md` |
-| Scaffold for new ADR files | `ADR-template.md` |
+Mid-migration from the flat `MODULES.md` registry to a per-feature SRD under `docs/srd/`.
 
-**Rule:** Never duplicate detailed specs across documents. `CLAUDE.md` files describe *conventions and rules* — not full specifications — alongside the code they describe.
+| Case | Rule |
+|---|---|
+| **New feature** | Write to SRD only. Add an `srd/MXX-*/FXX-*.md` from the template in [`srd/README.md`](srd/README.md). **Do not add `MODULES.md` rows.** |
+| **In-flight work on an unmigrated module** | Finish against `MODULES.md`. |
+| **Touching an unmigrated module substantively** | Migrate the module to SRD first (replace its `MODULES.md` section with `→ moved to <SRD path>` in the same PR). |
+| **Cutover** | When every `In Progress` / `Planned` / `Done` `MODULES.md` row has an SRD counterpart, `MODULES.md` becomes an archive and root `CLAUDE.md` flips its pointer entirely to SRD. |
 
-## Documentation Update Workflow
+Migrated today: **M01** (Identity & Authentication), **M16** (Team & Access — stub), **M17** (Audit & Compliance — stub). Everything else lives in `MODULES.md` for now.
 
-The previous two-mode (Doc-Driven / Code-Driven) workflow has been folded into the **Development Workflow** in the root [`CLAUDE.md`](../CLAUDE.md) — see Rules 1–9 there. The short version:
+## CHANGELOG conventions
 
-1. **Identify the requirement ID** in `MODULES.md` (Rule 1).
-2. **Update `MODULES.md` status** in the same commit/PR as the implementation (Rule 2).
-3. **For reference content** (tech stack changes, new conventions, new component patterns), update the appropriate **scoped `CLAUDE.md`** next to the code — see "What Goes Where" above and root `CLAUDE.md` Rule 9.
-4. **For significant changes** add a `CHANGELOG.md` entry — see conventions below.
-
-When the codebase has drifted from `MODULES.md` (statuses lagging behind implemented features), scan controllers / migrations / `.csproj` to discover what exists, then flip the relevant `MXX-FXX-RXX` rows to `Done` and bump `Last Updated`.
-
-## CHANGELOG Conventions
-
-**Format:**
 ```markdown
 ## [1.2.0] - 2026-02-08
 
 ### Added
-- Dark mode support guidelines
+- <new capability>
 
 ### Changed
-- Updated UI/UX Guidelines section
+- <behaviour change>
 
 ### Technical Decisions
-- Chose X over Y because [reason]
+- Chose X over Y because <reason>
 ```
 
-**When to add an entry:**
-- Major feature additions
-- Technology stack changes
-- Architecture changes
-- Significant business rule changes
-- Breaking changes
+**Add an entry for:** major feature additions, tech-stack changes, architecture changes, significant business-rule changes, breaking changes.
+**Skip:** typo fixes, small clarifications that don't affect implementation.
 
-**When to skip:**
-- Minor typo fixes
-- Small clarifications that don't affect implementation
+## Principle
 
-## Keeping CLAUDE.md Files in Sync
-
-| When This Changes | Update This CLAUDE.md |
-|-------------------|----------------------|
-| Backend tech stack | `server/CLAUDE.md` |
-| Frontend tech stack | `fuel-flow-web/CLAUDE.md` |
-| Architecture patterns (Clean Architecture, CQRS) | `server/CLAUDE.md` |
-| API conventions (cookies, errors, samples) | `server/FuelFlow.Api/CLAUDE.md` |
-| EF Core conventions, global query filters, DB rules | `server/FuelFlow.Infrastructure/CLAUDE.md` |
-| Entity model, ER diagram | `server/FuelFlow.Domain/CLAUDE.md` |
-| Page → role routing, registration flow | `fuel-flow-web/src/routes/CLAUDE.md` |
-| Component patterns (Dialog, toasts, charts) | `fuel-flow-web/src/components/CLAUDE.md` |
-| API client, validators | `fuel-flow-web/src/lib/CLAUDE.md` |
-| Cross-cutting business rules | Root `CLAUDE.md` |
-| Documentation workflow | `docs/CLAUDE.md` (this file) |
-
-**Principle:** `CLAUDE.md` files are lean reference guides for AI agents and developers. Full module / feature / requirement specifications live in [`MODULES.md`](MODULES.md). Reference content (tech stack, architecture, API, schema, UI) lives in the scoped `CLAUDE.md` next to the code. Keep `CLAUDE.md` files scannable — if a section exceeds 30 lines, consider whether it belongs in a separate doc or as a code comment.
+`CLAUDE.md` files are lean reference guides — full specs live in SRD (or, for now, MODULES.md). If a section exceeds 30 lines, ask whether it belongs in a separate doc or as a code comment.

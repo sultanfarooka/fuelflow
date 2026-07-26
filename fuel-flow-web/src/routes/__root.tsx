@@ -13,8 +13,9 @@ function RootLayout() {
   // [M07-F07] /settings renders inside its own AppShell (see settings/route.tsx),
   // so it gets the bare Outlet like the other authenticated route trees.
   const isSettingsRoute = location.pathname.startsWith("/settings");
+  const isDesignsRoute = location.pathname.startsWith("/designs");
 
-  if (isAuthRoute || isOnboardingRoute || isDashboardRoute || isSettingsRoute) {
+  if (isAuthRoute || isOnboardingRoute || isDashboardRoute || isSettingsRoute || isDesignsRoute) {
     return (
       <>
         <Outlet />

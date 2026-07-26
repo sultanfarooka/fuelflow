@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DesignsRouteImport } from './routes/designs'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as OnboardingRouteRouteImport } from './routes/onboarding/route'
@@ -17,7 +18,9 @@ import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
+import { Route as DesignsIndexRouteImport } from './routes/designs.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DesignsSplatRouteImport } from './routes/designs.$'
 import { Route as AuthVerifyPhoneRouteImport } from './routes/auth/verify-phone'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth/verify-email'
 import { Route as AuthResetPasswordSuccessRouteImport } from './routes/auth/reset-password-success'
@@ -47,6 +50,11 @@ import { Route as DashboardStationStationIdAdminUsersRouteImport } from './route
 import { Route as DashboardStationStationIdAdminStaffRouteImport } from './routes/dashboard/station.$stationId.admin.staff'
 import { Route as DashboardStationStationIdAdminLubricantsRouteImport } from './routes/dashboard/station.$stationId.admin.lubricants'
 
+const DesignsRoute = DesignsRouteImport.update({
+  id: '/designs',
+  path: '/designs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -87,10 +95,20 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
   path: '/',
   getParentRoute: () => OnboardingRouteRoute,
 } as any)
+const DesignsIndexRoute = DesignsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DesignsRoute,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DesignsSplatRoute = DesignsSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => DesignsRoute,
 } as any)
 const AuthVerifyPhoneRoute = AuthVerifyPhoneRouteImport.update({
   id: '/verify-phone',
@@ -258,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/designs': typeof DesignsRouteWithChildren
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -268,7 +287,9 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/designs/$': typeof DesignsSplatRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/designs/': typeof DesignsIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
@@ -304,7 +325,9 @@ export interface FileRoutesByTo {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/designs/$': typeof DesignsSplatRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/designs': typeof DesignsIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
@@ -333,6 +356,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRouteRouteWithChildren
   '/settings': typeof SettingsRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/designs': typeof DesignsRouteWithChildren
   '/auth/check-email-register': typeof AuthCheckEmailRegisterRoute
   '/auth/check-email-reset': typeof AuthCheckEmailResetRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -343,7 +367,9 @@ export interface FileRoutesById {
   '/auth/reset-password-success': typeof AuthResetPasswordSuccessRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/auth/verify-phone': typeof AuthVerifyPhoneRoute
+  '/designs/$': typeof DesignsSplatRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/designs/': typeof DesignsIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/dashboard/account/phone': typeof DashboardAccountPhoneRoute
@@ -374,6 +400,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/about'
+    | '/designs'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
     | '/auth/forgot-password'
@@ -384,7 +411,9 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/designs/$'
     | '/dashboard/'
+    | '/designs/'
     | '/onboarding/'
     | '/settings/'
     | '/dashboard/account/phone'
@@ -420,7 +449,9 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/designs/$'
     | '/dashboard'
+    | '/designs'
     | '/onboarding'
     | '/settings'
     | '/dashboard/account/phone'
@@ -448,6 +479,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/about'
+    | '/designs'
     | '/auth/check-email-register'
     | '/auth/check-email-reset'
     | '/auth/forgot-password'
@@ -458,7 +490,9 @@ export interface FileRouteTypes {
     | '/auth/reset-password-success'
     | '/auth/verify-email'
     | '/auth/verify-phone'
+    | '/designs/$'
     | '/dashboard/'
+    | '/designs/'
     | '/onboarding/'
     | '/settings/'
     | '/dashboard/account/phone'
@@ -488,10 +522,18 @@ export interface RootRouteChildren {
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
+  DesignsRoute: typeof DesignsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/designs': {
+      id: '/designs'
+      path: '/designs'
+      fullPath: '/designs'
+      preLoaderRoute: typeof DesignsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -548,12 +590,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof OnboardingRouteRoute
     }
+    '/designs/': {
+      id: '/designs/'
+      path: '/'
+      fullPath: '/designs/'
+      preLoaderRoute: typeof DesignsIndexRouteImport
+      parentRoute: typeof DesignsRoute
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
+    }
+    '/designs/$': {
+      id: '/designs/$'
+      path: '/$'
+      fullPath: '/designs/$'
+      preLoaderRoute: typeof DesignsSplatRouteImport
+      parentRoute: typeof DesignsRoute
     }
     '/auth/verify-phone': {
       id: '/auth/verify-phone'
@@ -893,6 +949,19 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
   SettingsRouteRouteChildren,
 )
 
+interface DesignsRouteChildren {
+  DesignsSplatRoute: typeof DesignsSplatRoute
+  DesignsIndexRoute: typeof DesignsIndexRoute
+}
+
+const DesignsRouteChildren: DesignsRouteChildren = {
+  DesignsSplatRoute: DesignsSplatRoute,
+  DesignsIndexRoute: DesignsIndexRoute,
+}
+
+const DesignsRouteWithChildren =
+  DesignsRoute._addFileChildren(DesignsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
@@ -900,6 +969,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AboutRoute: AboutRoute,
+  DesignsRoute: DesignsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -185,7 +185,7 @@ public class CreateFuelTankCommandHandler : IRequestHandler<CreateFuelTankComman
 - Owner role can act across all stations of their organisation (consolidated view).
 - Manager role can act only on stations in their `UserStation` join rows.
 - Nozzleman role can act only on the currently-open shift's station.
-- See [M01-F07](../../docs/MODULES.md#m01-f07--multi-station-access) for the access rules; see `server/FuelFlow.Infrastructure/CLAUDE.md` for the corresponding global query filter pattern.
+- See the SRD for the access rules — multi-station access is now tracked under [M16 — Team & Access Management](../../docs/srd/M16-team-and-access/README.md) (legacy ID: `M01-F07` in [`docs/MODULES.md`](../../docs/MODULES.md)); see `server/FuelFlow.Infrastructure/CLAUDE.md` for the corresponding global query filter pattern.
 
 ## DTO ↔ Entity Mapping (Mapperly)
 

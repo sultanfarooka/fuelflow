@@ -86,6 +86,7 @@
     "Stock = Opening Dip + Deliveries - Sales. Variance alerts on threshold breach.",
     "Credit sales blocked at/above credit limit. Feature gating enforced at API level, not just UI."
   ],
+  "diffDisplay": "none",
   "hooks": {
     "PreToolUse": [
       {

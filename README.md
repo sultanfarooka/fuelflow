@@ -1,93 +1,80 @@
-# FuelFlow
+# Fuel Flow
 
+Comprehensive filling station management system for the Pakistani market. Station owners manage multiple filling stations, track fuel inventory, handle credit customers (udhaar), run shift-based operations, and generate reports.
 
+## Tech Stack
 
-## Getting started
+**Backend:** ASP.NET Core 10 (C# 12), EF Core 10, PostgreSQL 16, MediatR 14, FluentValidation 12, Mapperly 4.3, Serilog, JWT (HTTP-only cookies)
+**Frontend:** React 19, Vite 7, TypeScript 5.9, TanStack (Router/Query/Form/Table), Zustand 4.5, shadcn/ui, Tailwind CSS, Zod, Axios, i18next, Recharts, Sonner
+**Infra:** Docker + Docker Compose, GitHub Actions
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Per-layer details: [`server/CLAUDE.md`](server/CLAUDE.md), [`fuel-flow-web/CLAUDE.md`](fuel-flow-web/CLAUDE.md).
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Repository Layout
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.cancerlogics.com/umer_sultan/fuelflow.git
-git branch -M main
-git push -uf origin main
+server/                         # ASP.NET Core backend (see server/CLAUDE.md)
+  FuelFlow.Api/                 # Controllers, Program.cs composition root
+  FuelFlow.Application/         # Commands, Queries, DTOs, Validators, Interfaces
+  FuelFlow.Domain/              # Entities, Enums, BaseEntity (pure C#, zero packages)
+  FuelFlow.Infrastructure/      # EF Core, Handlers, Repos, Services
+  docker-compose.yml            # PostgreSQL 16
+fuel-flow-web/                  # React frontend
+docs/                           # SRD, ProjectOverview, MODULES (legacy)
+scripts/                        # dev.ps1, migrate.ps1 — see scripts/README.md
 ```
 
-## Integrate with your tools
+## Development Setup
 
-- [ ] [Set up project integrations](http://chiragh-ix.lums.net/umer_sultan/fuelflow/-/settings/integrations)
+**Prerequisites:** Node.js 18+, .NET 10 SDK, Docker Desktop, `dotnet tool install --global dotnet-ef`
 
-## Collaborate with your team
+```bash
+# 1. Start PostgreSQL (container publishes host port 5432 — see server/docker-compose.yml)
+cd server && docker compose up -d
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+# 2. Configure secrets (first time only)
+#    DefaultConnection is already in appsettings.Development.json (Port=5432), so
+#    a user-secret for it is optional in dev; if you set one it must use 5432.
+cd server/FuelFlow.Api
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=fuelflow_dev;Username=fuelflow;Password=fuelflow123"
+dotnet user-secrets set "Jwt:Secret" "your-secret-key-at-least-32-characters-long"
+dotnet user-secrets set "Jwt:Issuer" "FuelFlow"
+dotnet user-secrets set "Jwt:Audience" "FuelFlow"
 
-## Test and Deploy
+# 3. Apply migrations
+cd server && dotnet ef database update --project FuelFlow.Infrastructure --startup-project FuelFlow.Api
 
-Use the built-in continuous integration in GitLab.
+# 4. Run backend (http://localhost:5035, Swagger at /swagger)
+dotnet run --project server/FuelFlow.Api/FuelFlow.Api.csproj
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+# 5. Run frontend (http://localhost:5173)
+cd fuel-flow-web && npm install && npm run dev
 
-***
+# Or run both together:
+./scripts/dev.ps1
+```
 
-# Editing this README
+## Run the whole stack in Docker (one command)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+For a containerized run of Frontend + Backend + DB together (no local .NET/Node needed),
+use the root `docker-compose.yml`:
 
-## Suggestions for a good README
+```bash
+cp .env.example .env          # fill in POSTGRES_PASSWORD / JWT_SECRET / OTP_HASH_PEPPER
+docker compose up --build     # app at http://localhost
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+nginx serves the built SPA and reverse-proxies `/api` → the API (same-origin, so HTTP-only
+auth cookies work with no CORS). The API runs in `Production` mode but, for this local-HTTP
+profile, compose sets `Auth__CookieSecure=false` (cookies over plain HTTP) and
+`Database__MigrateOnStartup=true` (control-plane migrations applied on boot). With no SMS
+gateway, `Sms__Provider=console` prints signup OTPs to `docker compose logs api`. This is the
+full-stack runner; `server/docker-compose.yml` remains the DB-only dev DB used by `dev.ps1`.
 
-## Name
-Choose a self-explaining name for your project.
+## Documentation
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- **Conventions, architecture, workflow rules:** [`CLAUDE.md`](CLAUDE.md) (root) + scoped `CLAUDE.md` files next to the code.
+- **Module / feature specs:** [`docs/SRD.md`](docs/SRD.md) → per-feature specs under [`docs/srd/`](docs/srd/). Modules not yet migrated live in deprecated [`docs/MODULES.md`](docs/MODULES.md).
+- **AI Workflow (spec → module plan → feature plan → design → implement → E2E → ship → recap):** [`docs/AI-WORKFLOW.md`](docs/AI-WORKFLOW.md). Each stage is a separate slash-command (`/feature-discovery`, `/plan-module`, `/plan-feature`, `/design-feature`, `/feature-implementation`, `/feature-e2e-testing`, `/recap-feature`, `/recap-module`) that reads its predecessor's artefact and flips the module/feature `lifecycle:` field. Start with `/plan-module MXX` for interactive modules (its §8 table decides which features still need `/plan-feature` and which can go straight to design). Stop after any stage — the field records where you left off; picking up later runs the next command against the same `MXX` or `MXX-FXX`. Optional [design-only PR path](docs/AI-WORKFLOW.md#design-only-pr-path) ships designs to `main` before implementation.
+- **Business overview:** [`docs/ProjectOverView.md`](docs/ProjectOverView.md).
+- **Dev scripts:** [`scripts/README.md`](scripts/README.md).

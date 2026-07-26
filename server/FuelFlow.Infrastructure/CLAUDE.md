@@ -225,7 +225,7 @@ These invariants are enforced at the data-access layer (configurations, reposito
 | Shifts | At most one open `StationShift` per `stationId` | Application-level check in `OpenShiftCommandHandler` |
 | Audit | Audit rows are append-only — no delete | Configured at the repo level: no `Delete` method on `IAuditLogRepository` |
 
-> Cross-reference: every rule above is also tracked in [`docs/MODULES.md`](../../docs/MODULES.md) with its `MXX-FXX-RXX` ID, status, and acceptance criteria. Use the module file for *what should exist*; use this file for *how it's enforced in EF Core*.
+> Cross-reference: every rule above is also tracked in [`docs/SRD.md`](../../docs/SRD.md) (per-feature specs under `docs/srd/MXX-*/FXX-*.md`) with its `MXX-FXX[-RXX]` ID, lifecycle, and acceptance criteria. For modules not yet migrated to SRD (M02–M15 except M16), the spec is in the deprecated [`docs/MODULES.md`](../../docs/MODULES.md). Use the SRD (or MODULES.md, for unmigrated modules) for *what should exist*; use this file for *how it's enforced in EF Core*.
 
 ## Control Plane vs PerTenant Context (Multi-Tenancy — M14 complete)
 
