@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { IconCheck, IconEye, IconEyeOff } from "@tabler/icons-react";
+import { IconCheck, IconEye, IconEyeOff, IconX } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -56,32 +56,80 @@ export const DEFAULT_PASSWORD_RULES: PasswordRule[] = [
   { id: "digit", label: "Contains a digit", test: (v) => /\d/.test(v) },
 ];
 
+// `mode` controls how much of the policy is exposed:
+//
+//   "satisfied" (default) — progressive reveal. Only rules the value already
+//     passes are rendered; nothing shows on a pristine field.
+//   "all" — every rule is rendered from first paint with an explicit pass/fail
+//     mark, so the user can see the whole policy before typing.
+//
+// `failedRuleIds` carries the rule codes the server rejected (F14 R07 returns an
+// array, not a single message). A flagged rule renders as a hard failure even
+// when the local `test` would pass.
 export const PasswordChecklist = ({
   value,
   rules = DEFAULT_PASSWORD_RULES,
+  mode = "satisfied",
+  failedRuleIds,
 }: {
   value: string;
   rules?: PasswordRule[];
+  mode?: "satisfied" | "all";
+  failedRuleIds?: string[];
 }) => {
-  const passed = rules.filter((r) => r.test(value));
-  if (passed.length === 0) return null;
+  const showAll = mode === "all";
+  const visible = showAll ? rules : rules.filter((r) => r.test(value));
+  if (visible.length === 0) return null;
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-xs">
+    <ul
+      className={cn(
+        "pt-1 text-xs",
+        showAll
+          ? "flex flex-col gap-1"
+          : "flex flex-wrap gap-x-4 gap-y-1",
+      )}
+    >
       <AnimatePresence initial={false}>
-        {passed.map((rule) => (
-          <motion.li
-            key={rule.id}
-            layout
-            initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -6 }}
-            transition={{ duration: 0.2, ease: EASE_OUT_QUART }}
-            className="inline-flex items-center gap-1.5 text-success"
-          >
-            <IconCheck className="size-3.5" />
-            {rule.label}
-          </motion.li>
-        ))}
+        {visible.map((rule) => {
+          const flagged = failedRuleIds?.includes(rule.id) ?? false;
+          const passed = !flagged && rule.test(value);
+          return (
+            <motion.li
+              key={rule.id}
+              layout
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -6 }}
+              transition={{ duration: 0.2, ease: EASE_OUT_QUART }}
+              className={cn(
+                "inline-flex items-center gap-1.5",
+                passed
+                  ? "text-success"
+                  : flagged
+                    ? "font-medium text-destructive"
+                    : "text-muted-foreground",
+              )}
+            >
+              <AnimatePresence initial={false} mode="wait">
+                <motion.span
+                  key={passed ? "passed" : "unmet"}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.18, ease: EASE_OUT_QUART }}
+                  className="inline-flex"
+                >
+                  {passed ? (
+                    <IconCheck className="size-3.5" />
+                  ) : (
+                    <IconX className="size-3.5" />
+                  )}
+                </motion.span>
+              </AnimatePresence>
+              {rule.label}
+            </motion.li>
+          );
+        })}
       </AnimatePresence>
     </ul>
   );
