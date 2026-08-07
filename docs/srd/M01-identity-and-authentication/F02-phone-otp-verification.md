@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Lifecycle** | `spec-locked` |
-| **Design** | [`F02-phone-otp-verification.tsx`](../../../fuel-flow-web/src/design/screens/M01/F02-phone-otp-verification.tsx) |
-| **Last updated** | 2026-07-01 |
+| **Lifecycle** | `design-approved` |
+| **Design** | [`M01-F02/`](../../../fuel-flow-web/src/designs/M01-F02/) — [`otp-entry.tsx`](../../../fuel-flow-web/src/designs/M01-F02/otp-entry.tsx), [`success-handoff.tsx`](../../../fuel-flow-web/src/designs/M01-F02/success-handoff.tsx). Plan: [`M01-F02.md`](../../plans/M01/M01-F02.md) |
+| **Last updated** | 2026-07-27 |
 
 ## 1. Purpose
 
@@ -117,3 +117,5 @@ _None._ All initial open questions resolved 2026-06-27 — see section 11.
 - **2026-06-27** — **OQ3 resolved →** voice-call OTP fallback out of scope for F02. §7 wording updated; will be tracked as a separate future feature if SMS delivery rates become a problem.
 - **2026-06-27** — **OQ4 resolved →** no extra cooldown after the 3rd-attempt lock — user can immediately request a new code (subject to the standard 60 s resend cooldown and daily cap). R04 wording updated.
 - **2026-06-27** — **OQ5 resolved →** server infers `purpose` from the OTP row; client no longer supplies it. R10 wording updated, §9 API body shape dropped `purpose?`, AC9 / AC10 reworded to describe the row's `purpose` rather than the request payload.
+- **2026-07-27** — **Lifecycle `spec-locked` → `design-approved`** (backfill). The designs shipped on 2026-07-08 in `design(m01-f02): desktop + tablet + mobile passes`, but the lifecycle flip was never made, so the SRD index claimed F02 was undesigned for three weeks while `otp-entry.tsx` and `success-handoff.tsx` sat on `m01-main`. No spec content changed — this corrects the record only.
+- **2026-07-27** — **Design link corrected.** Pointed at `src/design/screens/M01/F02-phone-otp-verification.tsx` — a path under the superseded singular `src/design/` playground, on a branch that was never merged, and a filename that never existed even there. Now points at the real `src/designs/M01-F02/` files plus the feature plan. Same class of stale link already fixed in [F01](./F01-registration.md) and [F03](./F03-email-verification.md).
